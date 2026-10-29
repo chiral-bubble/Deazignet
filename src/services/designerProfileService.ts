@@ -2320,7 +2320,23 @@ export async function searchDesigners(
 
       if (query.trim()) {
         const text = query.trim();
-        qBuilder = qBuilder.or(`full_name.ilike.%${text}%,title.ilike.%${text}%,studio_name.ilike.%${text}%,bio.ilike.%${text}%`);
+        qBuilder = qBuilder.or(`search.wfts.${text},full_name.ilike.%${text}%,title.ilike.%${text}%,studio_name.ilike.%${text}%`);
+      }
+
+      if (onlySaved) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: savedList } = await (supabase as any)
+            .from('saved_designers')
+            .select('designer_id')
+            .eq('user_id', user.id);
+          const ids = (savedList || []).map((x: any) => x.designer_id);
+          if (ids.length > 0) {
+            qBuilder = qBuilder.in('designer_id', ids);
+          } else {
+            return { designers: [], totalCount: 0, hasMore: false, page };
+          }
+        }
       }
 
       if (professionalType && professionalType !== 'all') {
@@ -2334,6 +2350,10 @@ export async function searchDesigners(
 
       if (minYears > 0) {
         qBuilder = qBuilder.gte('years_experience', minYears);
+      }
+
+      if (verifiedOnly) {
+        qBuilder = qBuilder.eq('verified', true);
       }
 
       const startIndex = (page - 1) * limit;

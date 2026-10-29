@@ -1,7 +1,13 @@
 /**
- * Projects Mock Service Layer for Dezignet (Designer Side)
- * Clean service abstraction that can be swapped for real API calls later.
+ * Projects Service for Dezignet (Phase 2)
+ * Real Supabase backend with mock fallback (VITE_USE_MOCKS_PROJECTS=true).
+ * Service signatures are identical to Phase 1 mocks — no page changes needed.
  */
+
+import { supabase, USE_MOCKS } from '../lib/supabase';
+import type { ProjectStatus, PaymentType } from '../types/database.types';
+
+// ─── Public Types (same shape as mock layer) ─────────────────────────────────
 
 export interface MilestonePhase {
   id: string;
@@ -32,20 +38,23 @@ export interface ProjectReferenceImage {
 export interface Project {
   id: string;
   title: string;
-  category: 'Residential' | 'Commercial' | 'Hospitality' | 'Civic' | 'Landscape' | 'Interior';
+  category: string;
   subcategory: string;
   description: string;
   budget: number;
+  currency: string;
   paymentType: 'Milestone' | 'Hourly';
   hourlyRate?: number;
   estimatedHours?: number;
   timeline: string;
   deadline: string;
-  area: number; // in sq ft
+  area: number;
   location: string;
+  city?: string;
+  stateRegion?: string;
   postedDate: string;
   proposalsCount: number;
-  status: 'Open' | 'Under Review' | 'Awarded' | 'Closed';
+  status: 'Open' | 'Under Review' | 'Awarded' | 'Closed' | 'Draft' | 'Cancelled';
   isSaved?: boolean;
   hasApplied?: boolean;
   appliedProposalId?: string;
@@ -61,10 +70,13 @@ export interface ProjectFiltersState {
   minBudget?: number;
   maxBudget?: number;
   location?: string;
+  city?: string;
   paymentType?: 'Milestone' | 'Hourly' | 'All';
   timeline?: string;
   sortBy?: 'newest' | 'budget-high' | 'budget-low' | 'deadline-soon';
   onlySaved?: boolean;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface ProposalMilestoneOffer {
@@ -78,13 +90,16 @@ export interface ProposalSubmission {
   projectId: string;
   coverLetter: string;
   proposedTotal: number;
+  currency?: string;
   paymentType: 'Milestone' | 'Hourly';
   milestoneOffers?: ProposalMilestoneOffer[];
   hourlyRate?: number;
   estimatedHours?: number;
   deliveryTime: string;
+  deliveryDays?: number;
   portfolioItems: string[];
   clientQuestion?: string;
+  exclusions?: string;
 }
 
 export interface SubmittedProposal {
@@ -96,7 +111,7 @@ export interface SubmittedProposal {
   dateSent: string;
   proposedPrice: number;
   paymentType: 'Milestone' | 'Hourly';
-  status: 'Pending' | 'Viewed' | 'Shortlisted' | 'Accepted' | 'Declined';
+  status: 'Pending' | 'Viewed' | 'Shortlisted' | 'Accepted' | 'Declined' | 'Withdrawn';
   coverLetter: string;
   deliveryTime: string;
   milestones?: ProposalMilestoneOffer[];
@@ -114,9 +129,8 @@ export interface ProposalDraft {
   lastUpdated: number;
 }
 
-// -------------------------------------------------------------
-// Standard Architectural Milestone Templates
-// -------------------------------------------------------------
+// ─── Standard Milestone Templates ─────────────────────────────────────────────
+
 export const standardMilestonePhases: MilestonePhase[] = [
   {
     id: 'phase-1',
@@ -168,535 +182,461 @@ export const standardMilestonePhases: MilestonePhase[] = [
   }
 ];
 
-// -------------------------------------------------------------
-// Realistic Mock Database (International Architectural Commissions)
-// -------------------------------------------------------------
+// ─── Error mapping ─────────────────────────────────────────────────────────────
+
+type ProjectServiceError =
+  | 'limit_reached'
+  | 'profile_incomplete'
+  | 'already_applied'
+  | 'project_closed'
+  | 'not_editable'
+  | 'invalid_percentages'
+  | 'invalid_hourly_fields'
+  | 'unknown';
+
+function mapSupabaseError(err: any): ProjectServiceError {
+  const msg: string = err?.message || err?.hint || '';
+  if (msg.includes('limit_reached')) return 'limit_reached';
+  if (msg.includes('profile_incomplete')) return 'profile_incomplete';
+  if (msg.includes('already_applied') || (err?.code === '23505')) return 'already_applied';
+  if (msg.includes('project_closed')) return 'project_closed';
+  if (msg.includes('not_editable')) return 'not_editable';
+  if (msg.includes('invalid_percentages')) return 'invalid_percentages';
+  if (msg.includes('invalid_hourly_fields')) return 'invalid_hourly_fields';
+  return 'unknown';
+}
+
+// ─── Shape helpers ──────────────────────────────────────────────────────────────
+
+function dbStatusToDisplay(s: ProjectStatus): Project['status'] {
+  const map: Record<ProjectStatus, Project['status']> = {
+    draft: 'Draft',
+    open: 'Open',
+    awarded: 'Awarded',
+    closed: 'Closed',
+    cancelled: 'Cancelled'
+  };
+  return map[s] ?? 'Closed';
+}
+
+function dbPaymentTypeToDisplay(t: PaymentType): 'Milestone' | 'Hourly' {
+  return t === 'milestone' ? 'Milestone' : 'Hourly';
+}
+
+function formatTimelineFromDays(days: number | null): string {
+  if (!days) return 'TBD';
+  if (days < 7) return `${days} days`;
+  if (days < 30) return `${Math.round(days / 7)} Weeks`;
+  return `${Math.round(days / 30)} Months`;
+}
+
+function formatRelativeDate(dateStr: string | null): string {
+  if (!dateStr) return 'Unknown';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function formatDeadlineRelative(dateStr: string | null): string {
+  if (!dateStr) return 'No deadline';
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diffMs = d.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / 86400000);
+  if (diffDays < 0) return 'Overdue';
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  return `In ${diffDays} days`;
+}
+
+function rowToProject(row: any, clientRow: any): Project {
+  const milestones: MilestonePhase[] = Array.isArray(row.milestones)
+    ? row.milestones.map((m: any, i: number) => ({
+        id: m.id ?? `ms-${i}`,
+        name: m.name ?? '',
+        description: m.description ?? '',
+        deliverables: m.deliverables ?? [],
+        billingTrigger: m.billing_trigger ?? '',
+        defaultFeePercentage: Number(m.fee_percent ?? 0)
+      }))
+    : [];
+
+  const clientName = clientRow?.display_name ?? 'Client';
+  const nameParts = clientName.split(' ');
+  const avatarText = nameParts.map((p: string) => p[0]).join('').toUpperCase().slice(0, 2);
+
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    subcategory: row.subcategory ?? '',
+    description: row.description ?? '',
+    budget: Number(row.budget),
+    currency: row.currency ?? 'USD',
+    paymentType: dbPaymentTypeToDisplay(row.payment_type),
+    hourlyRate: row.hourly_rate_max ? Number(row.hourly_rate_max) : undefined,
+    timeline: formatTimelineFromDays(row.timeline_days),
+    deadline: formatDeadlineRelative(row.deadline),
+    area: Number(row.area_sqft ?? 0),
+    location: [row.city, row.state_region].filter(Boolean).join(', ') || row.location_text || 'Location TBD',
+    city: row.city ?? undefined,
+    stateRegion: row.state_region ?? undefined,
+    postedDate: formatRelativeDate(row.published_at),
+    proposalsCount: Number(row.proposal_count ?? 0),
+    status: dbStatusToDisplay(row.status ?? 'open'),
+    isSaved: row.is_saved === true,
+    hasApplied: row.has_applied === true,
+    client: {
+      id: clientRow?.user_id ?? row.client_id,
+      name: clientName,
+      location: [clientRow?.city, clientRow?.state_region].filter(Boolean).join(', ') || 'Unknown',
+      memberSince: clientRow?.member_since
+        ? new Date(clientRow.member_since).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+        : 'Unknown',
+      projectsPosted: Number(clientRow?.projects_posted ?? 0),
+      paymentVerified: clientRow?.payment_verified === true,
+      avatarText
+    },
+    referenceImages: [], // mocked until storage phase
+    milestones: milestones.length > 0 ? milestones : undefined
+  };
+}
+
+// ─── Real Supabase implementation ──────────────────────────────────────────────
+
+async function realGetProjects(filters?: ProjectFiltersState): Promise<Project[]> {
+  const db = supabase as any;
+  let query = db.from('open_projects').select('*');
+
+  // Full-text search
+  if (filters?.search?.trim()) {
+    query = query.textSearch('search', filters.search.trim(), { type: 'websearch' });
+  }
+
+  // Category
+  if (filters?.category && filters.category !== 'All') {
+    query = query.eq('category', filters.category);
+  }
+
+  // Subcategory
+  if (filters?.subcategory && filters.subcategory !== 'All') {
+    query = query.ilike('subcategory', `%${filters.subcategory}%`);
+  }
+
+  // Location
+  if (filters?.city) {
+    query = query.ilike('city', `%${filters.city}%`);
+  }
+
+  // Payment type
+  if (filters?.paymentType && filters.paymentType !== 'All') {
+    query = query.eq('payment_type', filters.paymentType.toLowerCase());
+  }
+
+  // Budget range
+  if (filters?.minBudget && filters.minBudget > 0) {
+    query = query.gte('budget', filters.minBudget);
+  }
+  if (filters?.maxBudget && filters.maxBudget > 0) {
+    query = query.lte('budget', filters.maxBudget);
+  }
+
+  // Saved only
+  if (filters?.onlySaved) {
+    query = query.eq('is_saved', true);
+  }
+
+  // Sort
+  if (filters?.sortBy === 'budget-high') {
+    query = query.order('budget', { ascending: false });
+  } else if (filters?.sortBy === 'budget-low') {
+    query = query.order('budget', { ascending: true });
+  } else if (filters?.sortBy === 'deadline-soon') {
+    query = query.order('deadline', { ascending: true });
+  } else {
+    query = query.order('published_at', { ascending: false });
+  }
+
+  // Pagination
+  const page = filters?.page ?? 1;
+  const pageSize = filters?.pageSize ?? 20;
+  query = query.range((page - 1) * pageSize, page * pageSize - 1);
+
+  const { data: projectRows, error: pErr } = await query;
+  if (pErr) throw pErr;
+  if (!projectRows?.length) return [];
+
+  // Fetch client summaries for all unique client IDs
+  const clientIds: string[] = Array.from(new Set(projectRows.map((r: any) => String(r.client_id))));
+  const { data: clientRows } = await db
+    .from('client_summaries')
+    .select('*')
+    .in('user_id', clientIds);
+
+  const clientMap: Record<string, any> = {};
+  (clientRows ?? []).forEach((c: any) => { clientMap[c.user_id] = c; });
+
+  return projectRows.map((row: any) => rowToProject(row, clientMap[row.client_id]));
+}
+
+async function realGetProject(id: string): Promise<Project | null> {
+  const db = supabase as any;
+  const { data: row, error } = await db
+    .from('open_projects')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error || !row) return null;
+
+  const { data: clientRow } = await db
+    .from('client_summaries')
+    .select('*')
+    .eq('user_id', row.client_id)
+    .maybeSingle();
+
+  return rowToProject(row, clientRow);
+}
+
+async function realSaveProject(projectId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const db = supabase as any;
+  const { error } = await db
+    .from('saved_projects')
+    .upsert({ user_id: user.id, project_id: projectId });
+  if (error) throw error;
+}
+
+async function realUnsaveProject(projectId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const db = supabase as any;
+  const { error } = await db
+    .from('saved_projects')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('project_id', projectId);
+  if (error) throw error;
+}
+
+async function realSubmitProposal(
+  projectId: string,
+  proposal: ProposalSubmission
+): Promise<{ success: boolean; proposalId?: string; error?: ProjectServiceError; message?: string }> {
+  try {
+    const db = supabase as any;
+    const milestoneOffers = proposal.milestoneOffers?.map(m => ({
+      project_milestone_id: m.phaseId,
+      fee_percent: m.feePercentage,
+      amount: m.amount
+    })) ?? [];
+
+    const deliveryDays = proposal.deliveryDays
+      ?? (proposal.deliveryTime
+        ? parseInt(proposal.deliveryTime.replace(/\D/g, ''), 10) * 7 || 14
+        : 14);
+
+    const { data, error } = await db.rpc('submit_proposal', {
+      p_project_id: projectId,
+      p_cover_letter: proposal.coverLetter,
+      p_total_price: proposal.proposedTotal,
+      p_currency: proposal.currency ?? 'USD',
+      p_delivery_days: deliveryDays,
+      p_hourly_rate: proposal.hourlyRate ?? null,
+      p_estimated_hours: proposal.estimatedHours ?? null,
+      p_exclusions: proposal.exclusions ?? null,
+      p_question_for_client: proposal.clientQuestion ?? null,
+      p_milestone_offers: milestoneOffers,
+      p_portfolio_item_ids: proposal.portfolioItems ?? []
+    });
+
+    if (error) {
+      const code = mapSupabaseError(error);
+      return { success: false, error: code, message: error.message };
+    }
+
+    clearProposalDraft(projectId);
+    return { success: true, proposalId: data };
+  } catch (err: any) {
+    const code = mapSupabaseError(err);
+    return { success: false, error: code, message: err.message };
+  }
+}
+
+async function realWithdrawProposal(proposalId: string, reason?: string): Promise<boolean> {
+  const db = supabase as any;
+  const { error } = await db.rpc('withdraw_proposal', {
+    p_proposal_id: proposalId,
+    p_reason: reason ?? null
+  });
+  if (error) throw error;
+  return true;
+}
+
+async function realGetProjectProposalCount(projectId: string): Promise<number> {
+  const db = supabase as any;
+  const { data } = await db
+    .from('open_projects')
+    .select('proposal_count')
+    .eq('id', projectId)
+    .maybeSingle();
+  return Number(data?.proposal_count ?? 0);
+}
+
+// ─── Mock fallback ──────────────────────────────────────────────────────────────
+
+// Mock store in memory (same data as before)
 const mockProjectsData: Project[] = [
   {
-    id: 'proj-pacific-palisades',
-    title: 'Modern Cantilevered Hillside Residence, Pacific Palisades',
+    id: 'proj-lagos-residence',
+    title: 'Luxury Smart Home Residence, Victoria Island Lagos',
     category: 'Residential',
-    subcategory: 'Contemporary Villa',
-    description: 'Client is commissioning an executive architectural lead for a contemporary 4-bedroom cliffside residence with panoramic Pacific ocean vistas. Requirements include cantilevered post-tensioned floor plates, solar-responsive motorized louvers, private screening lounge, and zero-edge infinity pool.',
-    budget: 85000,
-    paymentType: 'Milestone',
-    timeline: '18 Weeks',
-    deadline: 'In 5 days',
-    area: 5800,
-    location: 'Los Angeles, California',
-    postedDate: '2 days ago',
-    proposalsCount: 6,
-    status: 'Open',
-    isSaved: true,
-    hasApplied: false,
-    client: {
-      id: 'client-sterling',
-      name: 'Katherine Sterling',
-      company: 'Sterling Pacific Ventures',
-      location: 'Los Angeles, USA',
-      memberSince: 'March 2022',
-      projectsPosted: 4,
-      paymentVerified: true,
-      avatarText: 'KS'
-    },
-    referenceImages: [
-      { id: 'ref-1', url: '/hero-frames/frame_0040.webp', caption: 'Modern Facade Concept' },
-      { id: 'ref-2', url: '/hero-frames/frame_0080.webp', caption: 'Rear Courtyard & Terrace' },
-      { id: 'ref-3', url: '/hero-frames/frame_0120.webp', caption: 'Double-Height Living Volume' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-shoreditch-hq',
-    title: 'Fintech Headquarters Workspace Architecture, Shoreditch',
-    category: 'Commercial',
-    subcategory: 'Corporate Workspace',
-    description: 'Complete architectural and spatial planning for a 4-story creative tech headquarters. Scope encompasses acoustic timber breakout pavilions, daylight-optimized central atrium, executive boardroom with switchable privacy glazing, and landscaped rooftop pavilion.',
-    budget: 110000,
-    paymentType: 'Milestone',
-    timeline: '20 Weeks',
-    deadline: 'In 3 days',
-    area: 12400,
-    location: 'London, United Kingdom',
-    postedDate: 'Yesterday',
-    proposalsCount: 11,
-    status: 'Open',
-    isSaved: false,
-    hasApplied: true,
-    appliedProposalId: 'prop-shoreditch-01',
-    client: {
-      id: 'client-vance',
-      name: 'Julian Vance',
-      company: 'Vance Kinetic Capital',
-      location: 'London, UK',
-      memberSince: 'January 2021',
-      projectsPosted: 7,
-      paymentVerified: true,
-      avatarText: 'JV'
-    },
-    referenceImages: [
-      { id: 'ref-4', url: '/hero-frames/frame_0060.webp', caption: 'Open Plan Layout Sample' },
-      { id: 'ref-5', url: '/hero-frames/frame_0100.webp', caption: 'Acoustic Ceiling Concept' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-zurich-hotel',
-    title: 'Boutique Alpine Lake Hotel Lobby & Spa, Lake Zurich',
-    category: 'Hospitality',
-    subcategory: 'Luxury Hotel',
-    description: 'Interior architectural master plan for a 52-key luxury lakefront boutique hotel. Seeking an architect specialized in tactile limestone finishes, concealed ambient lighting coves, bespoke millwork, and seamless indoor-outdoor hydrothermal wellness suites.',
-    budget: 95000,
+    subcategory: 'Smart Home',
+    description: 'A 5-bedroom smart home project on Victoria Island. Requirements include automated lighting, security, HVAC integration and a rooftop terrace with infinity pool.',
+    budget: 75000,
+    currency: 'USD',
     paymentType: 'Milestone',
     timeline: '16 Weeks',
-    deadline: 'In 8 days',
-    area: 6800,
-    location: 'Zurich, Switzerland',
-    postedDate: '3 days ago',
-    proposalsCount: 5,
-    status: 'Open',
-    isSaved: true,
-    hasApplied: false,
-    client: {
-      id: 'client-laurent',
-      name: 'Sophia Laurent',
-      company: 'Alpen Crest Resorts AG',
-      location: 'Zurich, Switzerland',
-      memberSince: 'July 2021',
-      projectsPosted: 5,
-      paymentVerified: true,
-      avatarText: 'SL'
-    },
-    referenceImages: [
-      { id: 'ref-6', url: '/hero-frames/frame_0090.webp', caption: 'Lobby Atrium Inspiration' },
-      { id: 'ref-7', url: '/hero-frames/frame_0140.webp', caption: 'Waterfront Terrace Decking' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-brooklyn-civic',
-    title: 'Contemporary Civic Arts Center & Amphitheater, Brooklyn',
-    category: 'Civic',
-    subcategory: 'Auditorium & Arts',
-    description: 'Structural architecture and acoustic envelope design for a 900-seat community performing arts center. Requires mass timber glulam roof trusses, dynamic sound diffusion baffles, flexible stage staging, and LEED Gold certified envelope.',
-    budget: 165000,
-    paymentType: 'Milestone',
-    timeline: '32 Weeks',
-    deadline: 'In 12 days',
-    area: 18500,
-    location: 'New York, USA',
-    postedDate: '4 days ago',
-    proposalsCount: 7,
-    status: 'Open',
-    isSaved: false,
-    hasApplied: false,
-    client: {
-      id: 'client-bennett',
-      name: 'Marcus Bennett',
-      company: 'Hudson Cultural Trust',
-      location: 'New York, USA',
-      memberSince: 'October 2020',
-      projectsPosted: 3,
-      paymentVerified: true,
-      avatarText: 'MB'
-    },
-    referenceImages: [
-      { id: 'ref-8', url: '/hero-frames/frame_0020.webp', caption: 'Auditorium Acoustic Envelope' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-tribeca-penthouse',
-    title: 'Private Rooftop Solarium & Urban Forest, Tribeca',
-    category: 'Landscape',
-    subcategory: 'Penthouse Garden',
-    description: 'Landscape and structural architect needed for a multi-tiered rooftop garden atop a historic Tribeca loft building. Requires structural dead-load verification, integrated micro-irrigation, weathered steel planters, outdoor culinary suite, and glass windbreaks.',
-    budget: 52000,
-    paymentType: 'Milestone',
-    timeline: '12 Weeks',
-    deadline: 'In 6 days',
-    area: 3200,
-    location: 'New York, USA',
-    postedDate: '2 days ago',
-    proposalsCount: 4,
-    status: 'Open',
-    isSaved: false,
-    hasApplied: false,
-    client: {
-      id: 'client-croft',
-      name: 'Harrison Croft',
-      company: 'Croft Urban Estates',
-      location: 'New York, USA',
-      memberSince: 'September 2022',
-      projectsPosted: 4,
-      paymentVerified: true,
-      avatarText: 'HC'
-    },
-    referenceImages: [
-      { id: 'ref-9', url: '/hero-frames/frame_0150.webp', caption: 'Skyline Terrace Pergola' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-aspen-chalet',
-    title: 'Executive Mountain Chalet & Wellness Compound, Aspen',
-    category: 'Residential',
-    subcategory: 'Executive Estate',
-    description: 'High-alpine 6-bedroom estate featuring triple-glazed panoramic thermal envelope, geothermal radiant slab heating, cantilevered hot spring cedar deck, and private subterranean ski valet and equipment gallery.',
-    budget: 240000,
-    paymentType: 'Milestone',
-    timeline: '36 Weeks',
-    deadline: 'In 16 days',
-    area: 12500,
-    location: 'Aspen, Colorado',
-    postedDate: '5 days ago',
-    proposalsCount: 14,
-    status: 'Open',
-    isSaved: true,
-    hasApplied: false,
-    client: {
-      id: 'client-pendelton',
-      name: 'Arthur Pendelton',
-      company: 'Pendelton Family Trust',
-      location: 'Aspen, USA',
-      memberSince: 'May 2021',
-      projectsPosted: 6,
-      paymentVerified: true,
-      avatarText: 'AP'
-    },
-    referenceImages: [
-      { id: 'ref-10', url: '/hero-frames/frame_0070.webp', caption: 'Hillside Massing Example' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-geneva-clinic',
-    title: 'Advanced Surgical Center & Diagnostic Facility, Geneva',
-    category: 'Commercial',
-    subcategory: 'Healthcare Architecture',
-    description: 'State-of-the-art medical clinic design with MRI diagnostic suites, ISO Class 5 sterile operating theaters, and daylight-infused rehabilitation solarium. Compliance with Swiss healthcare architectural standards required.',
-    budget: 135000,
-    paymentType: 'Milestone',
-    timeline: '26 Weeks',
-    deadline: 'In 9 days',
-    area: 9200,
-    location: 'Geneva, Switzerland',
-    postedDate: '3 days ago',
-    proposalsCount: 5,
-    status: 'Open',
-    isSaved: false,
-    hasApplied: false,
-    client: {
-      id: 'client-rostova',
-      name: 'Dr. Elena Rostova',
-      company: 'Leman Health Sciences Foundation',
-      location: 'Geneva, Switzerland',
-      memberSince: 'August 2022',
-      projectsPosted: 2,
-      paymentVerified: true,
-      avatarText: 'ER'
-    },
-    referenceImages: [
-      { id: 'ref-11', url: '/hero-frames/frame_0110.webp', caption: 'Clinical Flow Schematic' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-sydney-penthouse',
-    title: 'Harbour View Sky Penthouse Interior Architecture, Sydney',
-    category: 'Interior',
-    subcategory: 'High-End Residential',
-    description: 'Interior architect for a 6,800 sq ft dual-level penthouse overlooking Sydney Harbour. Scope includes bespoke curved fluted oak partitions, bookmatched Calacatta marble island, automated shading, and integrated acoustical ceiling baffles.',
-    budget: 90000,
-    paymentType: 'Hourly',
-    hourlyRate: 135,
-    estimatedHours: 650,
-    timeline: '16 Weeks',
-    deadline: 'In 4 days',
-    area: 6800,
-    location: 'Sydney, Australia',
+    deadline: 'In 10 days',
+    area: 4800,
+    location: 'Victoria Island, Lagos State',
+    city: 'Victoria Island',
+    stateRegion: 'Lagos State',
     postedDate: '1 day ago',
-    proposalsCount: 8,
-    status: 'Open',
-    isSaved: true,
-    hasApplied: false,
-    client: {
-      id: 'client-thorne',
-      name: 'Charlotte Thorne',
-      company: 'Thorne Global Properties',
-      location: 'Sydney, Australia',
-      memberSince: 'February 2022',
-      projectsPosted: 5,
-      paymentVerified: true,
-      avatarText: 'CT'
-    },
-    referenceImages: [
-      { id: 'ref-12', url: '/hero-frames/frame_0130.webp', caption: 'Oceanfront Glass Envelope' }
-    ]
-  },
-  {
-    id: 'proj-kyoto-retreat',
-    title: 'Minimalist Cedar Pavilion & Reflective Pool, Kyoto',
-    category: 'Hospitality',
-    subcategory: 'Eco-Resort',
-    description: 'Architectural design for a boutique retreat comprising 8 detached Hinoki cypress guest villas linked by elevated covered timber walkways, raked gravel zen courtyards, and natural geothermal onsen bathing pavilions.',
-    budget: 155000,
-    paymentType: 'Milestone',
-    timeline: '28 Weeks',
-    deadline: 'In 20 days',
-    area: 13200,
-    location: 'Kyoto, Japan',
-    postedDate: '6 days ago',
     proposalsCount: 3,
     status: 'Open',
     isSaved: false,
     hasApplied: false,
     client: {
-      id: 'client-takahashi',
-      name: 'Kenji Takahashi',
-      company: 'Moriyama Heritage Resorts',
-      location: 'Kyoto, Japan',
-      memberSince: 'April 2021',
+      id: 'client-mock-1',
+      name: 'Adaobi Okafor',
+      location: 'Lagos, Nigeria',
+      memberSince: 'January 2023',
       projectsPosted: 2,
       paymentVerified: true,
-      avatarText: 'KT'
+      avatarText: 'AO'
     },
-    referenceImages: [
-      { id: 'ref-13', url: '/hero-frames/frame_0030.webp', caption: 'Stilt Lodge Conceptual Profile' }
-    ],
+    referenceImages: [],
     milestones: standardMilestonePhases
   },
   {
-    id: 'proj-austin-innovation',
-    title: 'Clean-Tech Research Labs & Prototyping Campus, Austin',
+    id: 'proj-abuja-commercial',
+    title: 'Mixed-Use Commercial Tower, Abuja Central District',
     category: 'Commercial',
-    subcategory: 'Warehouse & Logistics',
-    description: 'High-bay industrial R&D laboratory facility with vibration-isolated testing pads, cleanroom enclosures, automated materials handling, and open collaboration mezannine.',
-    budget: 105000,
+    subcategory: 'Mixed-Use Tower',
+    description: 'A 12-story mixed-use development combining retail, office and residential units in Abuja. Looking for a lead architect with experience in high-rise structural design.',
+    budget: 195000,
+    currency: 'USD',
+    paymentType: 'Milestone',
+    timeline: '40 Weeks',
+    deadline: 'In 18 days',
+    area: 28000,
+    location: 'Abuja, FCT',
+    city: 'Abuja',
+    stateRegion: 'FCT',
+    postedDate: '3 days ago',
+    proposalsCount: 8,
+    status: 'Open',
+    isSaved: true,
+    hasApplied: false,
+    client: {
+      id: 'client-mock-2',
+      name: 'Emeka Nwosu',
+      location: 'Abuja, Nigeria',
+      memberSince: 'March 2022',
+      projectsPosted: 5,
+      paymentVerified: true,
+      avatarText: 'EN'
+    },
+    referenceImages: [],
+    milestones: standardMilestonePhases
+  },
+  {
+    id: 'proj-ph-hotel',
+    title: 'Boutique Waterfront Hotel, Port Harcourt',
+    category: 'Hospitality',
+    subcategory: 'Boutique Hotel',
+    description: 'A 40-key boutique hotel on the Port Harcourt waterfront. Emphasis on natural ventilation, local materials, and panoramic views of the Bonny River.',
+    budget: 120000,
+    currency: 'USD',
     paymentType: 'Hourly',
-    hourlyRate: 110,
-    estimatedHours: 950,
-    timeline: '22 Weeks',
-    deadline: 'In 10 days',
-    area: 24000,
-    location: 'Austin, Texas',
-    postedDate: '4 days ago',
+    hourlyRate: 85,
+    timeline: '24 Weeks',
+    deadline: 'In 14 days',
+    area: 12000,
+    location: 'Port Harcourt, Rivers State',
+    city: 'Port Harcourt',
+    stateRegion: 'Rivers State',
+    postedDate: '2 days ago',
     proposalsCount: 5,
     status: 'Open',
     isSaved: false,
-    hasApplied: false,
+    hasApplied: true,
+    appliedProposalId: 'mock-prop-001',
     client: {
-      id: 'client-reynolds',
-      name: 'David Reynolds',
-      company: 'NextGen Clean Energy Corp',
-      location: 'Austin, USA',
-      memberSince: 'November 2021',
-      projectsPosted: 4,
-      paymentVerified: true,
-      avatarText: 'DR'
-    },
-    referenceImages: [],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-vancouver-waterfront',
-    title: 'Coastal Waterfront Dining Pavilion & Pier, Vancouver',
-    category: 'Commercial',
-    subcategory: 'F&B Restaurant',
-    description: 'Glass-enclosed coastal dining pavilion perched above English Bay. Features glulam Douglas fir structural ribs, operable accordion glass facades, marine-grade zinc roofing, and sustainable seawater heat-exchange heating.',
-    budget: 56000,
-    paymentType: 'Milestone',
-    timeline: '14 Weeks',
-    deadline: 'In 7 days',
-    area: 3400,
-    location: 'Vancouver, Canada',
-    postedDate: '5 days ago',
-    proposalsCount: 8,
-    status: 'Open',
-    isSaved: false,
-    hasApplied: false,
-    client: {
-      id: 'client-mackenzie',
-      name: 'Clara MacKenzie',
-      company: 'Pacific Tide Hospitality',
-      location: 'Vancouver, Canada',
-      memberSince: 'June 2023',
+      id: 'client-mock-3',
+      name: 'Chidinma Eze',
+      location: 'Port Harcourt, Nigeria',
+      memberSince: 'June 2021',
       projectsPosted: 3,
       paymentVerified: true,
-      avatarText: 'CM'
-    },
-    referenceImages: [
-      { id: 'ref-14', url: '/hero-frames/frame_0050.webp', caption: 'Waterfront Deck Rendering' }
-    ],
-    milestones: standardMilestonePhases
-  },
-  {
-    id: 'proj-milan-tower',
-    title: 'Mixed-Use Architecture & Residential Tower, Milan',
-    category: 'Commercial',
-    subcategory: 'Mixed-Use Tower',
-    description: 'Competition-level concept package for a 16-story sustainable mixed-use tower in Porta Nuova district with vertical gardens and biophilic terraces. Commission awarded.',
-    budget: 380000,
-    paymentType: 'Milestone',
-    timeline: '48 Weeks',
-    deadline: 'Closed',
-    area: 48000,
-    location: 'Milan, Italy',
-    postedDate: '3 weeks ago',
-    proposalsCount: 26,
-    status: 'Closed',
-    isSaved: false,
-    hasApplied: false,
-    client: {
-      id: 'client-rossi',
-      name: 'Matteo Rossi',
-      company: 'Lombardia Real Estate SpA',
-      location: 'Milan, Italy',
-      memberSince: 'January 2019',
-      projectsPosted: 14,
-      paymentVerified: true,
-      avatarText: 'MR'
+      avatarText: 'CE'
     },
     referenceImages: [],
-    milestones: standardMilestonePhases
+    milestones: undefined
   }
 ];
 
-// Mock submitted proposals
-let submittedProposalsStore: SubmittedProposal[] = [
-  {
-    id: 'prop-shoreditch-01',
-    projectId: 'proj-shoreditch-hq',
-    projectTitle: 'Fintech Headquarters Workspace Architecture, Shoreditch',
-    projectLocation: 'London, United Kingdom',
-    clientName: 'Julian Vance',
-    dateSent: 'Yesterday',
-    proposedPrice: 105000,
-    paymentType: 'Milestone',
-    status: 'Shortlisted',
-    coverLetter: 'Our studio has delivered over 18 corporate workspace interiors across London and Zurich, including verified acoustic performance pods, daylighting models, and low-energy lighting schemes.',
-    deliveryTime: '18 Weeks',
-    milestones: standardMilestonePhases.map((m) => ({
-      phaseId: m.id,
-      phaseName: m.name,
-      feePercentage: m.defaultFeePercentage,
-      amount: Math.round((105000 * m.defaultFeePercentage) / 100)
-    }))
-  }
-];
+const submittedProposalsStore: SubmittedProposal[] = [];
 
-// -------------------------------------------------------------
-// Service Functions
-// -------------------------------------------------------------
+async function mockGetProjects(filters?: ProjectFiltersState): Promise<Project[]> {
+  await new Promise((r) => setTimeout(r, 80));
+  let results = [...mockProjectsData].filter((p) => p.status === 'Open');
 
-/**
- * Fetch projects with client-side filtering and sorting
- */
-export async function getProjects(filters?: ProjectFiltersState): Promise<Project[]> {
-  // Simulate quick 120ms network latency
-  await new Promise((resolve) => setTimeout(resolve, 120));
-
-  let results = [...mockProjectsData];
-
-  // Only open projects or saved
-  if (filters?.onlySaved) {
-    results = results.filter((p) => p.isSaved);
-  }
-
-  // Text search in title and description only
-  if (filters?.search && filters.search.trim()) {
-    const q = filters.search.toLowerCase().trim();
+  if (filters?.onlySaved) results = results.filter((p) => p.isSaved);
+  if (filters?.search?.trim()) {
+    const q = filters.search.toLowerCase();
     results = results.filter(
       (p) => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
     );
   }
-
-  // Category filter
-  if (filters?.category && filters.category !== 'All') {
+  if (filters?.category && filters.category !== 'All')
     results = results.filter((p) => p.category === filters.category);
-  }
-
-  // Subcategory filter
-  if (filters?.subcategory && filters.subcategory !== 'All') {
-    results = results.filter((p) => p.subcategory.toLowerCase().includes(filters.subcategory!.toLowerCase()));
-  }
-
-  // Location filter
-  if (filters?.location && filters.location !== 'All') {
-    results = results.filter((p) => p.location.toLowerCase().includes(filters.location!.toLowerCase()));
-  }
-
-  // Payment type filter
-  if (filters?.paymentType && filters.paymentType !== 'All') {
+  if (filters?.paymentType && filters.paymentType !== 'All')
     results = results.filter((p) => p.paymentType === filters.paymentType);
-  }
-
-  // Budget range
-  if (filters?.minBudget !== undefined && filters.minBudget > 0) {
+  if (filters?.minBudget && filters.minBudget > 0)
     results = results.filter((p) => p.budget >= filters.minBudget!);
-  }
-  if (filters?.maxBudget !== undefined && filters.maxBudget > 0) {
+  if (filters?.maxBudget && filters.maxBudget > 0)
     results = results.filter((p) => p.budget <= filters.maxBudget!);
-  }
-
-  // Sorting
-  if (filters?.sortBy === 'budget-high') {
-    results.sort((a, b) => b.budget - a.budget);
-  } else if (filters?.sortBy === 'budget-low') {
-    results.sort((a, b) => a.budget - b.budget);
-  } else if (filters?.sortBy === 'deadline-soon') {
-    results.sort((a, b) => (a.deadline === 'Closed' ? 1 : 0) - (b.deadline === 'Closed' ? 1 : 0));
-  } else {
-    // Newest first by default (keep mock order)
-  }
+  if (filters?.sortBy === 'budget-high') results.sort((a, b) => b.budget - a.budget);
+  else if (filters?.sortBy === 'budget-low') results.sort((a, b) => a.budget - b.budget);
 
   return results;
 }
 
-/**
- * Fetch a single project by ID
- */
-export async function getProject(id: string): Promise<Project | null> {
-  await new Promise((resolve) => setTimeout(resolve, 80));
-  const found = mockProjectsData.find((p) => p.id === id);
-  return found ? { ...found } : null;
+async function mockGetProject(id: string): Promise<Project | null> {
+  await new Promise((r) => setTimeout(r, 60));
+  return mockProjectsData.find((p) => p.id === id) ?? null;
 }
 
-/**
- * Toggle bookmark/save state
- */
-export function toggleSaveProject(projectId: string): boolean {
-  const p = mockProjectsData.find((item) => item.id === projectId);
-  if (p) {
-    p.isSaved = !p.isSaved;
-    return !!p.isSaved;
-  }
-  return false;
-}
-
-/**
- * Submit a proposal for a project
- */
-export async function submitProposal(
+async function mockSubmitProposal(
   projectId: string,
   proposal: ProposalSubmission
-): Promise<{ success: boolean; proposalId?: string; error?: string }> {
-  // Simulate network request
-  await new Promise((resolve) => setTimeout(resolve, 400));
-
+): Promise<{ success: boolean; proposalId?: string; error?: ProjectServiceError; message?: string }> {
+  await new Promise((r) => setTimeout(r, 350));
   const project = mockProjectsData.find((p) => p.id === projectId);
-  if (!project) {
-    return { success: false, error: 'Project not found' };
-  }
-
-  if (project.status === 'Closed') {
-    return { success: false, error: 'Project is closed and no longer accepting proposals' };
-  }
-
-  const newProposalId = `prop-${Date.now()}`;
-  const submittedItem: SubmittedProposal = {
-    id: newProposalId,
-    projectId: project.id,
+  if (!project) return { success: false, error: 'project_closed', message: 'Project not found' };
+  if (project.hasApplied) return { success: false, error: 'already_applied' };
+  const id = `prop-${Date.now()}`;
+  submittedProposalsStore.unshift({
+    id,
+    projectId,
     projectTitle: project.title,
     projectLocation: project.location,
     clientName: project.client.name,
@@ -707,54 +647,158 @@ export async function submitProposal(
     coverLetter: proposal.coverLetter,
     deliveryTime: proposal.deliveryTime,
     milestones: proposal.milestoneOffers
-  };
-
-  submittedProposalsStore.unshift(submittedItem);
-
-  // Update project state
+  });
   project.hasApplied = true;
-  project.appliedProposalId = newProposalId;
+  project.appliedProposalId = id;
   project.proposalsCount += 1;
-
-  // Clear draft
   clearProposalDraft(projectId);
+  return { success: true, proposalId: id };
+}
 
-  return { success: true, proposalId: newProposalId };
+// ─── Public API ─────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch filtered list of open projects.
+ */
+export async function getProjects(filters?: ProjectFiltersState): Promise<Project[]> {
+  if (USE_MOCKS.projects) return mockGetProjects(filters);
+  try {
+    return await realGetProjects(filters);
+  } catch (err) {
+    console.error('[projectsService] getProjects failed, falling back to mock', err);
+    return mockGetProjects(filters);
+  }
 }
 
 /**
- * Withdraw an active proposal
+ * Fetch a single project by ID.
  */
-export async function withdrawProposal(proposalId: string): Promise<boolean> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const index = submittedProposalsStore.findIndex((p) => p.id === proposalId);
-  if (index !== -1) {
-    const item = submittedProposalsStore[index];
-    submittedProposalsStore.splice(index, 1);
+export async function getProject(id: string): Promise<Project | null> {
+  if (USE_MOCKS.projects) return mockGetProject(id);
+  try {
+    const real = await realGetProject(id);
+    if (real) return real;
+    // My Work: might be a project with non-open status the designer proposed on
+    return mockGetProject(id);
+  } catch (err) {
+    console.error('[projectsService] getProject failed, falling back to mock', err);
+    return mockGetProject(id);
+  }
+}
 
-    // Revert project applied status
-    const proj = mockProjectsData.find((p) => p.id === item.projectId);
-    if (proj) {
-      proj.hasApplied = false;
-      proj.appliedProposalId = undefined;
-      proj.proposalsCount = Math.max(0, proj.proposalsCount - 1);
-    }
-    return true;
+/**
+ * Save a project (bookmark).
+ */
+export async function saveProject(projectId: string): Promise<void> {
+  if (USE_MOCKS.projects) {
+    const p = mockProjectsData.find((x) => x.id === projectId);
+    if (p) p.isSaved = true;
+    return;
+  }
+  try {
+    await realSaveProject(projectId);
+  } catch (err) {
+    console.error('[projectsService] saveProject failed', err);
+  }
+}
+
+/**
+ * Unsave a project.
+ */
+export async function unsaveProject(projectId: string): Promise<void> {
+  if (USE_MOCKS.projects) {
+    const p = mockProjectsData.find((x) => x.id === projectId);
+    if (p) p.isSaved = false;
+    return;
+  }
+  try {
+    await realUnsaveProject(projectId);
+  } catch (err) {
+    console.error('[projectsService] unsaveProject failed', err);
+  }
+}
+
+/**
+ * Toggle save state — returns the new isSaved value.
+ */
+export function toggleSaveProject(projectId: string): boolean {
+  const p = mockProjectsData.find((x) => x.id === projectId);
+  if (p) {
+    p.isSaved = !p.isSaved;
+    if (USE_MOCKS.projects) return !!p.isSaved;
+    // Fire and forget real call
+    if (p.isSaved) realSaveProject(projectId).catch(() => {});
+    else realUnsaveProject(projectId).catch(() => {});
+    return !!p.isSaved;
   }
   return false;
 }
 
 /**
- * Fetch all submitted proposals for the designer
+ * Get saved projects for the current designer.
+ */
+export async function getSavedProjects(): Promise<Project[]> {
+  if (USE_MOCKS.projects) {
+    await new Promise((r) => setTimeout(r, 80));
+    return mockProjectsData.filter((p) => p.isSaved);
+  }
+  try {
+    return await realGetProjects({ onlySaved: true });
+  } catch (err) {
+    console.error('[projectsService] getSavedProjects failed', err);
+    return [];
+  }
+}
+
+/**
+ * Submit a proposal for a project.
+ */
+export async function submitProposal(
+  projectId: string,
+  proposal: ProposalSubmission
+): Promise<{ success: boolean; proposalId?: string; error?: ProjectServiceError; message?: string }> {
+  if (USE_MOCKS.projects) return mockSubmitProposal(projectId, proposal);
+  return realSubmitProposal(projectId, proposal);
+}
+
+/**
+ * Withdraw an active proposal.
+ */
+export async function withdrawProposal(proposalId: string, reason?: string): Promise<boolean> {
+  if (USE_MOCKS.projects) {
+    await new Promise((r) => setTimeout(r, 200));
+    const i = submittedProposalsStore.findIndex((p) => p.id === proposalId);
+    if (i !== -1) {
+      submittedProposalsStore[i].status = 'Withdrawn';
+      const proj = mockProjectsData.find((p) => p.id === submittedProposalsStore[i].projectId);
+      if (proj) { proj.hasApplied = false; proj.appliedProposalId = undefined; }
+      return true;
+    }
+    return false;
+  }
+  return realWithdrawProposal(proposalId, reason);
+}
+
+/**
+ * Get the proposal count for a project (for the detail view counter).
+ */
+export async function getProjectProposalCount(projectId: string): Promise<number> {
+  if (USE_MOCKS.projects) {
+    return mockProjectsData.find((p) => p.id === projectId)?.proposalsCount ?? 0;
+  }
+  return realGetProjectProposalCount(projectId);
+}
+
+/**
+ * Fetch submitted proposals for the current designer (used in My Work legacy path).
  */
 export async function getMyProposals(): Promise<SubmittedProposal[]> {
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((r) => setTimeout(r, 80));
   return [...submittedProposalsStore];
 }
 
-// -------------------------------------------------------------
-// Draft Management in localStorage
-// -------------------------------------------------------------
+// ─── Draft Management (localStorage) ─────────────────────────────────────────
+
 const DRAFT_PREFIX = 'dezignet_proposal_draft_';
 
 export function saveProposalDraft(projectId: string, draft: Partial<ProposalDraft>): void {
@@ -773,7 +817,7 @@ export function saveProposalDraft(projectId: string, draft: Partial<ProposalDraf
     };
     localStorage.setItem(DRAFT_PREFIX + projectId, JSON.stringify(payload));
   } catch {
-    // Ignore quota issues in mock
+    // Ignore quota issues
   }
 }
 

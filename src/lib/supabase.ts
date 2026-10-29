@@ -29,5 +29,7 @@ export const USE_MOCKS = {
   auth: import.meta.env.VITE_USE_MOCKS_AUTH === 'true',
   profiles: import.meta.env.VITE_USE_MOCKS_PROFILES === 'true',
   portfolio: import.meta.env.VITE_USE_MOCKS_PORTFOLIO === 'true',
-  credentials: import.meta.env.VITE_USE_MOCKS_CREDENTIALS === 'true'
+  credentials: import.meta.env.VITE_USE_MOCKS_CREDENTIALS === 'true',
+  projects: import.meta.env.VITE_USE_MOCKS_PROJECTS === 'true',
+  proposals: import.meta.env.VITE_USE_MOCKS_PROPOSALS === 'true'
 };
