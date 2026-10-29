@@ -51,9 +51,12 @@ async function seedPhase3() {
   console.log(`Found Designer: ${designer.email} (${designer.id})`);
   console.log(`Found Client:   ${client.email} (${client.id})\n`);
 
+  // Ensure client profile exists in client_profiles table
+  await adminClient.from('client_profiles').upsert({ user_id: client.id });
+
   // 2. Fetch or create projects for engagements
   // Project 1: Milestone Contract
-  const { data: proj1 } = await adminClient
+  let { data: proj1 } = await adminClient
     .from('projects')
     .select('id, title, payment_type')
     .eq('client_id', client.id)
@@ -61,8 +64,29 @@ async function seedPhase3() {
     .limit(1)
     .maybeSingle();
 
+  if (!proj1) {
+    const { data: newProj1, error: p1Err } = await adminClient
+      .from('projects')
+      .insert({
+        client_id: client.id,
+        title: 'Modern Cantilevered Residence',
+        description: 'Luxury contemporary cliffside residence with cantilevered living room and infinity pool.',
+        category: 'Residential Architecture',
+        subcategory: 'Luxury Villas',
+        budget: 64000.00,
+        currency: 'USD',
+        payment_type: 'milestone',
+        status: 'awarded'
+      })
+      .select('id, title, payment_type')
+      .single();
+
+    if (p1Err) throw new Error(`Failed to create Project 1: ${p1Err.message}`);
+    proj1 = newProj1;
+  }
+
   // Project 2: Hourly Contract
-  const { data: proj2 } = await adminClient
+  let { data: proj2 } = await adminClient
     .from('projects')
     .select('id, title, payment_type')
     .eq('client_id', client.id)
@@ -70,8 +94,26 @@ async function seedPhase3() {
     .limit(1)
     .maybeSingle();
 
-  if (!proj1 || !proj2) {
-    throw new Error('Projects not found for client. Ensure seed-phase2.ts has been executed.');
+  if (!proj2) {
+    const { data: newProj2, error: p2Err } = await adminClient
+      .from('projects')
+      .insert({
+        client_id: client.id,
+        title: 'Corporate Headquarters Interior Fit-Out',
+        description: 'Biophilic open-plan workplace design for 250 workstations across 3 levels.',
+        category: 'Interior Design',
+        subcategory: 'Commercial Office',
+        budget: 12000.00,
+        currency: 'USD',
+        payment_type: 'hourly',
+        hourly_rate_max: 85.00,
+        status: 'awarded'
+      })
+      .select('id, title, payment_type')
+      .single();
+
+    if (p2Err) throw new Error(`Failed to create Project 2: ${p2Err.message}`);
+    proj2 = newProj2;
   }
 
   // 3. Clear pre-existing test engagements for clean idempotency
@@ -290,6 +332,18 @@ async function seedPhase3() {
   console.log(`✓ Engagement 2 created (${eng2.id}) with 8.0 logged hours and invoice INV-001.`);
 
   console.log('\nSeeding Engagement 3: Dispute Eligibility Milestone (2 Revisions Reached)...');
+  // Clean up any previous test project 3 for idempotency
+  const { data: prevProj3 } = await adminClient
+    .from('projects')
+    .select('id')
+    .eq('client_id', client.id)
+    .eq('title', 'Boutique Hotel Lobby Refurbishment')
+    .maybeSingle();
+
+  if (prevProj3) {
+    await adminClient.from('projects').delete().eq('id', prevProj3.id);
+  }
+
   // Create third test project for revision & dispute check
   const { data: proj3 } = await adminClient
     .from('projects')
@@ -364,3 +418,4 @@ seedPhase3().catch((err) => {
   console.error('\n❌ Seeding failed:', err);
   process.exit(1);
 });
+

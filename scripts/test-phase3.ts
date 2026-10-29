@@ -80,6 +80,9 @@ async function runTests() {
   // TEST 1: Acceptance Flow & Cascade Lifecycle Transitions
   // ---------------------------------------------------------------------------
   console.log('--- TEST GROUP 1: Proposal Acceptance & Engagement Creation ---');
+  // Ensure client exists in client_profiles
+  await adminClient.from('client_profiles').upsert({ user_id: clientId });
+
   // Create a clean open project with 2 proposals
   const { data: testProj } = await adminClient
     .from('projects')
@@ -279,11 +282,23 @@ async function runTests() {
     .select()
     .single();
 
+  const { data: hProp } = await adminClient
+    .from('proposals')
+    .insert({
+      project_id: hProj!.id,
+      designer_id: designerId,
+      total_price: 10000.00,
+      hourly_rate: 80.00,
+      status: 'accepted'
+    })
+    .select()
+    .single();
+
   const { data: hEng } = await adminClient
     .from('engagements')
     .insert({
       project_id: hProj!.id,
-      proposal_id: winProp!.id,
+      proposal_id: hProp!.id,
       client_id: clientId,
       designer_id: designerId,
       payment_type: 'hourly',
@@ -408,3 +423,4 @@ runTests().catch((err) => {
   console.error('\n❌ Unhandled test runner error:', err);
   process.exit(1);
 });
+
