@@ -358,7 +358,7 @@ BEGIN
                 END IF;
 
                 IF abs(v_percent_sum - 100.0) > 0.01 THEN
-                    RAISE EXCEPTION 'Project milestone fee percentages must total exactly 100%% before opening. Current total: %%', v_percent_sum
+                    RAISE EXCEPTION 'Project milestone fee percentages must total exactly 100 percent before opening. Current total: %', v_percent_sum
                         USING ERRCODE = 'P0001';
                 END IF;
             ELSIF NEW.payment_type = 'hourly'::public.payment_type THEN
