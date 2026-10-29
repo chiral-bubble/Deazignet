@@ -1,0 +1,614 @@
+/* ============================================================
+   Dezignet — Double-Slider Sliding Auth Page Styles (Brand Blue)
+   ============================================================ */
+
+/* Fullpage Wrapper */
+.auth-page-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  background-color: #0B1426;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+/* Background Atmosphere */
+.auth-page-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background: 
+    linear-gradient(135deg, rgba(11, 20, 38, 0.84) 0%, rgba(15, 26, 48, 0.90) 100%),
+    url('/hero-frames/frame_0050.webp') center/cover no-repeat;
+  filter: blur(24px) brightness(0.48);
+  transform: scale(1.08);
+}
+
+.auth-ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  opacity: 0.28;
+}
+
+.auth-ambient-orb--1 {
+  width: 520px;
+  height: 520px;
+  top: 15%;
+  left: 10%;
+  background: radial-gradient(circle, #2F7BE5 0%, #1e3a8a 50%, transparent 80%);
+  animation: authOrbFloat1 22s ease-in-out infinite alternate;
+}
+
+.auth-ambient-orb--2 {
+  width: 600px;
+  height: 600px;
+  bottom: 10%;
+  right: 10%;
+  background: radial-gradient(circle, #60a5fa 0%, #0B1426 65%, transparent 80%);
+  animation: authOrbFloat2 26s ease-in-out infinite alternate;
+}
+
+@keyframes authOrbFloat1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(80px, 60px) scale(1.15); }
+}
+
+@keyframes authOrbFloat2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-70px, -50px) scale(1.12); }
+}
+
+/* Header Bar */
+.auth-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 3rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: all 0.25s ease;
+}
+
+.auth-back-link:hover {
+  background: rgba(47, 123, 229, 0.2);
+  color: #ffffff;
+  transform: translateX(-3px);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 4px 15px rgba(47, 123, 229, 0.25);
+}
+
+.auth-back-icon {
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.auth-back-link:hover .auth-back-icon {
+  transform: translateX(-3px);
+}
+
+.auth-brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+.auth-header-logo-icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* Main Content Area */
+.auth-main-content {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* ============================================================
+   The Sliding Container Card (850px x 550px, border-radius: 30px)
+   ============================================================ */
+.auth-slider-container {
+  position: relative;
+  width: 850px;
+  height: 550px;
+  background: #ffffff;
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: 
+    0 25px 65px rgba(0, 0, 0, 0.55),
+    0 0 50px rgba(47, 123, 229, 0.22),
+    0 0 0 1px rgba(47, 123, 229, 0.25);
+}
+
+/* ============================================================
+   Form Boxes (Login & Registration)
+   width: 50%, height: 100%, position: absolute
+   transition: .6s ease-in-out 1.2s;
+   ============================================================ */
+.form-box {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 35px 44px;
+  z-index: 1;
+  transition: .6s ease-in-out 1.2s;
+}
+
+/* Login Form: Positioned on the right by default */
+.form-box.login {
+  right: 0;
+  transform: translateX(0);
+  visibility: visible;
+  opacity: 1;
+}
+
+/* When .active: Login slides away to the right */
+.auth-slider-container.active .form-box.login {
+  transform: translateX(100%);
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Registration Form: Positioned on the left by default (hidden) */
+.form-box.register {
+  left: 0;
+  transform: translateX(-100%);
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* When .active: Registration slides in on the left */
+.auth-slider-container.active .form-box.register {
+  transform: translateX(0);
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Auth Form Typography & Layout */
+.auth-form {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.auth-title {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #0B1426;
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.01em;
+}
+
+.auth-subtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin-bottom: 1.35rem;
+  line-height: 1.45;
+}
+
+/* Input Box */
+.input-box {
+  position: relative;
+  width: 100%;
+  margin-bottom: 0.9rem;
+}
+
+.input-box input {
+  width: 100%;
+  padding: 13px 44px 13px 18px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.input-box input::placeholder {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.input-box input:focus {
+  background: #ffffff;
+  border-color: #2F7BE5;
+  box-shadow: 0 0 0 3px rgba(47, 123, 229, 0.18);
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  transition: color 0.25s ease;
+}
+
+.input-box input:focus ~ .input-icon {
+  color: #2F7BE5;
+}
+
+/* Forgot Password Link */
+.forgot-link-wrap {
+  text-align: right;
+  margin-top: -0.25rem;
+  margin-bottom: 1.1rem;
+}
+
+.forgot-link {
+  font-size: 0.8rem;
+  color: #2F7BE5;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.forgot-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* Submit Button in Dezignet Brand Blue */
+.btn-auth-submit {
+  position: relative;
+  width: 100%;
+  padding: 13px 0;
+  background: linear-gradient(135deg, #2F7BE5 0%, #2563eb 50%, #1d4ed8 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(47, 123, 229, 0.4);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.btn-auth-submit:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #3b82f6 0%, #2F7BE5 50%, #1e40af 100%);
+  box-shadow: 0 8px 25px rgba(47, 123, 229, 0.55);
+}
+
+.btn-auth-submit:active {
+  transform: translateY(0);
+}
+
+/* Social Login Divider */
+.social-divider {
+  position: relative;
+  margin: 1.25rem 0 0.9rem;
+  text-align: center;
+}
+
+.social-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.social-divider span {
+  position: relative;
+  background: #ffffff;
+  padding: 0 12px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+/* Social Icons */
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.social-btn:hover {
+  transform: translateY(-2px);
+  border-color: #2F7BE5;
+  color: #2F7BE5;
+  box-shadow: 0 4px 12px rgba(47, 123, 229, 0.25);
+}
+
+/* ============================================================
+   The Sliding Overlay Animation (Crucial)
+   Toggle-Box with 300% Width Pill Shape
+   transition: 1.8s ease-in-out
+   ============================================================ */
+.toggle-box {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* Giant 300% Width Rounded Pill Shape (border-radius: 150px) */
+.toggle-pill {
+  position: absolute;
+  top: 0;
+  width: 300%;
+  height: 100%;
+  border-radius: 150px;
+  background: 
+    linear-gradient(135deg, rgba(11, 20, 38, 0.94) 0%, rgba(16, 32, 68, 0.90) 35%, rgba(29, 78, 160, 0.88) 75%, rgba(47, 123, 229, 0.94) 100%),
+    url('/hero-frames/frame_0080.webp') center/cover no-repeat;
+  box-shadow: 
+    inset 0 0 100px rgba(11, 20, 38, 0.7),
+    0 0 45px rgba(47, 123, 229, 0.35);
+  /* Default position covering 50% on left (x: -250% + 300% = 50%) */
+  left: -250%;
+  transition: 1.8s ease-in-out;
+  z-index: 2;
+}
+
+/* Subtle architectural blueprint overlay inside sliding pill */
+.toggle-pill-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(96, 165, 250, 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(96, 165, 250, 0.09) 1px, transparent 1px);
+  background-size: 36px 36px;
+  pointer-events: none;
+}
+
+/* When .active: Sliding pill expands and settles on the right 50% */
+.auth-slider-container.active .toggle-pill {
+  left: 50%;
+}
+
+/* ============================================================
+   Toggle Panels (Left & Right Texts & Outlined Buttons)
+   transition: .6s ease-in-out 1.2s;
+   ============================================================ */
+.toggle-panel {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #ffffff;
+  z-index: 3;
+  padding: 0 44px;
+  transition: .6s ease-in-out 1.2s;
+  pointer-events: none;
+}
+
+/* Left Toggle Panel (Shown during Login) */
+.toggle-panel.toggle-left {
+  left: 0;
+  transform: translateX(0);
+  visibility: visible;
+  opacity: 1;
+}
+
+/* When .active: Left panel slides out */
+.auth-slider-container.active .toggle-panel.toggle-left {
+  transform: translateX(-100%);
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Right Toggle Panel (Shown during Registration) */
+.toggle-panel.toggle-right {
+  right: 0;
+  transform: translateX(100%);
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* When .active: Right panel slides in */
+.auth-slider-container.active .toggle-panel.toggle-right {
+  transform: translateX(0);
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Toggle Panel Content Typography */
+.toggle-brand-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #60a5fa;
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+}
+
+.toggle-heading {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.toggle-desc {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+  margin-bottom: 1.8rem;
+  max-width: 320px;
+}
+
+/* Outlined Toggle Buttons */
+.btn-toggle {
+  pointer-events: auto;
+  padding: 12px 38px;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 9999px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-toggle:hover {
+  background: #ffffff;
+  color: #1d4ed8;
+  border-color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+}
+
+.btn-toggle:active {
+  transform: translateY(0);
+}
+
+/* ============================================================
+   Responsive Adaptations
+   ============================================================ */
+@media (max-width: 900px) {
+  .auth-slider-container {
+    width: 95vw;
+    max-width: 750px;
+    height: 520px;
+  }
+  .form-box {
+    padding: 25px 28px;
+  }
+  .toggle-panel {
+    padding: 0 28px;
+  }
+  .toggle-heading {
+    font-size: 1.85rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .auth-slider-container {
+    width: 95vw;
+    height: 580px;
+    border-radius: 20px;
+  }
+  
+  .auth-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .form-box {
+    width: 100%;
+    padding: 24px 20px;
+  }
+
+  .form-box.login {
+    right: 0;
+  }
+  .auth-slider-container.active .form-box.login {
+    transform: translateY(100%);
+  }
+
+  .form-box.register {
+    left: 0;
+    transform: translateY(-100%);
+  }
+  .auth-slider-container.active .form-box.register {
+    transform: translateY(0);
+  }
+
+  /* Vertical slide adjustment for small mobile screens */
+  .toggle-box {
+    display: none;
+  }
+
+  .auth-mobile-switch {
+    display: block;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  .auth-mobile-switch a {
+    color: #2F7BE5;
+    font-weight: 600;
+  }
+}

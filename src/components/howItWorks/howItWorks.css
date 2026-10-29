@@ -1,0 +1,1186 @@
+/* ============================================================
+   Revamped "How Dezignet Works" Component Styles
+   ============================================================ */
+
+/* ---- Section Container & Atmosphere ---- */
+.section--how-it-works {
+  position: relative;
+  background-color: #f8fafc;
+  padding: 6rem 0;
+  overflow: hidden;
+}
+
+/* 1. Background Atmosphere */
+.hiw-bg-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* Blueprint Grid Pattern */
+.hiw-blueprint-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(47, 123, 229, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(47, 123, 229, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 50%, black 25%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 50%, black 25%, transparent 85%);
+}
+
+/* Drifting Gradient Orbs */
+.hiw-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.10;
+  pointer-events: none;
+}
+
+.hiw-orb--1 {
+  width: 440px;
+  height: 440px;
+  top: 10%;
+  left: 5%;
+  background: radial-gradient(circle, #2F7BE5 0%, #3b82f6 50%, transparent 80%);
+  animation: hiwOrbDrift1 24s ease-in-out infinite alternate;
+}
+
+.hiw-orb--2 {
+  width: 500px;
+  height: 500px;
+  bottom: 8%;
+  right: 5%;
+  background: radial-gradient(circle, #60a5fa 0%, #2F7BE5 60%, transparent 80%);
+  animation: hiwOrbDrift2 28s ease-in-out infinite alternate;
+}
+
+@keyframes hiwOrbDrift1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(80px, 40px) scale(1.12); }
+  100% { transform: translate(-40px, 60px) scale(0.95); }
+}
+
+@keyframes hiwOrbDrift2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-70px, -50px) scale(1.15); }
+  100% { transform: translate(50px, -30px) scale(1); }
+}
+
+/* Architectural Line-Drawing Accents in Corners (~6% opacity) */
+.hiw-accent-corner {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  color: #2F7BE5;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+.hiw-accent-corner--tl {
+  top: 16px;
+  left: 16px;
+}
+
+.hiw-accent-corner--br {
+  bottom: 16px;
+  right: 16px;
+}
+
+/* Container */
+.hiw-container {
+  position: relative;
+  z-index: 2;
+  max-width: var(--max-width, 1200px);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ---- 2. Header Reveal ---- */
+.hiw-header {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 3.5rem;
+}
+
+/* Eyebrow Pill Badge */
+.hiw-eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  background: rgba(47, 123, 229, 0.08);
+  border: 1px solid rgba(47, 123, 229, 0.22);
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(47, 123, 229, 0.08);
+}
+
+.hiw-eyebrow-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-primary, #2F7BE5);
+  box-shadow: 0 0 0 0 rgba(47, 123, 229, 0.6);
+  animation: hiwPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes hiwPulse {
+  0% { box-shadow: 0 0 0 0 rgba(47, 123, 229, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(47, 123, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(47, 123, 229, 0); }
+}
+
+.hiw-eyebrow-text {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-primary, #2F7BE5);
+}
+
+/* Heading with Word Stagger */
+.hiw-title {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  color: var(--color-dark, #0B1426);
+  line-height: 1.2;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35em;
+}
+
+.hiw-word {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+.hiw-word--gradient {
+  background: linear-gradient(135deg, #2F7BE5 0%, #1d4ed8 50%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.hiw-description {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 1.1rem;
+  color: var(--color-gray-500, #6b7585);
+  line-height: 1.7;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ---- 3. Timeline & Step Circles (Desktop) ---- */
+.hiw-timeline-wrapper {
+  position: relative;
+  margin-bottom: 4rem;
+}
+
+.hiw-desktop-timeline {
+  display: block;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.hiw-timeline-svg-container {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hiw-timeline-svg {
+  width: 100%;
+  height: 40px;
+  position: absolute;
+  top: -18px;
+  left: 0;
+  overflow: visible;
+}
+
+/* Base dashed line */
+.hiw-track-base {
+  stroke: #d1d5db;
+  stroke-width: 2px;
+  stroke-dasharray: 6 6;
+}
+
+/* Active drawn line */
+.hiw-track-active {
+  stroke: url(#hiwTimelineGrad);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(47, 123, 229, 0.4));
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Traveling Glowing Dot */
+.hiw-traveler-dot {
+  position: absolute;
+  top: 2px;
+  left: 16.66%;
+  width: 12px;
+  height: 12px;
+  background: #60a5fa;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #2F7BE5, 0 0 18px rgba(96, 165, 250, 0.8);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s ease, left 0.1s linear;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Step Number Circles Row */
+.hiw-step-circles-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.hiw-circle-col {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hiw-step-circle {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.hiw-step-circle-num {
+  position: relative;
+  z-index: 2;
+}
+
+.hiw-circle-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(47, 123, 229, 0.4);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Circle Active State */
+.hiw-step-circle.is-active {
+  background: linear-gradient(135deg, #2F7BE5, #60a5fa);
+  border-color: transparent;
+  color: #ffffff;
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(47, 123, 229, 0.35);
+}
+
+.hiw-step-circle.is-active .hiw-circle-pulse-ring {
+  animation: hiwCircleRingPulse 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes hiwCircleRingPulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* ---- 4. Premium Cards Grid ---- */
+.hiw-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* Step Card Base */
+.step-card-premium {
+  position: relative;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 24px;
+  border: 1px solid rgba(47, 123, 229, 0.16);
+  box-shadow: 
+    0 4px 6px -1px rgba(11, 20, 38, 0.03),
+    0 12px 24px -4px rgba(47, 123, 229, 0.06),
+    0 24px 48px -12px rgba(11, 20, 38, 0.08);
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+  transform-style: preserve-3d;
+}
+
+/* Subtle gradient border effect on hover */
+.step-card-premium:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 12px 28px -4px rgba(47, 123, 229, 0.14),
+    0 24px 52px -12px rgba(11, 20, 38, 0.12);
+  border-color: rgba(47, 123, 229, 0.4);
+}
+
+/* Mouse-following Spotlight Layer */
+.step-card__spotlight {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(350px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(47, 123, 229, 0.12), transparent 65%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 1;
+}
+
+/* Watermark Step Number ("01", "02", "03") */
+.step-card__watermark {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 1.25rem;
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 5.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(47, 123, 229, 0.05);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  transition: color 0.3s ease;
+}
+
+.step-card-premium:hover .step-card__watermark {
+  color: rgba(47, 123, 229, 0.09);
+}
+
+/* Card Inner (for 3D tilt transformation) */
+.step-card__inner {
+  position: relative;
+  z-index: 2;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Illustration Wrap */
+.step-card__illustration-wrap {
+  width: 100%;
+  height: 160px;
+  margin-bottom: 1.25rem;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #f8faff 0%, #edf3fc 100%);
+  border: 1px solid rgba(47, 123, 229, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Content Area */
+.step-card__content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.step-card__badge-row {
+  margin-bottom: 0.6rem;
+}
+
+.step-card__badge {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-primary, #2F7BE5);
+  background: rgba(47, 123, 229, 0.08);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.step-card__title {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--color-dark, #0B1426);
+  margin-bottom: 0.6rem;
+  line-height: 1.3;
+}
+
+.step-card__description {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-gray-500, #6b7585);
+  margin-top: auto;
+}
+
+/* ---- 5. Mini-UI Illustrations ---- */
+
+/* Step 1: Mock Form */
+.mini-ui--step1 {
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-ui__window {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(47, 123, 229, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  padding: 10px 12px;
+}
+
+.mini-ui__browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.mini-ui__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.mini-ui__dot--red { background: #ef4444; }
+.mini-ui__dot--yellow { background: #f59e0b; }
+.mini-ui__dot--green { background: #10b981; }
+
+.mini-ui__browser-title {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  margin-left: 6px;
+  font-family: monospace;
+}
+
+.mini-ui__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.mini-ui__input-field {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  color: #0f172a;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mini-ui-playing .mini-ui__input-field {
+  animation: hiwInputFocus 6s infinite;
+}
+
+@keyframes hiwInputFocus {
+  0%, 15% { border-color: #cbd5e1; box-shadow: none; }
+  25%, 85% { border-color: #2F7BE5; box-shadow: 0 0 0 2px rgba(47, 123, 229, 0.15); }
+  95%, 100% { border-color: #cbd5e1; box-shadow: none; }
+}
+
+.mini-ui__typing-text {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mini-ui-playing .mini-ui__typing-text::after {
+  content: "Modern 3-Bedroom Duplex";
+  display: inline-block;
+  animation: hiwTyping 6s steps(23, end) infinite;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+@keyframes hiwTyping {
+  0%, 15% { width: 0; }
+  45%, 85% { width: 23ch; }
+  95%, 100% { width: 0; }
+}
+
+.mini-ui__cursor {
+  display: inline-block;
+  width: 2px;
+  height: 12px;
+  background-color: #2F7BE5;
+  margin-left: 2px;
+  animation: hiwCursorBlink 0.8s infinite;
+}
+
+@keyframes hiwCursorBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.mini-ui__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mini-ui__chip-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-ui__chip-label {
+  font-size: 0.58rem;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.mini-ui__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(47, 123, 229, 0.1);
+  color: #2F7BE5;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.mini-ui-playing .mini-ui__chip {
+  animation: hiwChipPop 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+@keyframes hiwChipPop {
+  0%, 45% { transform: scale(0.6); opacity: 0; }
+  52%, 85% { transform: scale(1); opacity: 1; }
+  95%, 100% { transform: scale(0.8); opacity: 0; }
+}
+
+.mini-ui__chip-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #2F7BE5;
+}
+
+.mini-ui__btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #2F7BE5;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(47, 123, 229, 0.3);
+  transform-origin: center;
+}
+
+.mini-ui-playing .mini-ui__btn-action {
+  animation: hiwBtnPress 6s ease-in-out infinite;
+}
+
+@keyframes hiwBtnPress {
+  0%, 65% { transform: scale(1); box-shadow: 0 2px 6px rgba(47, 123, 229, 0.3); }
+  70% { transform: scale(0.92); box-shadow: 0 1px 2px rgba(47, 123, 229, 0.2); }
+  75%, 90% { transform: scale(1); box-shadow: 0 0 10px rgba(47, 123, 229, 0.6); }
+  100% { transform: scale(1); box-shadow: 0 2px 6px rgba(47, 123, 229, 0.3); }
+}
+
+/* Step 2: Stacked Proposals */
+.mini-ui--step2 {
+  width: 100%;
+  height: 100%;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.mini-ui__proposals-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.mini-ui__badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #2F7BE5;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.64rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(47, 123, 229, 0.35);
+  transform: scale(0);
+}
+
+.mini-ui-playing .mini-ui__badge-pill {
+  animation: hiwBadgeBounce 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+@keyframes hiwBadgeBounce {
+  0%, 50% { transform: scale(0); opacity: 0; }
+  58%, 88% { transform: scale(1); opacity: 1; }
+  96%, 100% { transform: scale(0); opacity: 0; }
+}
+
+.mini-ui__bell-icon {
+  display: flex;
+  align-items: center;
+}
+
+.mini-ui__proposals-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.mini-ui__proposal-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(47, 123, 229, 0.12);
+  border-radius: 8px;
+  padding: 5px 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+  transform: translateX(50px);
+  opacity: 0;
+}
+
+.mini-ui-playing .mini-ui__proposal-card--1 {
+  animation: hiwPropSlideIn 6s cubic-bezier(0.16, 1, 0.3, 1) infinite 0.1s;
+}
+
+.mini-ui-playing .mini-ui__proposal-card--2 {
+  animation: hiwPropSlideIn 6s cubic-bezier(0.16, 1, 0.3, 1) infinite 0.25s;
+}
+
+.mini-ui-playing .mini-ui__proposal-card--3 {
+  animation: hiwPropSlideIn 6s cubic-bezier(0.16, 1, 0.3, 1) infinite 0.4s;
+}
+
+@keyframes hiwPropSlideIn {
+  0%, 10% { transform: translateX(50px); opacity: 0; }
+  22%, 88% { transform: translateX(0); opacity: 1; }
+  96%, 100% { transform: translateX(50px); opacity: 0; }
+}
+
+.mini-ui__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+.mini-ui__avatar--1 { background: linear-gradient(135deg, #2F7BE5, #1d4ed8); }
+.mini-ui__avatar--2 { background: linear-gradient(135deg, #06b6d4, #0284c7); }
+.mini-ui__avatar--3 { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+
+.mini-ui__prop-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.mini-ui__prop-name {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-ui__prop-role {
+  font-size: 0.58rem;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-left: 3px;
+}
+
+.mini-ui__prop-rating {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.6rem;
+  color: #64748b;
+}
+
+.mini-ui__star {
+  color: #f59e0b;
+  font-size: 0.68rem;
+}
+
+.mini-ui__reviews {
+  color: #94a3b8;
+  font-size: 0.55rem;
+}
+
+.mini-ui__prop-bid {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #2F7BE5;
+  flex-shrink: 0;
+}
+
+/* Step 3: Milestones & Escrow */
+.mini-ui--step3 {
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-ui__milestones-box {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(47, 123, 229, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  padding: 10px 12px;
+}
+
+.mini-ui__milestone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mini-ui__m-title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.mini-ui__m-status {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 6px;
+  border-radius: 9999px;
+}
+
+.mini-ui__milestone-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.mini-ui__m-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 2;
+}
+
+.mini-ui__m-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-ui__m-circle--complete {
+  background: #2F7BE5;
+  color: #ffffff;
+}
+
+.mini-ui__m-circle--active {
+  background: #ffffff;
+  border: 2px solid #2F7BE5;
+  position: relative;
+}
+
+.mini-ui__m-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2F7BE5;
+  animation: hiwPulse 1.5s infinite;
+}
+
+.mini-ui__m-name {
+  font-size: 0.58rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.mini-ui__m-connector {
+  flex-grow: 1;
+  height: 2px;
+  background: #2F7BE5;
+  margin: 0 4px 10px 4px;
+}
+
+.mini-ui__milestone-bar-wrap {
+  width: 100%;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.mini-ui__milestone-bar-fill {
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(90deg, #2F7BE5, #10b981);
+  border-radius: 9999px;
+}
+
+.mini-ui-playing .mini-ui__milestone-bar-fill {
+  animation: hiwProgressFill 6s ease-in-out infinite;
+}
+
+@keyframes hiwProgressFill {
+  0%, 15% { width: 33%; }
+  45% { width: 66%; }
+  70%, 90% { width: 100%; }
+  98%, 100% { width: 33%; }
+}
+
+.mini-ui__escrow-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 6px;
+  padding: 4px 8px;
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.mini-ui-playing .mini-ui__escrow-badge {
+  animation: hiwEscrowPop 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+@keyframes hiwEscrowPop {
+  0%, 60% { transform: scale(0.8); opacity: 0; }
+  68%, 90% { transform: scale(1); opacity: 1; }
+  98%, 100% { transform: scale(0.8); opacity: 0; }
+}
+
+.mini-ui__shield-icon {
+  color: #10b981;
+  display: flex;
+  align-items: center;
+}
+
+.mini-ui__escrow-text {
+  font-size: 0.62rem;
+  color: #065f46;
+}
+
+.mini-ui__escrow-text strong {
+  color: #047857;
+  font-weight: 700;
+}
+
+/* ---- 6. Stats Strip Below Cards ---- */
+.stats-strip {
+  margin-top: 4rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1px solid rgba(47, 123, 229, 0.16);
+  box-shadow: 
+    0 4px 6px -1px rgba(11, 20, 38, 0.02),
+    0 10px 24px -4px rgba(47, 123, 229, 0.05);
+  padding: 1.5rem 2.5rem;
+}
+
+.stats-strip__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.stats-item {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.stats-item__icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(47, 123, 229, 0.08);
+  border: 1px solid rgba(47, 123, 229, 0.15);
+  color: var(--color-primary, #2F7BE5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stats-item__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-item__number {
+  font-family: var(--font-display, 'Playfair Display', serif);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--color-dark, #0B1426);
+  line-height: 1.1;
+}
+
+.stats-item__label {
+  font-family: var(--font-body, 'Inter', sans-serif);
+  font-size: 0.85rem;
+  color: var(--color-gray-500, #6b7585);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.stats-strip__divider {
+  width: 1px;
+  height: 44px;
+  background: rgba(11, 20, 38, 0.08);
+}
+
+/* Desktop: Hide mobile vertical timeline elements */
+.hiw-mobile-circle-wrap,
+.hiw-mobile-connector {
+  display: none;
+}
+
+/* Tablet (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .hiw-cards-grid {
+    gap: 1.25rem;
+  }
+  .hiw-step-circles-row {
+    gap: 1.25rem;
+  }
+  .stats-strip {
+    padding: 1.25rem 1.5rem;
+  }
+  .stats-item {
+    gap: 0.8rem;
+  }
+  .stats-item__number {
+    font-size: 1.5rem;
+  }
+}
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  .section--how-it-works {
+    padding: 4rem 0;
+  }
+
+  .hiw-container {
+    padding: 0 1rem;
+  }
+
+  .hiw-desktop-timeline {
+    display: none;
+  }
+
+  .hiw-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .hiw-card-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .hiw-mobile-circle-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .hiw-mobile-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    height: 44px;
+    margin: 0.5rem 0;
+  }
+
+  .hiw-m-connector-base {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-left: 2px dashed #cbd5e1;
+  }
+
+  .hiw-m-connector-active {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 0%;
+    background: linear-gradient(180deg, #2F7BE5, #60a5fa);
+    box-shadow: 0 0 6px rgba(47, 123, 229, 0.5);
+    transition: height 0.1s linear;
+  }
+
+  .hiw-m-traveler-dot {
+    position: absolute;
+    top: 0%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #60a5fa;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 8px #2F7BE5;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .step-card-premium {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .stats-strip__inner {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .stats-strip__divider {
+    width: 80%;
+    height: 1px;
+  }
+
+  .stats-item {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 1rem;
+  }
+}
+
+/* Extra small screens (down to 375px) */
+@media (max-width: 480px) {
+  .hiw-title {
+    font-size: 1.85rem;
+  }
+  .hiw-description {
+    font-size: 0.95rem;
+  }
+  .step-card__inner {
+    padding: 1.25rem;
+  }
+  .stats-strip {
+    padding: 1.25rem 1rem;
+  }
+}
+
+/* ---- 8. Reduced Motion Accessibility ---- */
+@media (prefers-reduced-motion: reduce) {
+  .hiw-orb,
+  .hiw-eyebrow-pulse,
+  .hiw-traveler-dot,
+  .mini-ui-playing .mini-ui__input-field,
+  .mini-ui-playing .mini-ui__typing-text::after,
+  .mini-ui-playing .mini-ui__chip,
+  .mini-ui-playing .mini-ui__btn-action,
+  .mini-ui-playing .mini-ui__badge-pill,
+  .mini-ui-playing .mini-ui__proposal-card--1,
+  .mini-ui-playing .mini-ui__proposal-card--2,
+  .mini-ui-playing .mini-ui__proposal-card--3,
+  .mini-ui-playing .mini-ui__milestone-bar-fill,
+  .mini-ui-playing .mini-ui__escrow-badge {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .mini-ui__chip,
+  .mini-ui__badge-pill,
+  .mini-ui__proposal-card,
+  .mini-ui__escrow-badge {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .mini-ui__typing-text::after {
+    content: "Modern 3-Bedroom Duplex" !important;
+    width: auto !important;
+  }
+
+  .mini-ui__milestone-bar-fill {
+    width: 100% !important;
+  }
+
+  .hiw-track-active {
+    stroke-dashoffset: 0 !important;
+  }
+}

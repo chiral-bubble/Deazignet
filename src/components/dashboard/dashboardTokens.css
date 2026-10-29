@@ -1,0 +1,86 @@
+/* ============================================================
+   Dezignet Dashboard Design Tokens
+   Supports Dark (default) and Light (warm paper) modes
+   ============================================================ */
+
+:root {
+  /* Common Brand Tokens */
+  --dash-brand-primary: #2F7BE5;
+  --dash-brand-hover: #2468c7;
+  --dash-brand-glow: rgba(47, 123, 229, 0.35);
+  --dash-brand-subtle: rgba(47, 123, 229, 0.12);
+  --dash-brand-border: rgba(47, 123, 229, 0.25);
+
+  /* Status Colors */
+  --dash-status-pending: #f59e0b;
+  --dash-status-pending-bg: rgba(245, 158, 11, 0.12);
+  --dash-status-ongoing: #2F7BE5;
+  --dash-status-ongoing-bg: rgba(47, 123, 229, 0.12);
+  --dash-status-completed: #10b981;
+  --dash-status-completed-bg: rgba(16, 185, 129, 0.12);
+  --dash-status-alert: #ef4444;
+
+  /* Typography */
+  --dash-font-display: 'Playfair Display', Georgia, serif;
+  --dash-font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Border Radii */
+  --dash-radius-card: 20px;
+  --dash-radius-control: 12px;
+  --dash-radius-pill: 9999px;
+  --dash-radius-rail: 24px;
+}
+
+/* ------------------------------------------------------------
+   DARK THEME (Default: Deep Ink & Raised Obsidian)
+   ------------------------------------------------------------ */
+[data-theme="dark"], :root:not([data-theme="light"]) {
+  --dash-bg: #0B0E14;
+  --dash-bg-subtle: #0f131a;
+  --dash-surface-1: #121722;
+  --dash-surface-2: #171D2B;
+  --dash-surface-glass: rgba(18, 23, 34, 0.75);
+  --dash-surface-hover: rgba(255, 255, 255, 0.04);
+  
+  --dash-border-hairline: rgba(255, 255, 255, 0.08);
+  --dash-border-subtle: rgba(255, 255, 255, 0.12);
+  --dash-border-highlight: rgba(255, 255, 255, 0.18);
+  
+  --dash-text-primary: #EDEAE4;
+  --dash-text-muted: #8A93A6;
+  --dash-text-faint: #525a6b;
+  
+  --dash-rail-bg: rgba(18, 23, 34, 0.85);
+  --dash-rail-border: rgba(255, 255, 255, 0.08);
+  
+  --dash-shadow-glass: 0 20px 40px -15px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --dash-shadow-glow: 0 0 35px rgba(47, 123, 229, 0.2);
+  --dash-grid-color: rgba(47, 123, 229, 0.05);
+}
+
+/* ------------------------------------------------------------
+   LIGHT THEME (Warm Paper & Ink)
+   ------------------------------------------------------------ */
+[data-theme="light"] {
+  --dash-bg: #F6F4EF;
+  --dash-bg-subtle: #EDE9DF;
+  --dash-surface-1: #FFFFFF;
+  --dash-surface-2: #FAF8F5;
+  --dash-surface-glass: rgba(255, 255, 255, 0.82);
+  --dash-surface-hover: rgba(0, 0, 0, 0.03);
+  
+  --dash-border-hairline: rgba(17, 22, 34, 0.08);
+  --dash-border-subtle: rgba(17, 22, 34, 0.12);
+  --dash-border-highlight: rgba(17, 22, 34, 0.2);
+  
+  --dash-text-primary: #111622;
+  --dash-text-muted: #626A7A;
+  --dash-text-faint: #98A1B2;
+  
+  --dash-rail-bg: rgba(255, 255, 255, 0.88);
+  --dash-rail-border: rgba(17, 22, 34, 0.1);
+  
+  --dash-shadow-glass: 0 16px 36px -12px rgba(17, 22, 34, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --dash-shadow-glow: 0 0 30px rgba(47, 123, 229, 0.15);
+  --dash-grid-color: rgba(47, 123, 229, 0.06);
+}
