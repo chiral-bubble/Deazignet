@@ -60,3 +60,4 @@ SET
     value = EXCLUDED.value,
     description = EXCLUDED.description,
     updated_at = timezone('utc'::text, now());
+

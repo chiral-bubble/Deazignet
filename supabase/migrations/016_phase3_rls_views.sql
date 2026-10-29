@@ -221,3 +221,4 @@ GRANT EXECUTE ON FUNCTION public.raise_dispute(UUID, UUID, TEXT, TEXT) TO authen
 GRANT EXECUTE ON FUNCTION public.cancel_engagement(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.create_support_ticket(UUID, public.ticket_type, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_designer_dashboard() TO authenticated;
+

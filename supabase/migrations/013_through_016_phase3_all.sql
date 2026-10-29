@@ -60,6 +60,7 @@ SET
     value = EXCLUDED.value,
     description = EXCLUDED.description,
     updated_at = timezone('utc'::text, now());
+
 -- ==============================================================================
 -- DEZIGNET SUPABASE MIGRATION - PHASE 3
 -- 014_engagements_schema.sql
@@ -208,7 +209,7 @@ CREATE TABLE public.invoices (
 CREATE TABLE public.engagement_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     engagement_id UUID NOT NULL REFERENCES public.engagements(id) ON DELETE CASCADE,
-    actor_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     event_type TEXT NOT NULL,
     milestone_id UUID REFERENCES public.engagement_milestones(id) ON DELETE SET NULL,
     data JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -274,12 +275,37 @@ CREATE INDEX IF NOT EXISTS idx_disputes_raised_by ON public.disputes(raised_by);
 
 CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON public.support_tickets(user_id);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_engagement_id ON public.support_tickets(engagement_id);
+
 -- ==============================================================================
 -- DEZIGNET SUPABASE MIGRATION - PHASE 3
 -- 015_phase3_functions.sql
 -- Transition Matrix Functions for Active Work
 -- Security Definer, search_path = public, strict ownership & status checks
 -- ==============================================================================
+
+-- ------------------------------------------------------------------------------
+-- 0. Admin Check Helper (Supports both profiles admin role and service_role JWT)
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    RETURN (
+        COALESCE(auth.role(), '') = 'service_role'
+        OR COALESCE(current_setting('request.jwt.claim.role', true), '') = 'service_role'
+        OR EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE id = (SELECT auth.uid())
+              AND role = 'admin'::public.user_role
+        )
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Ensure engagement_events actor_id allows NULL for system/dev actions
+ALTER TABLE IF EXISTS public.engagement_events ALTER COLUMN actor_id DROP NOT NULL;
 
 -- ------------------------------------------------------------------------------
 -- 1. Helper Function: log_engagement_event
@@ -2017,6 +2043,7 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql;
+
 -- ==============================================================================
 -- DEZIGNET SUPABASE MIGRATION - PHASE 3
 -- 016_phase3_rls_views.sql
@@ -2240,3 +2267,4 @@ GRANT EXECUTE ON FUNCTION public.raise_dispute(UUID, UUID, TEXT, TEXT) TO authen
 GRANT EXECUTE ON FUNCTION public.cancel_engagement(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.create_support_ticket(UUID, public.ticket_type, TEXT, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_designer_dashboard() TO authenticated;
+

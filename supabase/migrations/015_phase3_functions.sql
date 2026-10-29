@@ -6,6 +6,30 @@
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
+-- 0. Admin Check Helper (Supports both profiles admin role and service_role JWT)
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    RETURN (
+        COALESCE(auth.role(), '') = 'service_role'
+        OR COALESCE(current_setting('request.jwt.claim.role', true), '') = 'service_role'
+        OR EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE id = (SELECT auth.uid())
+              AND role = 'admin'::public.user_role
+        )
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+-- Ensure engagement_events actor_id allows NULL for system/dev actions
+ALTER TABLE IF EXISTS public.engagement_events ALTER COLUMN actor_id DROP NOT NULL;
+
+-- ------------------------------------------------------------------------------
 -- 1. Helper Function: log_engagement_event
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.log_engagement_event(
@@ -1741,3 +1765,4 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql;
+

@@ -193,7 +193,7 @@ async function runTests() {
 
   // Admin funds milestone 1
   const { error: fundErr } = await adminClient.rpc('dev_fund_milestone', { p_milestone_id: msId });
-  assert('Admin successfully funds milestone 1', !fundErr);
+  assert('Admin successfully funds milestone 1', !fundErr, fundErr?.message);
 
   const { data: fundedMs } = await adminClient.from('engagement_milestones').select('status, due_date').eq('id', msId).single();
   assert('Milestone status is now funded with auto-calculated due date', fundedMs?.status === 'funded' && !!fundedMs?.due_date);
@@ -204,7 +204,7 @@ async function runTests() {
   console.log('\n--- TEST GROUP 3: Deliverables, File Types & Size Constraints ---');
   // Designer starts milestone
   const { error: startErr } = await designerClient.rpc('start_milestone', { p_milestone_id: msId });
-  assert('Designer starts funded milestone (in_progress)', !startErr);
+  assert('Designer starts funded milestone (in_progress)', !startErr, startErr?.message);
 
   // Reject invalid file type (e.g. .exe)
   const { error: badFileTypeErr } = await designerClient.rpc('submit_milestone', {
@@ -228,7 +228,7 @@ async function runTests() {
     p_notes: 'Design drawings set v1 ready for client inspection.',
     p_files: [{ path: '/uploads/drawings.pdf', file_name: 'drawings.pdf', size_bytes: 15400000, mime_type: 'application/pdf' }]
   });
-  assert('Valid deliverable submission creates version 1 and submission_file', !subErr && !!subId);
+  assert('Valid deliverable submission creates version 1 and submission_file', !subErr && !!subId, subErr?.message);
 
   const { data: submittedMs } = await adminClient.from('engagement_milestones').select('status').eq('id', msId).single();
   assert('Milestone status transitioned to submitted', submittedMs?.status === 'submitted');
@@ -242,7 +242,7 @@ async function runTests() {
     p_milestone_id: msId,
     p_reason: 'Please increase window daylight openings on the north facade.'
   });
-  assert('Client successfully requests revision 1', !rev1Err);
+  assert('Client successfully requests revision 1', !rev1Err, rev1Err?.message);
 
   const { data: revMs1 } = await adminClient.from('engagement_milestones').select('status, revision_count').eq('id', msId).single();
   assert('Milestone is revision_requested with revision_count = 1', revMs1?.status === 'revision_requested' && revMs1?.revision_count === 1);
@@ -270,14 +270,14 @@ async function runTests() {
   });
 
   const { error: approveErr } = await clientClient.rpc('approve_milestone', { p_milestone_id: msId });
-  assert('Client approves milestone deliverable', !approveErr);
+  assert('Client approves milestone deliverable', !approveErr, approveErr?.message);
 
   const { data: approvedMs } = await adminClient.from('engagement_milestones').select('status, payout_status').eq('id', msId).single();
   assert('Milestone is approved and payout_status is pending_release', approvedMs?.status === 'approved' && approvedMs?.payout_status === 'pending_release');
 
   // Admin releases payout
   const { error: relErr } = await adminClient.rpc('dev_release_milestone', { p_milestone_id: msId });
-  assert('Admin releases milestone payout to designer balance', !relErr);
+  assert('Admin releases milestone payout to designer balance', !relErr, relErr?.message);
 
   // ---------------------------------------------------------------------------
   // TEST 5: Time Tracking & Hourly Invoicing

@@ -146,7 +146,7 @@ CREATE TABLE public.invoices (
 CREATE TABLE public.engagement_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     engagement_id UUID NOT NULL REFERENCES public.engagements(id) ON DELETE CASCADE,
-    actor_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     event_type TEXT NOT NULL,
     milestone_id UUID REFERENCES public.engagement_milestones(id) ON DELETE SET NULL,
     data JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -212,3 +212,4 @@ CREATE INDEX IF NOT EXISTS idx_disputes_raised_by ON public.disputes(raised_by);
 
 CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON public.support_tickets(user_id);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_engagement_id ON public.support_tickets(engagement_id);
+
