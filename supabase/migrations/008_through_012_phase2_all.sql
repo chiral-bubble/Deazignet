@@ -1071,6 +1071,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 -- PART 5: Views and Security Barriers
 -- ------------------------------------------------------------------------------
 
+-- Drop views first to avoid column data type mismatch errors
+DROP VIEW IF EXISTS public.client_summaries CASCADE;
+DROP VIEW IF EXISTS public.open_projects CASCADE;
+DROP VIEW IF EXISTS public.public_designer_profiles CASCADE;
+
 -- Client Summaries View
 CREATE OR REPLACE VIEW public.client_summaries
 WITH (security_barrier = true) AS
@@ -1085,7 +1090,7 @@ SELECT
     END AS display_name,
     p.location AS city,
     p.location AS state_region,
-    p.created_at AS member_since,
+    TO_CHAR(p.created_at, 'Month YYYY') AS member_since,
     (
         SELECT COUNT(*)::INT
         FROM public.projects prj
@@ -1206,7 +1211,7 @@ SELECT
     dp.years_experience,
     dp.is_available,
     dp.availability_note,
-    p.created_at AS member_since,
+    TO_CHAR(p.created_at, 'Month YYYY') AS member_since,
     CASE
         WHEN dp.show_hourly_rate = true THEN dp.hourly_rate
         ELSE NULL
@@ -1528,6 +1533,7 @@ CREATE POLICY "Users can manage own saved designers"
 -- Grants
 GRANT SELECT ON public.open_projects TO authenticated;
 GRANT SELECT ON public.client_summaries TO authenticated;
+GRANT SELECT ON public.public_designer_profiles TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION public.submit_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.withdraw_proposal TO authenticated;

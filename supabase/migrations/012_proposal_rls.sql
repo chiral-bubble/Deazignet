@@ -176,7 +176,7 @@ CREATE POLICY "Users can manage own saved designers"
     );
 
 -- 4. Full-Text Search on Public Designer Profiles View
--- Replace or extend public_designer_profiles view to include a generated search tsvector
+DROP VIEW IF EXISTS public.public_designer_profiles CASCADE;
 CREATE OR REPLACE VIEW public.public_designer_profiles
 WITH (security_barrier = true) AS
 SELECT
@@ -193,7 +193,7 @@ SELECT
     dp.years_experience,
     dp.is_available,
     dp.availability_note,
-    p.created_at AS member_since,
+    TO_CHAR(p.created_at, 'Month YYYY') AS member_since,
     CASE
         WHEN dp.show_hourly_rate = true THEN dp.hourly_rate
         ELSE NULL
@@ -221,7 +221,8 @@ WHERE
         OR (SELECT auth.role()) = 'anon'
     );
 
--- 5. Grants for Stored Functions
+-- 5. Grants for Stored Functions and Views
+GRANT SELECT ON public.public_designer_profiles TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION public.submit_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.withdraw_proposal TO authenticated;

@@ -194,8 +194,7 @@ CREATE POLICY "Project owners can manage images"
     );
 
 -- 3. Security-Barrier View: client_summaries
--- Safely exposes minimal client details for open projects or projects where designer applied.
--- NEVER exposes email, phone, full name or full address.
+DROP VIEW IF EXISTS public.client_summaries CASCADE;
 CREATE OR REPLACE VIEW public.client_summaries
 WITH (security_barrier = true) AS
 SELECT
@@ -203,14 +202,14 @@ SELECT
     -- Display Name: First name + First letter of Last name + '.'
     CASE
         WHEN POSITION(' ' IN trim(p.full_name)) > 0 THEN
-            SPLIT_PART(trim(p.full_name), ' ', 1) || ' ' ||
+            SPLIT_PART(trim(p.full_name), 1, 1) || ' ' ||
             SUBSTRING(SPLIT_PART(trim(p.full_name), ' ', 2), 1, 1) || '.'
         ELSE
             trim(p.full_name)
     END AS display_name,
     p.location AS city,
     p.location AS state_region,
-    p.created_at AS member_since,
+    TO_CHAR(p.created_at, 'Month YYYY') AS member_since,
     (
         SELECT COUNT(*)::INT
         FROM public.projects prj
@@ -243,7 +242,7 @@ WHERE
     );
 
 -- 4. Security-Barrier View: open_projects
--- Primary view for designers to explore open projects and track projects they proposed on.
+DROP VIEW IF EXISTS public.open_projects CASCADE;
 CREATE OR REPLACE VIEW public.open_projects
 WITH (security_barrier = true) AS
 SELECT
