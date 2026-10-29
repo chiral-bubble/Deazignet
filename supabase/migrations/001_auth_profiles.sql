@@ -118,3 +118,4 @@ CREATE TRIGGER trg_protect_profile_role
     BEFORE UPDATE ON public.profiles
     FOR EACH ROW
     EXECUTE FUNCTION public.protect_profile_role();
+

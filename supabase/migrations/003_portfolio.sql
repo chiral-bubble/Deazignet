@@ -43,3 +43,4 @@ CREATE TRIGGER trg_portfolio_images_updated_at
     BEFORE UPDATE ON public.portfolio_images
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_updated_at();
+

@@ -60,3 +60,4 @@ Once migrations are applied:
    npx tsx scripts/test-phase1.ts
    ```
    Tests RLS isolation, role protection, credential reset triggers, and public view projections.
+

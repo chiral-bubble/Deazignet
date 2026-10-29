@@ -48,3 +48,4 @@ CREATE TRIGGER on_designer_profile_init
     AFTER INSERT ON public.profiles
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_designer_profile_init();
+

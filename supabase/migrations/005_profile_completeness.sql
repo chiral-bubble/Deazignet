@@ -88,3 +88,4 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+

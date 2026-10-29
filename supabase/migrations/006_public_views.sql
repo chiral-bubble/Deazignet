@@ -139,3 +139,4 @@ COMMENT ON VIEW public.public_credentials IS
 GRANT SELECT ON public.public_designer_profiles TO authenticated, anon;
 GRANT SELECT ON public.public_portfolio TO authenticated, anon;
 GRANT SELECT ON public.public_credentials TO authenticated, anon;
+

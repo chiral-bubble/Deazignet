@@ -620,3 +620,4 @@ DROP POLICY IF EXISTS "credentials_admin_all" ON public.credentials;
 CREATE POLICY "credentials_admin_all" ON public.credentials
     FOR ALL TO authenticated
     USING (public.is_admin());
+

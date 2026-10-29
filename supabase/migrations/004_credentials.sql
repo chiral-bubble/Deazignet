@@ -81,3 +81,4 @@ CREATE TRIGGER trg_reset_verified_credential
     BEFORE UPDATE ON public.credentials
     FOR EACH ROW
     EXECUTE FUNCTION public.reset_verified_credential_on_edit();
+
