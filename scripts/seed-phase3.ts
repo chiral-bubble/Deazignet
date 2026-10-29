@@ -129,7 +129,7 @@ async function seedPhase3() {
     .maybeSingle();
 
   if (!prop1) {
-    const { data: newProp } = await adminClient
+    const { data: newProp, error: p1Err } = await adminClient
       .from('proposals')
       .insert({
         project_id: proj1.id,
@@ -139,11 +139,17 @@ async function seedPhase3() {
         delivery_days: 90,
         cover_letter: 'Comprehensive architectural development proposal.',
         status: 'accepted',
+        project_snapshot: {
+          title: proj1.title,
+          category: 'Residential Architecture'
+        },
         sent_at: new Date(Date.now() - 14 * 86400000).toISOString(),
         decided_at: new Date(Date.now() - 12 * 86400000).toISOString()
       })
       .select()
       .single();
+
+    if (p1Err) throw new Error(`Failed to create Proposal 1: ${p1Err.message}`);
     prop1 = newProp;
   } else {
     await adminClient.from('proposals').update({ status: 'accepted' }).eq('id', prop1.id);
@@ -241,7 +247,7 @@ async function seedPhase3() {
     .maybeSingle();
 
   if (!prop2) {
-    const { data: newProp } = await adminClient
+    const { data: newProp, error: p2Err } = await adminClient
       .from('proposals')
       .insert({
         project_id: proj2.id,
@@ -253,11 +259,17 @@ async function seedPhase3() {
         delivery_days: 30,
         cover_letter: 'Interior space planning and construction supervision on hourly terms.',
         status: 'accepted',
+        project_snapshot: {
+          title: proj2.title,
+          category: 'Interior Design'
+        },
         sent_at: new Date(Date.now() - 10 * 86400000).toISOString(),
         decided_at: new Date(Date.now() - 9 * 86400000).toISOString()
       })
       .select()
       .single();
+
+    if (p2Err) throw new Error(`Failed to create Proposal 2: ${p2Err.message}`);
     prop2 = newProp;
   } else {
     await adminClient.from('proposals').update({ status: 'accepted' }).eq('id', prop2.id);
@@ -360,7 +372,7 @@ async function seedPhase3() {
     .select()
     .single();
 
-  const { data: prop3 } = await adminClient
+  const { data: prop3, error: p3Err } = await adminClient
     .from('proposals')
     .insert({
       project_id: proj3!.id,
@@ -369,10 +381,16 @@ async function seedPhase3() {
       currency: 'USD',
       delivery_days: 45,
       cover_letter: 'Boutique hotel lobby proposal.',
+      project_snapshot: {
+        title: proj3!.title,
+        category: 'Commercial Architecture'
+      },
       status: 'accepted'
     })
     .select()
     .single();
+
+  if (p3Err) throw new Error(`Failed to create Proposal 3: ${p3Err.message}`);
 
   const { data: eng3 } = await adminClient
     .from('engagements')

@@ -111,7 +111,7 @@ async function runTests() {
     .single();
 
   // Winning Proposal
-  const { data: winProp } = await adminClient
+  const { data: winProp, error: wpErr } = await adminClient
     .from('proposals')
     .insert({
       project_id: testProj!.id,
@@ -120,10 +120,16 @@ async function runTests() {
       currency: 'USD',
       delivery_days: 60,
       cover_letter: 'Winning proposal for acceptance verification.',
-      status: 'shortlisted'
+      status: 'shortlisted',
+      project_snapshot: {
+        title: testProj!.title,
+        category: testProj!.category
+      }
     })
     .select()
     .single();
+
+  if (wpErr) throw new Error(`Failed to create winProp: ${wpErr.message}`);
 
   await adminClient.from('proposal_milestones').insert({
     proposal_id: winProp!.id,
@@ -133,16 +139,25 @@ async function runTests() {
   });
 
   // Competitor Proposal
-  const { data: rivalProp } = await adminClient
+  const { data: rivalProp, error: rpErr } = await adminClient
     .from('proposals')
     .insert({
       project_id: testProj!.id,
       designer_id: otherDesignerId!,
       total_price: 55000.00,
-      status: 'pending'
+      currency: 'USD',
+      delivery_days: 60,
+      cover_letter: 'Rival architectural design proposal.',
+      status: 'pending',
+      project_snapshot: {
+        title: testProj!.title,
+        category: testProj!.category
+      }
     })
     .select()
     .single();
+
+  if (rpErr) throw new Error(`Failed to create rivalProp: ${rpErr.message}`);
 
   // Non-client cannot accept proposal
   const { error: unauthAccept } = await designerClient.rpc('accept_proposal', {
@@ -282,17 +297,25 @@ async function runTests() {
     .select()
     .single();
 
-  const { data: hProp } = await adminClient
+  const { data: hProp, error: hpErr } = await adminClient
     .from('proposals')
     .insert({
       project_id: hProj!.id,
       designer_id: designerId,
       total_price: 10000.00,
       hourly_rate: 80.00,
+      delivery_days: 30,
+      cover_letter: 'Hourly engineering consultation proposal.',
+      project_snapshot: {
+        title: hProj!.title,
+        category: hProj!.category
+      },
       status: 'accepted'
     })
     .select()
     .single();
+
+  if (hpErr) throw new Error(`Failed to create hProp: ${hpErr.message}`);
 
   const { data: hEng } = await adminClient
     .from('engagements')
