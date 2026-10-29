@@ -21,6 +21,22 @@ export type PaymentType = 'milestone' | 'hourly';
 export type ProposalStatus = 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'declined' | 'withdrawn';
 export type PlanTier = 'free' | 'basic' | 'upgraded';
 
+// Phase 3 enums (Active Work)
+export type EngagementStatus = 'active' | 'completed' | 'cancelled' | 'disputed';
+export type MilestoneStatus =
+  | 'awaiting_funding'
+  | 'funded'
+  | 'in_progress'
+  | 'submitted'
+  | 'revision_requested'
+  | 'approved'
+  | 'disputed';
+export type PayoutStatus = 'not_due' | 'pending_release' | 'released';
+export type TimeEntryStatus = 'draft' | 'submitted' | 'approved' | 'disputed';
+export type InvoiceStatus = 'pending_approval' | 'approved' | 'paid' | 'disputed';
+export type DisputeStatus = 'open' | 'resolved';
+export type TicketType = 'help' | 'problem';
+
 export type Database = {
   public: {
     Tables: {
@@ -504,6 +520,430 @@ export type Database = {
         };
         Relationships: [];
       };
+
+      engagements: {
+        Row: {
+          id: string;
+          project_id: string;
+          proposal_id: string;
+          client_id: string;
+          designer_id: string;
+          payment_type: PaymentType;
+          total_price: number;
+          currency: string;
+          platform_fee_percent: number;
+          hourly_rate: number | null;
+          weekly_hours_cap: number | null;
+          status: EngagementStatus;
+          terms_snapshot: Json;
+          started_at: string;
+          completed_at: string | null;
+          cancelled_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          proposal_id: string;
+          client_id: string;
+          designer_id: string;
+          payment_type: PaymentType;
+          total_price: number;
+          currency?: string;
+          platform_fee_percent?: number;
+          hourly_rate?: number | null;
+          weekly_hours_cap?: number | null;
+          status?: EngagementStatus;
+          terms_snapshot?: Json;
+          started_at?: string;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          proposal_id?: string;
+          client_id?: string;
+          designer_id?: string;
+          payment_type?: PaymentType;
+          total_price?: number;
+          currency?: string;
+          platform_fee_percent?: number;
+          hourly_rate?: number | null;
+          weekly_hours_cap?: number | null;
+          status?: EngagementStatus;
+          terms_snapshot?: Json;
+          started_at?: string;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      engagement_milestones: {
+        Row: {
+          id: string;
+          engagement_id: string;
+          sort_order: number;
+          name: string;
+          description: string | null;
+          deliverables: string[];
+          billing_trigger: string | null;
+          fee_percent: number;
+          amount: number;
+          due_date: string | null;
+          status: MilestoneStatus;
+          payout_status: PayoutStatus;
+          funded_at: string | null;
+          started_at: string | null;
+          submitted_at: string | null;
+          approved_at: string | null;
+          released_at: string | null;
+          revision_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          engagement_id: string;
+          sort_order?: number;
+          name: string;
+          description?: string | null;
+          deliverables?: string[];
+          billing_trigger?: string | null;
+          fee_percent: number;
+          amount: number;
+          due_date?: string | null;
+          status?: MilestoneStatus;
+          payout_status?: PayoutStatus;
+          funded_at?: string | null;
+          started_at?: string | null;
+          submitted_at?: string | null;
+          approved_at?: string | null;
+          released_at?: string | null;
+          revision_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          engagement_id?: string;
+          sort_order?: number;
+          name?: string;
+          description?: string | null;
+          deliverables?: string[];
+          billing_trigger?: string | null;
+          fee_percent?: number;
+          amount?: number;
+          due_date?: string | null;
+          status?: MilestoneStatus;
+          payout_status?: PayoutStatus;
+          funded_at?: string | null;
+          started_at?: string | null;
+          submitted_at?: string | null;
+          approved_at?: string | null;
+          released_at?: string | null;
+          revision_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      milestone_submissions: {
+        Row: {
+          id: string;
+          milestone_id: string;
+          version: number;
+          notes: string | null;
+          submitted_at: string;
+          client_response: string | null;
+          response_comment: string | null;
+          responded_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          milestone_id: string;
+          version: number;
+          notes?: string | null;
+          submitted_at?: string;
+          client_response?: string | null;
+          response_comment?: string | null;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          milestone_id?: string;
+          version?: number;
+          notes?: string | null;
+          submitted_at?: string;
+          client_response?: string | null;
+          response_comment?: string | null;
+          responded_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      submission_files: {
+        Row: {
+          id: string;
+          submission_id: string;
+          path: string;
+          file_name: string;
+          size_bytes: number;
+          mime_type: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_id: string;
+          path: string;
+          file_name: string;
+          size_bytes: number;
+          mime_type?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          submission_id?: string;
+          path?: string;
+          file_name?: string;
+          size_bytes?: number;
+          mime_type?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      milestone_comments: {
+        Row: {
+          id: string;
+          milestone_id: string;
+          submission_id: string | null;
+          author_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          milestone_id: string;
+          submission_id?: string | null;
+          author_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          milestone_id?: string;
+          submission_id?: string | null;
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      time_entries: {
+        Row: {
+          id: string;
+          engagement_id: string;
+          designer_id: string;
+          work_date: string;
+          hours: number;
+          description: string;
+          status: TimeEntryStatus;
+          week_start: string;
+          submitted_at: string | null;
+          approved_at: string | null;
+          dispute_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          engagement_id: string;
+          designer_id: string;
+          work_date: string;
+          hours: number;
+          description: string;
+          status?: TimeEntryStatus;
+          week_start?: string;
+          submitted_at?: string | null;
+          approved_at?: string | null;
+          dispute_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          engagement_id?: string;
+          designer_id?: string;
+          work_date?: string;
+          hours?: number;
+          description?: string;
+          status?: TimeEntryStatus;
+          week_start?: string;
+          submitted_at?: string | null;
+          approved_at?: string | null;
+          dispute_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      invoices: {
+        Row: {
+          id: string;
+          engagement_id: string;
+          week_start: string;
+          hours_total: number;
+          hourly_rate: number;
+          amount: number;
+          status: InvoiceStatus;
+          number: string;
+          created_at: string;
+          approved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          engagement_id: string;
+          week_start: string;
+          hours_total: number;
+          hourly_rate: number;
+          amount: number;
+          status?: InvoiceStatus;
+          number: string;
+          created_at?: string;
+          approved_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          engagement_id?: string;
+          week_start?: string;
+          hours_total?: number;
+          hourly_rate?: number;
+          amount?: number;
+          status?: InvoiceStatus;
+          number?: string;
+          created_at?: string;
+          approved_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      engagement_events: {
+        Row: {
+          id: string;
+          engagement_id: string;
+          actor_id: string;
+          event_type: string;
+          milestone_id: string | null;
+          data: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          engagement_id: string;
+          actor_id: string;
+          event_type: string;
+          milestone_id?: string | null;
+          data?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          engagement_id?: string;
+          actor_id?: string;
+          event_type?: string;
+          milestone_id?: string | null;
+          data?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      disputes: {
+        Row: {
+          id: string;
+          engagement_id: string;
+          milestone_id: string | null;
+          raised_by: string;
+          reason: string;
+          details: string;
+          status: DisputeStatus;
+          created_at: string;
+          resolved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          engagement_id: string;
+          milestone_id?: string | null;
+          raised_by: string;
+          reason: string;
+          details: string;
+          status?: DisputeStatus;
+          created_at?: string;
+          resolved_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          engagement_id?: string;
+          milestone_id?: string | null;
+          raised_by?: string;
+          reason?: string;
+          details?: string;
+          status?: DisputeStatus;
+          created_at?: string;
+          resolved_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      support_tickets: {
+        Row: {
+          id: string;
+          user_id: string;
+          engagement_id: string | null;
+          type: TicketType;
+          subject: string;
+          details: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          engagement_id?: string | null;
+          type: TicketType;
+          subject: string;
+          details: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          engagement_id?: string | null;
+          type?: TicketType;
+          subject?: string;
+          details?: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       is_admin: {
@@ -572,6 +1012,88 @@ export type Database = {
         Args: { p_designer_id: string };
         Returns: Array<{ used: number; limit: number; period_end: string }>;
       };
+
+      // Phase 3 Functions
+      accept_proposal: {
+        Args: { p_proposal_id: string };
+        Returns: string;
+      };
+      dev_fund_milestone: {
+        Args: { p_milestone_id: string };
+        Returns: void;
+      };
+      dev_release_milestone: {
+        Args: { p_milestone_id: string };
+        Returns: void;
+      };
+      start_milestone: {
+        Args: { p_milestone_id: string };
+        Returns: void;
+      };
+      submit_milestone: {
+        Args: { p_milestone_id: string; p_notes: string; p_files?: Json };
+        Returns: string;
+      };
+      add_milestone_comment: {
+        Args: { p_milestone_id: string; p_submission_id: string | null; p_body: string };
+        Returns: string;
+      };
+      log_time: {
+        Args: { p_engagement_id: string; p_work_date: string; p_hours: number; p_description: string };
+        Returns: string;
+      };
+      update_time_entry: {
+        Args: { p_entry_id: string; p_work_date: string; p_hours: number; p_description: string };
+        Returns: void;
+      };
+      delete_time_entry: {
+        Args: { p_entry_id: string };
+        Returns: void;
+      };
+      submit_week: {
+        Args: { p_engagement_id: string; p_week_start: string };
+        Returns: string;
+      };
+      approve_milestone: {
+        Args: { p_milestone_id: string };
+        Returns: void;
+      };
+      request_revision: {
+        Args: { p_milestone_id: string; p_reason: string };
+        Returns: void;
+      };
+      approve_week: {
+        Args: { p_invoice_id: string };
+        Returns: void;
+      };
+      dev_pay_invoice: {
+        Args: { p_invoice_id: string };
+        Returns: void;
+      };
+      dispute_week: {
+        Args: { p_invoice_id: string; p_note: string };
+        Returns: string;
+      };
+      complete_engagement: {
+        Args: { p_engagement_id: string };
+        Returns: void;
+      };
+      raise_dispute: {
+        Args: { p_engagement_id: string; p_milestone_id: string | null; p_reason: string; p_details: string };
+        Returns: string;
+      };
+      cancel_engagement: {
+        Args: { p_engagement_id: string; p_reason: string };
+        Returns: void;
+      };
+      create_support_ticket: {
+        Args: { p_engagement_id: string | null; p_type: TicketType; p_subject: string; p_details: string };
+        Returns: string;
+      };
+      get_designer_dashboard: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -581,6 +1103,13 @@ export type Database = {
       payment_type: PaymentType;
       proposal_status: ProposalStatus;
       plan_tier: PlanTier;
+      engagement_status: EngagementStatus;
+      milestone_status: MilestoneStatus;
+      payout_status: PayoutStatus;
+      time_entry_status: TimeEntryStatus;
+      invoice_status: InvoiceStatus;
+      dispute_status: DisputeStatus;
+      ticket_type: TicketType;
     };
     CompositeTypes: Record<string, never>;
   };

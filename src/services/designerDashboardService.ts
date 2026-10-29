@@ -171,6 +171,7 @@ let currentMockState: MockStateKey = ((): MockStateKey => {
 })();
 
 import { sharedDataset } from '../mocks/dataset';
+import { supabase, USE_MOCKS } from '../lib/supabase';
 
 // Working mutable copy of notifications for interactive "mark all as read"
 let notificationsState = [...FULL_NOTIFICATIONS];
@@ -206,6 +207,25 @@ function resetStateForMockKey(state: MockStateKey): void {
  * Retrieve high-level summary KPIs for the designer dashboard.
  */
 export async function getDesignerSummary(): Promise<DesignerSummary> {
+  if (!USE_MOCKS.active_work) {
+    try {
+      const { data, error } = await supabase.rpc('get_designer_dashboard');
+      if (!error && data) {
+        const d = data as any;
+        return {
+          activeProjectsCount: d.activeProjectsCount || 0,
+          milestonesDueThisWeek: d.milestonesDueThisWeek || 0,
+          proposalsPendingCount: d.proposalsPendingCount || 0,
+          proposalsViewedCount: d.proposalsViewedCount || 0,
+          inEscrowAmount: Number(d.inEscrowAmount) || 0,
+          totalEarnedAmount: Number(d.totalEarnedAmount) || 0
+        };
+      }
+    } catch (err) {
+      console.warn('Fallback to mock summary:', err);
+    }
+  }
+
   // Simulate network latency ~80ms
   await new Promise((resolve) => setTimeout(resolve, 80));
 
@@ -254,6 +274,36 @@ export async function getDesignerSummary(): Promise<DesignerSummary> {
  * Retrieve active projects list with optional payment type filter.
  */
 export async function getActiveProjects(filter: 'all' | 'milestone' | 'hourly' = 'all'): Promise<ActiveProject[]> {
+  if (!USE_MOCKS.active_work) {
+    try {
+      const { data, error } = await supabase.rpc('get_designer_dashboard');
+      if (!error && data && Array.isArray((data as any).activeProjects)) {
+        let list = (data as any).activeProjects.map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          clientName: 'Client',
+          clientCompany: 'Dezignet Client',
+          clientLocation: 'Nigeria',
+          paymentType: (p.paymentType === 'hourly' ? 'Hourly' : 'Milestone') as any,
+          status: 'awaiting_deliverable' as any,
+          statusLabel: p.status === 'active' ? 'Active' : p.status,
+          category: p.category || 'Architecture',
+          currentMilestoneName: p.currentMilestoneName || undefined,
+          completedMilestonesCount: p.completedMilestonesCount || 0,
+          totalMilestonesCount: p.totalMilestonesCount || 0,
+          escrowCurrentMilestone: Number(p.inEscrowAmount) || 0,
+          totalBudget: Number(p.totalBudget) || 0,
+          inEscrowAmount: Number(p.inEscrowAmount) || 0
+        }));
+        if (filter === 'milestone') list = list.filter((x: any) => x.paymentType === 'Milestone');
+        if (filter === 'hourly') list = list.filter((x: any) => x.paymentType === 'Hourly');
+        return list;
+      }
+    } catch (err) {
+      console.warn('Fallback to mock active projects:', err);
+    }
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 80));
 
   if (currentMockState === 'empty') {
@@ -320,6 +370,23 @@ export async function getNotifications(): Promise<DesignerNotification[]> {
  * Retrieve payments breakdown.
  */
 export async function getPayments(): Promise<DesignerPaymentsSummary> {
+  if (!USE_MOCKS.active_work) {
+    try {
+      const { data, error } = await supabase.rpc('get_designer_dashboard');
+      if (!error && data) {
+        const d = data as any;
+        return {
+          availableToWithdraw: Number(d.availableToWithdraw) || 0,
+          pendingRelease: Number(d.pendingRelease) || 0,
+          totalEarned: Number(d.totalEarnedAmount) || 0,
+          currency: 'USD'
+        };
+      }
+    } catch (err) {
+      console.warn('Fallback to mock payments:', err);
+    }
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 80));
   return {
     availableToWithdraw: sharedDataset.balances.availableToWithdraw,
@@ -333,6 +400,25 @@ export async function getPayments(): Promise<DesignerPaymentsSummary> {
  * Retrieve upcoming deadlines sorted by date.
  */
 export async function getUpcomingDeadlines(): Promise<UpcomingDeadline[]> {
+  if (!USE_MOCKS.active_work) {
+    try {
+      const { data, error } = await supabase.rpc('get_designer_dashboard');
+      if (!error && data && Array.isArray((data as any).upcomingDeadlines)) {
+        return (data as any).upcomingDeadlines.map((dl: any) => ({
+          id: dl.id,
+          title: dl.title,
+          projectTitle: dl.projectTitle,
+          projectId: dl.projectId,
+          dueDate: dl.dueDate,
+          relativeDate: dl.isOverdue ? 'Overdue' : 'Upcoming',
+          isOverdue: !!dl.isOverdue
+        }));
+      }
+    } catch (err) {
+      console.warn('Fallback to mock deadlines:', err);
+    }
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 80));
 
   if (currentMockState === 'empty') {

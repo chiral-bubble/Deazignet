@@ -30,6 +30,46 @@ The migrations are sequentially numbered in `/supabase/migrations/`:
 | `012_proposal_rls.sql` | Proposal RLS policies, `saved_projects`, `saved_designers`, full-text search view on `public_designer_profiles`, and function grants. |
 | `008_through_012_phase2_all.sql` | Combined all-in-one Phase 2 migration script for single-click execution. |
 
+### Phase 3: Active Work & Milestone Execution
+| File | Purpose |
+| :--- | :--- |
+| `013_phase3_enums_settings.sql` | Active work enums (`engagement_status`, `milestone_status`, `payout_status`, `time_entry_status`, `invoice_status`, `dispute_status`, `ticket_type`) and application settings (`environment`, `revision_limit`, `dispute_after_days`, `sequential_funding`, `max_file_size_bytes`, `allowed_file_types`, `auto_complete_when_all_approved`). |
+| `014_engagements_schema.sql` | 10 Active Work tables (`engagements`, `engagement_milestones`, `milestone_submissions`, `submission_files`, `milestone_comments`, `time_entries`, `invoices`, `engagement_events`, `disputes`, `support_tickets`), foreign key indexes, constraints. |
+| `015_phase3_functions.sql` | Transition matrix functions (`accept_proposal`, `dev_fund_milestone`, `dev_release_milestone`, `start_milestone`, `submit_milestone`, `add_milestone_comment`, `log_time`, `update_time_entry`, `delete_time_entry`, `submit_week`, `approve_milestone`, `request_revision`, `approve_week`, `dev_pay_invoice`, `dispute_week`, `complete_engagement`, `raise_dispute`, `cancel_engagement`, `create_support_ticket`, and single-query `get_designer_dashboard`). |
+| `016_phase3_rls_views.sql` | Mutation revocation from authenticated role, strict RLS read policies for parties, function execution grants. |
+| `013_through_016_phase3_all.sql` | Combined all-in-one Phase 3 migration script for single-click execution in Supabase SQL Editor. |
+
+---
+
+## How to Apply Phase 3 Migrations
+
+### Supabase Dashboard SQL Editor
+1. Open your project on Supabase: [https://supabase.com/dashboard/project/hnssctjagfwdfbagpikv/sql](https://supabase.com/dashboard/project/hnssctjagfwdfbagpikv/sql)
+2. Click **New query** (the `+` tab).
+3. Open `supabase/migrations/013_through_016_phase3_all.sql`.
+4. Copy all contents, paste into the editor, and click **Run**.
+
+---
+
+## Seeding & Running Tests
+
+### Phase 3 Seeding & Testing
+```bash
+# Seed 3 realistic active work engagements matching the mock dataset
+npx tsx scripts/seed-phase3.ts
+
+# Run the automated 11-point Active Work & Security Test Suite
+npx tsx scripts/test-phase3.ts
+
+# Interactive simulation CLI for active work actions
+npx tsx scripts/simulate-active-work.ts fund <milestone_id>
+npx tsx scripts/simulate-active-work.ts release <milestone_id>
+npx tsx scripts/simulate-active-work.ts approve <milestone_id>
+npx tsx scripts/simulate-active-work.ts revision <milestone_id> "Adjust north elevation"
+npx tsx scripts/simulate-active-work.ts approve-invoice <invoice_id>
+npx tsx scripts/simulate-active-work.ts dispute-invoice <invoice_id> "Exceeds scope"
+```
+
 ---
 
 ## How to Apply Phase 2 Migrations
