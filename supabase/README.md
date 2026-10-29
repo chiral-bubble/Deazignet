@@ -39,6 +39,40 @@ The migrations are sequentially numbered in `/supabase/migrations/`:
 | `016_phase3_rls_views.sql` | Mutation revocation from authenticated role, strict RLS read policies for parties, function execution grants. |
 | `013_through_016_phase3_all.sql` | Combined all-in-one Phase 3 migration script for single-click execution in Supabase SQL Editor. |
 
+### Phase 4: Amendments, Conversations (Realtime) & Notifications
+| File | Purpose |
+| :--- | :--- |
+| `017_phase3_amendments.sql` | 14-day deliverable auto-approval, 5-day mandatory payout security period, `client_raise_dispute`, `resolve_dispute`, `dev_fast_forward`, scheduled jobs (`send_review_reminders`, `auto_approve_overdue`, `release_due_payouts`), and `job_runs` audit table. |
+| `018_conversations_schema.sql` | `conversations`, `messages` (1-4000 chars, no editing/deleting), `message_attachments` (max 10, max 25MB, allowed types), `conversation_user_settings` (muted, archived, last_read_at), `conversation_reports`. |
+| `019_conversations_functions.sql` | Functions for messaging: `start_conversation` (client-initiated only), `send_message` (rate limit 20/min, off-platform flag check), `mark_delivered`, `mark_read`, `set_conversation_flags`, `report_conversation`, `get_unread_counts`, lifecycle auto-close and system event triggers. |
+| `020_notifications.sql` | `notification_type` enum (21 types), `notifications` (soft delete for 10-second undo window), `notification_preferences` (in-app, email), `create_notification` with idempotency, management functions, proposal & credential event triggers. |
+| `021_phase4_rls_realtime.sql` | RLS policies for conversations, messages, and notifications; Supabase Realtime publication setup for `messages`, `conversations`, and `notifications`. |
+| `017_through_021_phase4_all.sql` | Combined all-in-one Phase 4 migration script for single-click execution in Supabase SQL Editor. |
+
+---
+
+## How to Apply Phase 4 Migrations
+
+### Supabase Dashboard SQL Editor
+1. Open your project on Supabase: [https://supabase.com/dashboard/project/hnssctjagfwdfbagpikv/sql](https://supabase.com/dashboard/project/hnssctjagfwdfbagpikv/sql)
+2. Click **New query** (the `+` tab).
+3. Open `supabase/migrations/017_through_021_phase4_all.sql`.
+4. Copy all contents, paste into the editor, and click **Run**.
+
+---
+
+## Phase 4 Seeding & Running Tests
+
+```bash
+# Seed realistic conversations, messages, attachments, and ~15 notifications
+npx tsx scripts/seed-phase4.ts
+
+# Run the automated Phase 4 verification test suite
+npx tsx scripts/test-phase4.ts
+```
+
+---
+
 ---
 
 ## How to Apply Phase 3 Migrations

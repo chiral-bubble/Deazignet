@@ -31,11 +31,36 @@ export type MilestoneStatus =
   | 'revision_requested'
   | 'approved'
   | 'disputed';
-export type PayoutStatus = 'not_due' | 'pending_release' | 'released';
+export type PayoutStatus = 'not_due' | 'pending_release' | 'on_hold' | 'released' | 'cancelled';
 export type TimeEntryStatus = 'draft' | 'submitted' | 'approved' | 'disputed';
 export type InvoiceStatus = 'pending_approval' | 'approved' | 'paid' | 'disputed';
 export type DisputeStatus = 'open' | 'resolved';
 export type TicketType = 'help' | 'problem';
+export type ApprovalSource = 'client' | 'auto';
+
+// Phase 4 enums
+export type NotificationType =
+  | 'proposal_received'
+  | 'proposal_viewed'
+  | 'proposal_shortlisted'
+  | 'proposal_accepted'
+  | 'proposal_declined'
+  | 'milestone_funded'
+  | 'deliverable_submitted'
+  | 'review_reminder'
+  | 'deliverable_approved'
+  | 'approved_automatically'
+  | 'revision_requested'
+  | 'payment_released'
+  | 'dispute_opened'
+  | 'dispute_resolved'
+  | 'withdrawal_paid'
+  | 'withdrawal_failed'
+  | 'message_received'
+  | 'credential_verified'
+  | 'credential_rejected'
+  | 'plan_renewal'
+  | 'system_announcement';
 
 export type Database = {
   public: {
@@ -605,6 +630,8 @@ export type Database = {
           approved_at: string | null;
           released_at: string | null;
           revision_count: number;
+          approval_source: ApprovalSource | null;
+          release_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -627,6 +654,8 @@ export type Database = {
           approved_at?: string | null;
           released_at?: string | null;
           revision_count?: number;
+          approval_source?: ApprovalSource | null;
+          release_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -649,6 +678,8 @@ export type Database = {
           approved_at?: string | null;
           released_at?: string | null;
           revision_count?: number;
+          approval_source?: ApprovalSource | null;
+          release_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -812,6 +843,8 @@ export type Database = {
           number: string;
           created_at: string;
           approved_at: string | null;
+          approval_source: ApprovalSource | null;
+          release_at: string | null;
         };
         Insert: {
           id?: string;
@@ -824,6 +857,8 @@ export type Database = {
           number: string;
           created_at?: string;
           approved_at?: string | null;
+          approval_source?: ApprovalSource | null;
+          release_at?: string | null;
         };
         Update: {
           id?: string;
@@ -836,6 +871,8 @@ export type Database = {
           number?: string;
           created_at?: string;
           approved_at?: string | null;
+          approval_source?: ApprovalSource | null;
+          release_at?: string | null;
         };
         Relationships: [];
       };
@@ -941,6 +978,263 @@ export type Database = {
           status?: string;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      conversations: {
+        Row: {
+          id: string;
+          project_id: string;
+          proposal_id: string;
+          client_id: string;
+          designer_id: string;
+          status: 'active' | 'closed';
+          created_by: string;
+          created_at: string;
+          last_message_at: string | null;
+          last_message_preview: string | null;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          proposal_id: string;
+          client_id: string;
+          designer_id: string;
+          status?: 'active' | 'closed';
+          created_by: string;
+          created_at?: string;
+          last_message_at?: string | null;
+          last_message_preview?: string | null;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          proposal_id?: string;
+          client_id?: string;
+          designer_id?: string;
+          status?: 'active' | 'closed';
+          created_by?: string;
+          created_at?: string;
+          last_message_at?: string | null;
+          last_message_preview?: string | null;
+        };
+        Relationships: [];
+      };
+
+      messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string | null;
+          kind: 'user' | 'system';
+          system_type: string | null;
+          body: string;
+          created_at: string;
+          delivered_at: string | null;
+          flagged: boolean;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          sender_id?: string | null;
+          kind?: 'user' | 'system';
+          system_type?: string | null;
+          body: string;
+          created_at?: string;
+          delivered_at?: string | null;
+          flagged?: boolean;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          sender_id?: string | null;
+          kind?: 'user' | 'system';
+          system_type?: string | null;
+          body?: string;
+          created_at?: string;
+          delivered_at?: string | null;
+          flagged?: boolean;
+        };
+        Relationships: [];
+      };
+
+      message_attachments: {
+        Row: {
+          id: string;
+          message_id: string;
+          path: string;
+          file_name: string;
+          size_bytes: number;
+          mime_type: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          message_id: string;
+          path: string;
+          file_name: string;
+          size_bytes: number;
+          mime_type?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          message_id?: string;
+          path?: string;
+          file_name?: string;
+          size_bytes?: number;
+          mime_type?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      conversation_user_settings: {
+        Row: {
+          conversation_id: string;
+          user_id: string;
+          muted: boolean;
+          archived: boolean;
+          last_read_at: string | null;
+        };
+        Insert: {
+          conversation_id: string;
+          user_id: string;
+          muted?: boolean;
+          archived?: boolean;
+          last_read_at?: string | null;
+        };
+        Update: {
+          conversation_id?: string;
+          user_id?: string;
+          muted?: boolean;
+          archived?: boolean;
+          last_read_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      conversation_reports: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          reporter_id: string;
+          reason: string;
+          details: string;
+          status: 'open' | 'resolved';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          reporter_id: string;
+          reason: string;
+          details: string;
+          status?: 'open' | 'resolved';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          reporter_id?: string;
+          reason?: string;
+          details?: string;
+          status?: 'open' | 'resolved';
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          body: string;
+          data: Json;
+          created_at: string;
+          read_at: string | null;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          body: string;
+          data?: Json;
+          created_at?: string;
+          read_at?: string | null;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: NotificationType;
+          title?: string;
+          body?: string;
+          data?: Json;
+          created_at?: string;
+          read_at?: string | null;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      notification_preferences: {
+        Row: {
+          user_id: string;
+          type: NotificationType;
+          in_app: boolean;
+          email: boolean;
+        };
+        Insert: {
+          user_id: string;
+          type: NotificationType;
+          in_app?: boolean;
+          email?: boolean;
+        };
+        Update: {
+          user_id?: string;
+          type?: NotificationType;
+          in_app?: boolean;
+          email?: boolean;
+        };
+        Relationships: [];
+      };
+
+      job_runs: {
+        Row: {
+          id: string;
+          job_name: string;
+          started_at: string;
+          completed_at: string | null;
+          status: string;
+          items_processed: number;
+          details: Json;
+          error: string | null;
+        };
+        Insert: {
+          id?: string;
+          job_name: string;
+          started_at?: string;
+          completed_at?: string | null;
+          status?: string;
+          items_processed?: number;
+          details?: Json;
+          error?: string | null;
+        };
+        Update: {
+          id?: string;
+          job_name?: string;
+          started_at?: string;
+          completed_at?: string | null;
+          status?: string;
+          items_processed?: number;
+          details?: Json;
+          error?: string | null;
         };
         Relationships: [];
       };
@@ -1094,6 +1388,88 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: Json;
       };
+
+      // Phase 4 Functions
+      client_raise_dispute: {
+        Args: { p_item_type: 'milestone' | 'invoice'; p_item_id: string; p_reason: string; p_details: string };
+        Returns: string;
+      };
+      resolve_dispute: {
+        Args: { p_dispute_id: string; p_outcome: string; p_split_percent?: number | null; p_note?: string };
+        Returns: void;
+      };
+      dev_fast_forward: {
+        Args: { p_item_type: 'milestone' | 'invoice'; p_item_id: string; p_days: number };
+        Returns: void;
+      };
+      send_review_reminders: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      auto_approve_overdue: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      release_due_payouts: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      start_conversation: {
+        Args: { p_project_id: string; p_designer_id: string; p_first_message: string; p_attachments?: Json };
+        Returns: string;
+      };
+      send_message: {
+        Args: { p_conversation_id: string; p_body: string; p_attachments?: Json };
+        Returns: string;
+      };
+      mark_delivered: {
+        Args: { p_conversation_id: string };
+        Returns: void;
+      };
+      mark_read: {
+        Args: { p_conversation_id: string };
+        Returns: void;
+      };
+      set_conversation_flags: {
+        Args: { p_conversation_id: string; p_muted?: boolean | null; p_archived?: boolean | null };
+        Returns: void;
+      };
+      report_conversation: {
+        Args: { p_conversation_id: string; p_reason: string; p_details: string };
+        Returns: string;
+      };
+      get_unread_counts: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      create_notification: {
+        Args: { p_user_id: string; p_type: NotificationType; p_title: string; p_body: string; p_data?: Json };
+        Returns: string | null;
+      };
+      mark_notification_read: {
+        Args: { p_id: string; p_read?: boolean };
+        Returns: void;
+      };
+      mark_all_notifications_read: {
+        Args: { p_type?: NotificationType | null };
+        Returns: void;
+      };
+      delete_notification: {
+        Args: { p_id: string };
+        Returns: void;
+      };
+      undo_delete_notification: {
+        Args: { p_id: string };
+        Returns: void;
+      };
+      purge_old_notifications: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      announce_system: {
+        Args: { p_title: string; p_body: string; p_audience?: string };
+        Returns: number;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -1110,6 +1486,8 @@ export type Database = {
       invoice_status: InvoiceStatus;
       dispute_status: DisputeStatus;
       ticket_type: TicketType;
+      approval_source: ApprovalSource;
+      notification_type: NotificationType;
     };
     CompositeTypes: Record<string, never>;
   };

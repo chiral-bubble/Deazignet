@@ -11,6 +11,7 @@ import {
   type NotificationPayload
 } from '../config/notificationTypes';
 import { getProfile } from './designerProfileService';
+import { supabase, USE_MOCKS } from '../lib/supabase';
 
 export interface NotificationItem {
   id: string;
@@ -186,6 +187,70 @@ export async function getNotifications(
 ): Promise<GetNotificationsResult> {
   const { tab = 'all', typeCategory = 'all', cursor = 0, limit = 20 } = options;
 
+  if (!USE_MOCKS.notifications) {
+    const { data: userAuth } = await supabase.auth.getUser();
+    const currentUserId = userAuth.user?.id;
+    if (!currentUserId) {
+      return { notifications: [], totalCount: 0, unreadCount: 0, hasMore: false };
+    }
+
+    let query = supabase
+      .from('notifications')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    if (tab === 'unread') {
+      query = query.is('read_at', null);
+    }
+
+    const { data: rows, count } = await query.range(cursor, cursor + limit - 1);
+
+    const items: NotificationItem[] = (rows || []).map((row: any) => {
+      const cfg = NOTIFICATION_TYPES[row.type as NotificationTypeKey];
+      const payload = row.data || {};
+      const destination = cfg ? cfg.getDestination(payload) : '#notifications';
+
+      const createdDate = new Date(row.created_at);
+      const now = new Date();
+      const diffHours = (now.getTime() - createdDate.getTime()) / 3600000;
+      let dateGroup: 'Today' | 'Yesterday' | 'This week' | 'Earlier' = 'Earlier';
+      if (diffHours < 24) dateGroup = 'Today';
+      else if (diffHours < 48) dateGroup = 'Yesterday';
+      else if (diffHours < 168) dateGroup = 'This week';
+
+      return {
+        id: row.id,
+        type: row.type as NotificationTypeKey,
+        title: row.title,
+        detail: row.body,
+        timestamp: createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        dateGroup,
+        isUnread: row.read_at === null,
+        payload,
+        destinationUrl: destination
+      };
+    });
+
+    let filtered = items;
+    if (typeCategory && typeCategory !== 'all') {
+      filtered = filtered.filter((n) => {
+        const cfg = NOTIFICATION_TYPES[n.type];
+        return cfg && cfg.category === typeCategory;
+      });
+    }
+
+    const totalCount = count || filtered.length;
+    const unreadCount = filtered.filter((n) => n.isUnread).length;
+
+    return {
+      notifications: filtered,
+      totalCount,
+      unreadCount,
+      hasMore: cursor + limit < totalCount,
+      nextCursor: cursor + limit < totalCount ? cursor + limit : undefined
+    };
+  }
+
   await new Promise((r) => setTimeout(r, 60)); // Small simulated API latency
 
   // Only non-deleted notifications
@@ -235,6 +300,10 @@ export function getUnreadNotificationsCount(): { count: number; display: string 
  * Mark a specific notification as read or unread
  */
 export async function markAsRead(id: string, isRead = true): Promise<void> {
+  if (!USE_MOCKS.notifications) {
+    await supabase.rpc('mark_notification_read', { p_id: id, p_read: isRead });
+    return;
+  }
   const item = notificationsStore.find((n) => n.id === id);
   if (item) {
     item.isUnread = !isRead;
@@ -245,6 +314,10 @@ export async function markAsRead(id: string, isRead = true): Promise<void> {
  * Mark all active notifications as read
  */
 export async function markAllAsRead(): Promise<void> {
+  if (!USE_MOCKS.notifications) {
+    await supabase.rpc('mark_all_notifications_read');
+    return;
+  }
   notificationsStore.forEach((n) => {
     if (!n.deletedAt) n.isUnread = false;
   });
@@ -254,6 +327,10 @@ export async function markAllAsRead(): Promise<void> {
  * Delete a notification with undo support
  */
 export async function deleteNotification(id: string): Promise<boolean> {
+  if (!USE_MOCKS.notifications) {
+    const { error } = await supabase.rpc('delete_notification', { p_id: id });
+    return !error;
+  }
   const idx = notificationsStore.findIndex((n) => n.id === id);
   if (idx !== -1) {
     const item = notificationsStore[idx];
@@ -268,6 +345,13 @@ export async function deleteNotification(id: string): Promise<boolean> {
  * Undo recent deletion
  */
 export async function undoDeleteNotification(id?: string): Promise<NotificationItem | null> {
+  if (!USE_MOCKS.notifications && id) {
+    const { error } = await supabase.rpc('undo_delete_notification', { p_id: id });
+    if (!error) {
+      return { id } as any;
+    }
+    return null;
+  }
   const entry = id
     ? recentlyDeletedStack.find((e) => e.item.id === id)
     : recentlyDeletedStack.pop();
