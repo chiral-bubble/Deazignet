@@ -229,3 +229,4 @@ GRANT EXECUTE ON FUNCTION public.mark_proposal_viewed TO authenticated;
 GRANT EXECUTE ON FUNCTION public.shortlist_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.decline_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.proposal_usage TO authenticated;
+

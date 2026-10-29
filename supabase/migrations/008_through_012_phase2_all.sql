@@ -159,6 +159,19 @@ CREATE POLICY "Admins can manage plan_limits"
 -- PART 2: 009_client_profiles_projects.sql
 -- ------------------------------------------------------------------------------
 
+-- Drop legacy prototype tables if present from earlier testing to ensure clean schema
+DROP TABLE IF EXISTS public.proposal_versions CASCADE;
+DROP TABLE IF EXISTS public.proposal_events CASCADE;
+DROP TABLE IF EXISTS public.proposal_portfolio_items CASCADE;
+DROP TABLE IF EXISTS public.proposal_milestones CASCADE;
+DROP TABLE IF EXISTS public.proposals CASCADE;
+DROP TABLE IF EXISTS public.project_images CASCADE;
+DROP TABLE IF EXISTS public.project_milestones CASCADE;
+DROP TABLE IF EXISTS public.projects CASCADE;
+DROP TABLE IF EXISTS public.client_profiles CASCADE;
+DROP VIEW IF EXISTS public.open_projects CASCADE;
+DROP VIEW IF EXISTS public.client_summaries CASCADE;
+
 -- Client Profiles Table
 CREATE TABLE IF NOT EXISTS public.client_profiles (
     user_id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -1522,3 +1535,4 @@ GRANT EXECUTE ON FUNCTION public.mark_proposal_viewed TO authenticated;
 GRANT EXECUTE ON FUNCTION public.shortlist_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.decline_proposal TO authenticated;
 GRANT EXECUTE ON FUNCTION public.proposal_usage TO authenticated;
+
