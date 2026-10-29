@@ -612,3 +612,129 @@
     font-weight: 600;
   }
 }
+
+/* ============================================================
+   Role Selector & Modals (Phase 1 Auth)
+   ============================================================ */
+.auth-role-selector {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.auth-role-heading {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.auth-role-radios {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-role-chip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.auth-role-chip:hover {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+}
+
+.auth-role-chip input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: #2F7BE5;
+}
+
+.auth-role-chip input[type="radio"] {
+  accent-color: #2F7BE5;
+}
+
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(11, 20, 38, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.auth-modal-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 28px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.auth-modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 6px;
+}
+
+.auth-modal-subtitle {
+  font-size: 0.875rem;
+  color: #64748B;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.auth-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-auth-primary {
+  background: #2F7BE5;
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-auth-primary:hover {
+  background: #2563eb;
+}
+
+.btn-auth-secondary {
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-auth-secondary:hover {
+  background: #E2E8F0;
+}

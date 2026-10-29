@@ -5,6 +5,11 @@
  * Functions can be swapped for real backend API calls later.
  */
 
+import { supabase, USE_MOCKS } from '../lib/supabase';
+import { getAuthState, changePasswordWithVerification } from './authService';
+
+const db = supabase as any;
+
 export type ProfessionalType =
   | 'Architect'
   | 'Interior Designer'
@@ -140,6 +145,7 @@ export interface DesignerProfile {
   notifications: DesignerNotificationSettings;
   showInDesignerSearch?: boolean;
   hideRateFromPeers?: boolean;
+  showHourlyRate?: boolean;
 }
 
 export interface CompletenessCheckItem {
@@ -1463,180 +1469,658 @@ export function calculateProfileCompleteness(profile: DesignerProfile): ProfileC
   return { score, checklist };
 }
 
+export async function getProfileCompleteness(designerId?: string): Promise<ProfileCompletenessResult> {
+  const targetId = designerId || getAuthState().user?.id;
+
+  if (!USE_MOCKS.profiles && targetId) {
+    try {
+      const { data, error } = await db.rpc('get_profile_completeness', { p_designer_id: targetId });
+      if (!error && data) {
+        return data as ProfileCompletenessResult;
+      }
+    } catch (e) {
+      console.warn('RPC get_profile_completeness error, falling back:', e);
+    }
+  }
+
+  const profile = await getProfile();
+  return calculateProfileCompleteness(profile);
+}
+
+// Helper mapping from DB rows to frontend DesignerProfile
+function mapDbToDesignerProfile(
+  profile: any,
+  designerProfile: any,
+  portfolioProjects: any[] = [],
+  credentials: any[] = []
+): DesignerProfile {
+  const locParts = (profile?.location || '').split(',').map((s: string) => s.trim());
+  const city = locParts[0] || 'Zurich';
+  const country = locParts[1] || 'Switzerland';
+
+  const mappedCredentials: DesignerCredential[] = credentials.map((c) => ({
+    id: c.id,
+    registrationBody: c.body,
+    registrationNumber: c.number || c.masked_number || '••••',
+    stateOrRegion: c.state_region,
+    year: c.year,
+    certificateUrl: c.certificate_path || undefined,
+    status: c.status as CredentialStatus,
+    rejectionReason: c.rejection_reason || undefined
+  }));
+
+  const mappedPortfolio: PortfolioProject[] = portfolioProjects.map((p, idx) => {
+    const rawImages = p.portfolio_images || p.images || [];
+    const images: PortfolioImage[] = Array.isArray(rawImages)
+      ? rawImages.map((img: any, iIdx: number) => ({
+          id: img.id || `img-${p.id}-${iIdx}`,
+          url: img.path || p.cover_image_path || ARCH_IMAGES[0],
+          caption: p.title,
+          isCover: iIdx === 0
+        }))
+      : [];
+
+    if (images.length === 0 && p.cover_image_path) {
+      images.push({
+        id: `img-${p.id}-cover`,
+        url: p.cover_image_path,
+        caption: p.title,
+        isCover: true
+      });
+    }
+
+    return {
+      id: p.id || p.project_id,
+      title: p.title,
+      year: p.year || 2024,
+      category: p.category || 'Residential',
+      location: p.location || `${city}, ${country}`,
+      shortDescription: p.description || '',
+      role: p.role || 'Lead Architect',
+      order: p.sort_order || idx + 1,
+      images
+    };
+  });
+
+  const profTypeMap: Record<string, ProfessionalType> = {
+    architect: 'Architect',
+    interior_designer: 'Interior Designer',
+    landscape_architect: 'Landscape Architect',
+    engineer: 'Engineer'
+  };
+
+  const rawType = (designerProfile?.professional_type || 'architect').toLowerCase();
+  const professionalType: ProfessionalType = profTypeMap[rawType] || 'Architect';
+
+  return {
+    id: profile?.id || 'des-1',
+    name: profile?.full_name || 'Alexandre Sterling',
+    avatarUrl: profile?.avatar_path || ARCH_IMAGES[0],
+    professionalTitle: designerProfile?.title || 'Principal Architect & Urbanist',
+    professionalType,
+    companyName: designerProfile?.studio_name || 'Sterling Atelier Architecture',
+    location: { city, state: city, country },
+    email: profile?.email || 'alexandre.sterling@dezignet.studio',
+    phone: profile?.phone || '+41 44 214 8900',
+    languages: designerProfile?.languages || ['English'],
+    yearsOfExperience: designerProfile?.years_experience || 10,
+    about: designerProfile?.bio || '',
+    specializations: designerProfile?.specializations || ['Residential'],
+    hourlyRate: designerProfile?.hourly_rate ?? 140,
+    showHourlyRate: designerProfile?.show_hourly_rate ?? true,
+    showInDesignerSearch: designerProfile?.show_in_search ?? true,
+    isAvailableForProjects: designerProfile?.is_available ?? true,
+    availabilityNote: designerProfile?.availability_note || '',
+    memberSince: designerProfile?.member_since || 'March 2022',
+    stats: {
+      projectsCompleted: 24,
+      averageRating: 4.96,
+      reviewCount: 18,
+      responseTime: 'Under 1 hour'
+    },
+    currentPlanId: 'upgraded',
+    planBillingCycle: 'yearly',
+    hasActiveProjectsOrEscrow: false,
+    credentials: mappedCredentials,
+    portfolio: mappedPortfolio,
+    reviews: [],
+    payoutAccounts: [],
+    invoices: [],
+    sessions: [],
+    notifications: {
+      email: {
+        newMessage: true,
+        proposalViewed: true,
+        proposalShortlisted: true,
+        proposalAccepted: true,
+        milestoneApproved: true,
+        paymentReleased: true,
+        platformNews: false
+      },
+      inApp: {
+        newMessage: true,
+        proposalViewed: true,
+        proposalShortlisted: true,
+        proposalAccepted: true,
+        milestoneApproved: true,
+        paymentReleased: true,
+        platformNews: true
+      }
+    }
+  };
+}
+
 // ============================================================================
 // SERVICE FUNCTIONS (Swappable for Real APIs)
 // ============================================================================
 
 export async function getProfile(): Promise<DesignerProfile> {
-  await delay(120);
-  const found = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!found) {
+  if (USE_MOCKS.profiles) {
+    await delay(120);
+    const found = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!found) {
+      return JSON.parse(JSON.stringify(designersStore[0]));
+    }
+    return JSON.parse(JSON.stringify(found));
+  }
+
+  try {
+    const authUser = getAuthState().user;
+    const userId = authUser?.id;
+
+    if (!userId) {
+      // Fallback to primary store designer if not logged in
+      return JSON.parse(JSON.stringify(designersStore[0]));
+    }
+
+    const [
+      { data: profile, error: pErr },
+      { data: designerProfile },
+      { data: portfolio },
+      { data: credentials }
+    ] = await Promise.all([
+      db.from('profiles').select('*').eq('id', userId).maybeSingle(),
+      db.from('designer_profiles').select('*').eq('user_id', userId).maybeSingle(),
+      db.from('portfolio_projects').select('*, portfolio_images(*)').eq('designer_id', userId).order('sort_order', { ascending: true }),
+      db.from('credentials').select('*').eq('designer_id', userId).order('year', { ascending: false })
+    ]);
+
+    if (pErr || !profile) {
+      console.warn('Profile not found in Supabase, using fallback:', pErr);
+      return JSON.parse(JSON.stringify(designersStore[0]));
+    }
+
+    return mapDbToDesignerProfile(profile, designerProfile, portfolio || [], credentials || []);
+  } catch (err) {
+    console.error('getProfile Supabase error:', err);
     return JSON.parse(JSON.stringify(designersStore[0]));
   }
-  return JSON.parse(JSON.stringify(found));
 }
 
 export async function updateProfile(updates: Partial<DesignerProfile>): Promise<DesignerProfile> {
-  await delay(150);
-  const index = designersStore.findIndex((d) => d.id === activeLoggedUserId);
-  if (index === -1) throw new Error('Designer profile not found');
+  if (USE_MOCKS.profiles) {
+    await delay(150);
+    const index = designersStore.findIndex((d) => d.id === activeLoggedUserId);
+    if (index === -1) throw new Error('Designer profile not found');
 
-  designersStore[index] = {
-    ...designersStore[index],
-    ...updates,
-    location: {
-      ...designersStore[index].location,
-      ...(updates.location || {})
+    designersStore[index] = {
+      ...designersStore[index],
+      ...updates,
+      location: {
+        ...designersStore[index].location,
+        ...(updates.location || {})
+      }
+    };
+    return JSON.parse(JSON.stringify(designersStore[index]));
+  }
+
+  try {
+    const authUser = getAuthState().user;
+    const userId = authUser?.id;
+    if (!userId) throw new Error('Must be logged in to update profile');
+
+    // 1. Update profiles table
+    const profileUpdates: any = {};
+    if (updates.name) profileUpdates.full_name = updates.name.trim();
+    if (updates.avatarUrl !== undefined) profileUpdates.avatar_path = updates.avatarUrl;
+    if (updates.phone !== undefined) profileUpdates.phone = updates.phone;
+    if (updates.location) {
+      profileUpdates.location = `${updates.location.city || ''}, ${updates.location.country || ''}`.trim();
     }
-  };
 
-  return JSON.parse(JSON.stringify(designersStore[index]));
+    if (Object.keys(profileUpdates).length > 0) {
+      const { error: pErr } = await supabase
+        .from('profiles')
+        .update(profileUpdates)
+        .eq('id', userId);
+      if (pErr) throw pErr;
+    }
+
+    // 2. Update designer_profiles table
+    const dpUpdates: any = {};
+    if (updates.professionalTitle !== undefined) dpUpdates.title = updates.professionalTitle;
+    if (updates.companyName !== undefined) dpUpdates.studio_name = updates.companyName;
+    if (updates.about !== undefined) dpUpdates.bio = updates.about.slice(0, 600);
+    if (updates.specializations !== undefined) dpUpdates.specializations = updates.specializations;
+    if (updates.languages !== undefined) dpUpdates.languages = updates.languages;
+    if (updates.yearsOfExperience !== undefined) dpUpdates.years_experience = updates.yearsOfExperience;
+    if (updates.hourlyRate !== undefined) dpUpdates.hourly_rate = updates.hourlyRate;
+    if (updates.showHourlyRate !== undefined) dpUpdates.show_hourly_rate = updates.showHourlyRate;
+    if (updates.showInDesignerSearch !== undefined) dpUpdates.show_in_search = updates.showInDesignerSearch;
+    if (updates.isAvailableForProjects !== undefined) dpUpdates.is_available = updates.isAvailableForProjects;
+    if (updates.availabilityNote !== undefined) dpUpdates.availability_note = updates.availabilityNote;
+
+    if (updates.professionalType) {
+      const typeKey = updates.professionalType.toLowerCase().replace(/\s+/g, '_');
+      dpUpdates.professional_type = typeKey;
+    }
+
+    if (Object.keys(dpUpdates).length > 0) {
+      const { error: dpErr } = await supabase
+        .from('designer_profiles')
+        .update(dpUpdates)
+        .eq('user_id', userId);
+      if (dpErr) throw dpErr;
+    }
+
+    return await getProfile();
+  } catch (err: any) {
+    console.error('updateProfile error:', err);
+    throw new Error(err.message || 'Failed to update profile');
+  }
 }
 
 export async function uploadPortfolioItem(
   item: Omit<PortfolioProject, 'id' | 'order'>
 ): Promise<PortfolioProject> {
-  await delay(200);
-  const profile = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!profile) throw new Error('Designer profile not found');
+  if (USE_MOCKS.portfolio) {
+    await delay(200);
+    const profile = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!profile) throw new Error('Designer profile not found');
 
-  const newId = `port-${Date.now()}`;
-  const newOrder = profile.portfolio.length + 1;
-  const newProject: PortfolioProject = {
-    ...item,
-    id: newId,
-    order: newOrder
-  };
+    const newId = `port-${Date.now()}`;
+    const newOrder = profile.portfolio.length + 1;
+    const newProject: PortfolioProject = {
+      ...item,
+      id: newId,
+      order: newOrder
+    };
 
-  profile.portfolio.push(newProject);
-  return JSON.parse(JSON.stringify(newProject));
+    profile.portfolio.push(newProject);
+    return JSON.parse(JSON.stringify(newProject));
+  }
+
+  try {
+    const authUser = getAuthState().user;
+    const userId = authUser?.id;
+    if (!userId) throw new Error('Must be logged in to add portfolio projects');
+
+    // Get current project count for sort order
+    const { count } = await supabase
+      .from('portfolio_projects')
+      .select('*', { count: 'exact', head: true })
+      .eq('designer_id', userId);
+
+    const sortOrder = (count || 0) + 1;
+    const coverUrl = item.images?.find((i) => i.isCover)?.url || item.images?.[0]?.url || null;
+
+    const { data: newProject, error: projErr } = await supabase
+      .from('portfolio_projects')
+      .insert({
+        designer_id: userId,
+        title: item.title,
+        year: Number(item.year) || null,
+        category: item.category,
+        location: item.location,
+        description: item.shortDescription,
+        role: item.role,
+        sort_order: sortOrder,
+        cover_image_path: coverUrl
+      })
+      .select()
+      .single();
+
+    if (projErr) throw projErr;
+
+    // Insert associated images
+    const imagesToInsert = (item.images || []).map((img, idx) => ({
+      portfolio_project_id: newProject.id,
+      path: img.url,
+      sort_order: idx + 1
+    }));
+
+    if (imagesToInsert.length > 0) {
+      await supabase.from('portfolio_images').insert(imagesToInsert);
+    }
+
+    return {
+      id: newProject.id,
+      title: newProject.title,
+      year: newProject.year || 2024,
+      category: newProject.category || '',
+      location: newProject.location || '',
+      shortDescription: newProject.description || '',
+      role: newProject.role || '',
+      order: newProject.sort_order,
+      images: item.images || []
+    };
+  } catch (err: any) {
+    console.error('uploadPortfolioItem error:', err);
+    throw new Error(err.message || 'Failed to create portfolio item');
+  }
 }
 
 export async function updatePortfolioItem(
   id: string,
   updates: Partial<PortfolioProject>
 ): Promise<PortfolioProject> {
-  await delay(180);
-  const profile = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!profile) throw new Error('Designer profile not found');
+  if (USE_MOCKS.portfolio) {
+    await delay(180);
+    const profile = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!profile) throw new Error('Designer profile not found');
 
-  const pIndex = profile.portfolio.findIndex((p) => p.id === id);
-  if (pIndex === -1) throw new Error('Portfolio project not found');
+    const pIndex = profile.portfolio.findIndex((p) => p.id === id);
+    if (pIndex === -1) throw new Error('Portfolio project not found');
 
-  profile.portfolio[pIndex] = {
-    ...profile.portfolio[pIndex],
-    ...updates
-  };
+    profile.portfolio[pIndex] = {
+      ...profile.portfolio[pIndex],
+      ...updates
+    };
 
-  return JSON.parse(JSON.stringify(profile.portfolio[pIndex]));
+    return JSON.parse(JSON.stringify(profile.portfolio[pIndex]));
+  }
+
+  try {
+    const dbUpdates: any = {};
+    if (updates.title) dbUpdates.title = updates.title;
+    if (updates.year !== undefined) dbUpdates.year = Number(updates.year) || null;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.location !== undefined) dbUpdates.location = updates.location;
+    if (updates.shortDescription !== undefined) dbUpdates.description = updates.shortDescription;
+    if (updates.role !== undefined) dbUpdates.role = updates.role;
+    if (updates.images && updates.images.length > 0) {
+      dbUpdates.cover_image_path = updates.images.find((i) => i.isCover)?.url || updates.images[0].url;
+    }
+
+    const { data: updated, error } = await supabase
+      .from('portfolio_projects')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select('*, portfolio_images(*)')
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: updated.id,
+      title: updated.title,
+      year: updated.year || 2024,
+      category: updated.category || '',
+      location: updated.location || '',
+      shortDescription: updated.description || '',
+      role: updated.role || '',
+      order: updated.sort_order,
+      images: updates.images || []
+    };
+  } catch (err: any) {
+    console.error('updatePortfolioItem error:', err);
+    throw new Error(err.message || 'Failed to update portfolio item');
+  }
 }
 
 export async function reorderPortfolio(projectIds: string[]): Promise<PortfolioProject[]> {
-  await delay(120);
-  const profile = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!profile) throw new Error('Designer profile not found');
+  if (USE_MOCKS.portfolio) {
+    await delay(120);
+    const profile = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!profile) throw new Error('Designer profile not found');
 
-  const reordered: PortfolioProject[] = [];
-  projectIds.forEach((id, index) => {
-    const item = profile.portfolio.find((p) => p.id === id);
-    if (item) {
-      item.order = index + 1;
-      reordered.push(item);
-    }
-  });
+    const reordered: PortfolioProject[] = [];
+    projectIds.forEach((id, index) => {
+      const item = profile.portfolio.find((p) => p.id === id);
+      if (item) {
+        item.order = index + 1;
+        reordered.push(item);
+      }
+    });
 
-  profile.portfolio = reordered;
-  return JSON.parse(JSON.stringify(profile.portfolio));
+    profile.portfolio = reordered;
+    return JSON.parse(JSON.stringify(profile.portfolio));
+  }
+
+  try {
+    // Update sort orders in Supabase
+    await Promise.all(
+      projectIds.map((id, index) =>
+        supabase
+          .from('portfolio_projects')
+          .update({ sort_order: index + 1 })
+          .eq('id', id)
+      )
+    );
+
+    const prof = await getProfile();
+    return prof.portfolio;
+  } catch (err: any) {
+    console.error('reorderPortfolio error:', err);
+    throw new Error(err.message || 'Failed to reorder portfolio');
+  }
 }
 
 export async function deletePortfolioItem(id: string): Promise<boolean> {
-  await delay(150);
-  const profile = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!profile) throw new Error('Designer profile not found');
+  if (USE_MOCKS.portfolio) {
+    await delay(150);
+    const profile = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!profile) throw new Error('Designer profile not found');
 
-  profile.portfolio = profile.portfolio.filter((p) => p.id !== id);
-  // Re-index orders
-  profile.portfolio.forEach((p, idx) => {
-    p.order = idx + 1;
-  });
-  return true;
+    profile.portfolio = profile.portfolio.filter((p) => p.id !== id);
+    profile.portfolio.forEach((p, idx) => {
+      p.order = idx + 1;
+    });
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('portfolio_projects')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return true;
+  } catch (err: any) {
+    console.error('deletePortfolioItem error:', err);
+    throw new Error(err.message || 'Failed to delete portfolio item');
+  }
 }
 
 export async function getPublicProfile(id: string): Promise<DesignerProfile | null> {
-  await delay(140);
-  const designer = designersStore.find((d) => d.id === id);
-  if (!designer) return null;
-  return JSON.parse(JSON.stringify(designer));
+  if (USE_MOCKS.profiles) {
+    await delay(140);
+    const designer = designersStore.find((d) => d.id === id);
+    if (!designer) return null;
+    return JSON.parse(JSON.stringify(designer));
+  }
+
+  try {
+    const [
+      { data: viewProfile, error: vErr },
+      { data: portfolio },
+      { data: credentials }
+    ] = await Promise.all([
+      supabase.from('public_designer_profiles').select('*').eq('designer_id', id).maybeSingle(),
+      supabase.from('public_portfolio').select('*').eq('designer_id', id).order('sort_order', { ascending: true }),
+      supabase.from('public_credentials').select('*').eq('designer_id', id).order('year', { ascending: false })
+    ]);
+
+    if (vErr || !viewProfile) {
+      // Fallback check in mock store
+      const mockFound = designersStore.find((d) => d.id === id);
+      return mockFound ? JSON.parse(JSON.stringify(mockFound)) : null;
+    }
+
+    return mapDbToDesignerProfile(
+      {
+        id: viewProfile.designer_id,
+        full_name: viewProfile.full_name,
+        avatar_path: viewProfile.avatar_path,
+        location: viewProfile.location,
+        email: ''
+      },
+      viewProfile,
+      portfolio || [],
+      credentials || []
+    );
+  } catch (err) {
+    console.error('getPublicProfile error:', err);
+    return null;
+  }
 }
 
 export async function getPublicDesignersList(): Promise<DesignerProfile[]> {
-  await delay(100);
-  return JSON.parse(JSON.stringify(designersStore));
+  const result = await searchDesigners();
+  return result.designers;
 }
 
 export async function changePassword(
   currentPass: string,
   newPass: string
 ): Promise<{ success: boolean; error?: string }> {
-  await delay(300);
-  if (currentPass !== 'Dezignet2026!' && currentPass.length < 6) {
-    return { success: false, error: 'Current password does not match our records.' };
-  }
-  if (newPass.length < 8) {
-    return { success: false, error: 'New password must be at least 8 characters long.' };
-  }
-  return { success: true };
+  return changePasswordWithVerification(currentPass, newPass);
 }
 
 export async function addCredential(
   cred: Omit<DesignerCredential, 'id' | 'status'>
 ): Promise<DesignerCredential> {
-  await delay(180);
-  const profile = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!profile) throw new Error('Profile not found');
+  if (USE_MOCKS.credentials) {
+    await delay(180);
+    const profile = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!profile) throw new Error('Profile not found');
 
-  const newCred: DesignerCredential = {
-    ...cred,
-    id: `cred-${Date.now()}`,
-    status: 'pending' // Initial status is pending review
-  };
+    const newCred: DesignerCredential = {
+      ...cred,
+      id: `cred-${Date.now()}`,
+      status: 'pending'
+    };
 
-  profile.credentials.push(newCred);
-  return JSON.parse(JSON.stringify(newCred));
+    profile.credentials.push(newCred);
+    return JSON.parse(JSON.stringify(newCred));
+  }
+
+  try {
+    const authUser = getAuthState().user;
+    const userId = authUser?.id;
+    if (!userId) throw new Error('Must be logged in to add credentials');
+
+    const { data: newRow, error } = await supabase
+      .from('credentials')
+      .insert({
+        designer_id: userId,
+        body: cred.registrationBody,
+        number: cred.registrationNumber,
+        state_region: cred.stateOrRegion,
+        year: Number(cred.year) || 2024,
+        certificate_path: cred.certificateUrl || null,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: newRow.id,
+      registrationBody: newRow.body,
+      registrationNumber: newRow.number,
+      stateOrRegion: newRow.state_region,
+      year: newRow.year,
+      certificateUrl: newRow.certificate_path || undefined,
+      status: newRow.status as CredentialStatus
+    };
+  } catch (err: any) {
+    console.error('addCredential error:', err);
+    throw new Error(err.message || 'Failed to add credential');
+  }
 }
 
 export async function updateCredential(
   id: string,
   updates: Partial<DesignerCredential>
 ): Promise<DesignerCredential> {
-  await delay(180);
-  const profile = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!profile) throw new Error('Profile not found');
+  if (USE_MOCKS.credentials) {
+    await delay(180);
+    const profile = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!profile) throw new Error('Profile not found');
 
-  const cIndex = profile.credentials.findIndex((c) => c.id === id);
-  if (cIndex === -1) throw new Error('Credential not found');
+    const cIndex = profile.credentials.findIndex((c) => c.id === id);
+    if (cIndex === -1) throw new Error('Credential not found');
 
-  const existing = profile.credentials[cIndex];
-  // Rule: changing a verified credential resets status to pending review
-  const nextStatus: CredentialStatus =
-    existing.status === 'verified' ? 'pending' : updates.status || existing.status;
+    const existing = profile.credentials[cIndex];
+    const nextStatus: CredentialStatus =
+      existing.status === 'verified' ? 'pending' : updates.status || existing.status;
 
-  profile.credentials[cIndex] = {
-    ...existing,
-    ...updates,
-    status: nextStatus
-  };
+    profile.credentials[cIndex] = {
+      ...existing,
+      ...updates,
+      status: nextStatus
+    };
 
-  return JSON.parse(JSON.stringify(profile.credentials[cIndex]));
+    return JSON.parse(JSON.stringify(profile.credentials[cIndex]));
+  }
+
+  try {
+    const dbUpdates: any = {};
+    if (updates.registrationBody) dbUpdates.body = updates.registrationBody;
+    if (updates.registrationNumber) dbUpdates.number = updates.registrationNumber;
+    if (updates.stateOrRegion) dbUpdates.state_region = updates.stateOrRegion;
+    if (updates.year !== undefined) dbUpdates.year = Number(updates.year);
+    if (updates.certificateUrl !== undefined) dbUpdates.certificate_path = updates.certificateUrl;
+
+    const { data: updated, error } = await supabase
+      .from('credentials')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: updated.id,
+      registrationBody: updated.body,
+      registrationNumber: updated.number,
+      stateOrRegion: updated.state_region,
+      year: updated.year,
+      certificateUrl: updated.certificate_path || undefined,
+      status: updated.status as CredentialStatus
+    };
+  } catch (err: any) {
+    console.error('updateCredential error:', err);
+    throw new Error(err.message || 'Failed to update credential');
+  }
 }
 
 export async function deleteCredential(id: string): Promise<boolean> {
-  await delay(150);
-  const profile = designersStore.find((d) => d.id === activeLoggedUserId);
-  if (!profile) throw new Error('Profile not found');
+  if (USE_MOCKS.credentials) {
+    await delay(150);
+    const profile = designersStore.find((d) => d.id === activeLoggedUserId);
+    if (!profile) throw new Error('Profile not found');
 
-  profile.credentials = profile.credentials.filter((c) => c.id !== id);
-  return true;
+    profile.credentials = profile.credentials.filter((c) => c.id !== id);
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from('credentials')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return true;
+  } catch (err: any) {
+    console.error('deleteCredential error:', err);
+    throw new Error(err.message || 'Failed to delete credential');
+  }
 }
 
 export async function addPayoutAccount(
@@ -1827,6 +2311,54 @@ export async function searchDesigners(
     page = 1,
     limit = 12
   } = params;
+
+  if (!USE_MOCKS.profiles) {
+    try {
+      let qBuilder = supabase
+        .from('public_designer_profiles')
+        .select('*', { count: 'exact' });
+
+      if (query.trim()) {
+        const text = query.trim();
+        qBuilder = qBuilder.or(`full_name.ilike.%${text}%,title.ilike.%${text}%,studio_name.ilike.%${text}%,bio.ilike.%${text}%`);
+      }
+
+      if (professionalType && professionalType !== 'all') {
+        const typeKey = professionalType.toLowerCase().replace(/\s+/g, '_') as any;
+        qBuilder = qBuilder.eq('professional_type', typeKey);
+      }
+
+      if (availableOnly) {
+        qBuilder = qBuilder.eq('is_available', true);
+      }
+
+      if (minYears > 0) {
+        qBuilder = qBuilder.gte('years_experience', minYears);
+      }
+
+      const startIndex = (page - 1) * limit;
+      qBuilder = qBuilder.range(startIndex, startIndex + limit - 1);
+
+      const { data, count, error } = await qBuilder;
+      if (!error && data && data.length > 0) {
+        const designers = data.map((d: any) =>
+          mapDbToDesignerProfile(
+            { id: d.designer_id, full_name: d.full_name, avatar_path: d.avatar_path, location: d.location },
+            d
+          )
+        );
+
+        return {
+          designers,
+          totalCount: count || data.length,
+          hasMore: startIndex + data.length < (count || 0),
+          page
+        };
+      }
+    } catch (err) {
+      console.warn('searchDesigners Supabase error, falling back to mock:', err);
+    }
+  }
 
   const currentUserId = getActiveLoggedUserId();
   const q = query.trim().toLowerCase();
