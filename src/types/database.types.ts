@@ -18,11 +18,34 @@ export type CredentialStatus = 'pending' | 'verified' | 'rejected';
 // Phase 2 enums
 export type ProjectStatus = 'draft' | 'open' | 'awarded' | 'closed' | 'cancelled';
 export type PaymentType = 'milestone' | 'hourly';
-export type ProposalStatus = 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'declined' | 'withdrawn';
+export type ProposalStatus = 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
 export type PlanTier = 'free' | 'basic' | 'upgraded';
+export type BuildingStatus = 'new_build' | 'renovation' | 'extension';
+export type SiteStatus = 'has_land' | 'no_land_yet';
+export type AreaUnit = 'sqft' | 'sqm';
+export type ClientAccountType = 'individual' | 'company';
+
+export type ReimbursableExpensesType = 'none' | 'at_cost' | 'capped';
+export type DeclineReasonCode =
+  | 'price_too_high'
+  | 'timeline_too_long'
+  | 'not_enough_experience'
+  | 'chose_another_designer'
+  | 'project_changed'
+  | 'other';
+
+export type ContractStatus =
+  | 'awaiting_signatures'
+  | 'partially_signed'
+  | 'active'
+  | 'completed'
+  | 'cancelled'
+  | 'expired';
+
+export type SignatureStyleType = 'typed' | 'drawn';
 
 // Phase 3 enums (Active Work)
-export type EngagementStatus = 'active' | 'completed' | 'cancelled' | 'disputed';
+export type EngagementStatus = 'active' | 'completed' | 'cancelled' | 'disputed' | 'pending_signature';
 export type MilestoneStatus =
   | 'awaiting_funding'
   | 'funded'
@@ -45,6 +68,14 @@ export type NotificationType =
   | 'proposal_shortlisted'
   | 'proposal_accepted'
   | 'proposal_declined'
+  | 'proposal_question_answered'
+  | 'contract_ready_to_sign'
+  | 'contract_signed_by_other_party'
+  | 'contract_active'
+  | 'contract_expired'
+  | 'contract_cancelled'
+  | 'review_received'
+  | 'review_reply'
   | 'milestone_funded'
   | 'deliverable_submitted'
   | 'review_reminder'
@@ -60,7 +91,26 @@ export type NotificationType =
   | 'credential_verified'
   | 'credential_rejected'
   | 'plan_renewal'
-  | 'system_announcement';
+  | 'system_announcement'
+  | 'feedback_received';
+
+// Phase 6 enums (Storage)
+export type FilePurpose =
+  | 'avatar'
+  | 'portfolio_image'
+  | 'project_image'
+  | 'certificate'
+  | 'deliverable'
+  | 'chat_attachment'
+  | 'support_attachment';
+
+export type FileStatus =
+  | 'uploading'
+  | 'pending_scan'
+  | 'clean'
+  | 'infected'
+  | 'rejected'
+  | 'deleted';
 
 export type Database = {
   public: {
@@ -73,6 +123,11 @@ export type Database = {
           avatar_path: string | null;
           location: string | null;
           phone: string | null;
+          deletion_requested_at?: string | null;
+          onboarding_completed_at?: string | null;
+          terms_accepted_at?: string | null;
+          terms_version?: string | null;
+          is_tester?: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -83,6 +138,11 @@ export type Database = {
           avatar_path?: string | null;
           location?: string | null;
           phone?: string | null;
+          deletion_requested_at?: string | null;
+          onboarding_completed_at?: string | null;
+          terms_accepted_at?: string | null;
+          terms_version?: string | null;
+          is_tester?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -93,6 +153,11 @@ export type Database = {
           avatar_path?: string | null;
           location?: string | null;
           phone?: string | null;
+          deletion_requested_at?: string | null;
+          onboarding_completed_at?: string | null;
+          terms_accepted_at?: string | null;
+          terms_version?: string | null;
+          is_tester?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -318,41 +383,177 @@ export type Database = {
       };
 
       client_profiles: {
-        Row: { user_id: string; payment_verified: boolean; created_at: string; updated_at: string; };
-        Insert: { user_id: string; payment_verified?: boolean; created_at?: string; updated_at?: string; };
-        Update: { user_id?: string; payment_verified?: boolean; created_at?: string; updated_at?: string; };
+        Row: {
+          user_id: string;
+          payment_verified: boolean;
+          account_type?: ClientAccountType | null;
+          company_name?: string | null;
+          phone?: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          payment_verified?: boolean;
+          account_type?: ClientAccountType | null;
+          company_name?: string | null;
+          phone?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          payment_verified?: boolean;
+          account_type?: ClientAccountType | null;
+          company_name?: string | null;
+          phone?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
         Relationships: [{ foreignKeyName: 'client_profiles_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id']; }];
       };
 
       projects: {
         Row: {
-          id: string; client_id: string; title: string; description: string | null;
-          category: string; subcategory: string | null; project_type_notes: string | null;
-          budget: number; currency: string; payment_type: PaymentType; hourly_rate_max: number | null;
-          timeline_days: number | null; deadline: string | null; area_sqft: number | null;
-          location_text: string | null; city: string | null; state_region: string | null;
-          status: ProjectStatus; published_at: string | null; closed_at: string | null;
-          created_at: string; updated_at: string;
+          id: string;
+          client_id: string;
+          title: string;
+          description: string | null;
+          category: string;
+          subcategory: string | null;
+          disciplines?: string[];
+          project_type_notes: string | null;
+          design_budget: number;
+          budget?: number;
+          construction_cost_estimate: number | null;
+          currency: string;
+          payment_type: PaymentType;
+          hourly_rate_max: number | null;
+          timeline_days: number | null;
+          deadline: string | null;
+          proposal_deadline: string | null;
+          area_sqft: number | null;
+          area_unit?: AreaUnit;
+          location_text: string | null;
+          city: string | null;
+          state_region: string | null;
+          building_status?: BuildingStatus | null;
+          site_status?: SiteStatus | null;
+          existing_documents?: string[];
+          included_revisions_requested?: number | null;
+          wizard_step?: number;
+          last_saved_at?: string | null;
+          status: ProjectStatus;
+          published_at: string | null;
+          closed_at: string | null;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
-          id?: string; client_id: string; title: string; description?: string | null;
-          category: string; subcategory?: string | null; project_type_notes?: string | null;
-          budget: number; currency?: string; payment_type: PaymentType; hourly_rate_max?: number | null;
-          timeline_days?: number | null; deadline?: string | null; area_sqft?: number | null;
-          location_text?: string | null; city?: string | null; state_region?: string | null;
-          status?: ProjectStatus; published_at?: string | null; closed_at?: string | null;
-          created_at?: string; updated_at?: string;
+          id?: string;
+          client_id: string;
+          title: string;
+          description?: string | null;
+          category: string;
+          subcategory?: string | null;
+          disciplines?: string[];
+          project_type_notes?: string | null;
+          design_budget?: number;
+          budget?: number;
+          construction_cost_estimate?: number | null;
+          currency?: string;
+          payment_type: PaymentType;
+          hourly_rate_max?: number | null;
+          timeline_days?: number | null;
+          deadline?: string | null;
+          proposal_deadline?: string | null;
+          area_sqft?: number | null;
+          area_unit?: AreaUnit;
+          location_text?: string | null;
+          city?: string | null;
+          state_region?: string | null;
+          building_status?: BuildingStatus | null;
+          site_status?: SiteStatus | null;
+          existing_documents?: string[];
+          included_revisions_requested?: number | null;
+          wizard_step?: number;
+          last_saved_at?: string | null;
+          status?: ProjectStatus;
+          published_at?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Update: {
-          id?: string; client_id?: string; title?: string; description?: string | null;
-          category?: string; subcategory?: string | null; project_type_notes?: string | null;
-          budget?: number; currency?: string; payment_type?: PaymentType; hourly_rate_max?: number | null;
-          timeline_days?: number | null; deadline?: string | null; area_sqft?: number | null;
-          location_text?: string | null; city?: string | null; state_region?: string | null;
-          status?: ProjectStatus; published_at?: string | null; closed_at?: string | null;
-          created_at?: string; updated_at?: string;
+          id?: string;
+          client_id?: string;
+          title?: string;
+          description?: string | null;
+          category?: string;
+          subcategory?: string | null;
+          disciplines?: string[];
+          design_budget?: number;
+          budget?: number;
+          construction_cost_estimate?: number | null;
+          currency?: string;
+          payment_type?: PaymentType;
+          hourly_rate_max?: number | null;
+          timeline_days?: number | null;
+          deadline?: string | null;
+          proposal_deadline?: string | null;
+          area_sqft?: number | null;
+          area_unit?: AreaUnit;
+          location_text?: string | null;
+          city?: string | null;
+          state_region?: string | null;
+          building_status?: BuildingStatus | null;
+          site_status?: SiteStatus | null;
+          existing_documents?: string[];
+          included_revisions_requested?: number | null;
+          wizard_step?: number;
+          last_saved_at?: string | null;
+          status?: ProjectStatus;
+          published_at?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [{ foreignKeyName: 'projects_client_id_fkey'; columns: ['client_id']; referencedRelation: 'client_profiles'; referencedColumns: ['user_id']; }];
+      };
+
+      categories: {
+        Row: { id: string; name: string; sort_order: number; created_at: string; };
+        Insert: { id?: string; name: string; sort_order?: number; created_at?: string; };
+        Update: { id?: string; name?: string; sort_order?: number; created_at?: string; };
+        Relationships: [];
+      };
+
+      subcategories: {
+        Row: { id: string; category_id: string; name: string; sort_order: number; created_at: string; };
+        Insert: { id?: string; category_id: string; name: string; sort_order?: number; created_at?: string; };
+        Update: { id?: string; category_id?: string; name?: string; sort_order?: number; created_at?: string; };
+        Relationships: [{ foreignKeyName: 'subcategories_category_id_fkey'; columns: ['category_id']; referencedRelation: 'categories'; referencedColumns: ['id']; }];
+      };
+
+      phase_templates: {
+        Row: { id: string; sort_order: number; name: string; description: string | null; deliverables: string[]; billing_trigger: string | null; default_fee_percent: number; };
+        Insert: { id?: string; sort_order: number; name: string; description?: string | null; deliverables?: string[]; billing_trigger?: string | null; default_fee_percent: number; };
+        Update: { id?: string; sort_order?: number; name?: string; description?: string | null; deliverables?: string[]; billing_trigger?: string | null; default_fee_percent?: number; };
+        Relationships: [];
+      };
+
+      project_private_details: {
+        Row: { project_id: string; street: string | null; postal_code: string | null; site_notes: string | null; access_instructions: string | null; created_at: string; updated_at: string; };
+        Insert: { project_id: string; street?: string | null; postal_code?: string | null; site_notes?: string | null; access_instructions?: string | null; created_at?: string; updated_at?: string; };
+        Update: { project_id?: string; street?: string | null; postal_code?: string | null; site_notes?: string | null; access_instructions?: string | null; created_at?: string; updated_at?: string; };
+        Relationships: [{ foreignKeyName: 'project_private_details_project_id_fkey'; columns: ['project_id']; referencedRelation: 'projects'; referencedColumns: ['id']; }];
+      };
+
+      project_updates: {
+        Row: { id: string; project_id: string; author_id: string; body: string; created_at: string; };
+        Insert: { id?: string; project_id: string; author_id?: string; body: string; created_at?: string; };
+        Update: { id?: string; project_id?: string; author_id?: string; body?: string; created_at?: string; };
+        Relationships: [{ foreignKeyName: 'project_updates_project_id_fkey'; columns: ['project_id']; referencedRelation: 'projects'; referencedColumns: ['id']; }];
       };
 
       project_milestones: {
@@ -373,7 +574,12 @@ export type Database = {
         Row: {
           id: string; project_id: string; designer_id: string; status: ProposalStatus;
           cover_letter: string; total_price: number; currency: string; delivery_days: number;
-          hourly_rate: number | null; estimated_hours: number | null; exclusions: string | null;
+          hourly_rate: number | null; estimated_hours: number | null;
+          assumptions?: string[]; reimbursable_expenses_type?: ReimbursableExpensesType;
+          reimbursable_cap?: number | null; additional_services_rate?: number | null;
+          included_revisions_per_phase?: number; decline_reason_code?: DeclineReasonCode | null;
+          decline_note?: string | null; question_answered_at?: string | null;
+          exclusions: string | null;
           question_for_client: string | null; client_answer: string | null;
           sent_at: string; viewed_at: string | null; decided_at: string | null;
           decline_reason: string | null; withdraw_reason: string | null;
@@ -382,7 +588,12 @@ export type Database = {
         Insert: {
           id?: string; project_id: string; designer_id: string; status?: ProposalStatus;
           cover_letter: string; total_price: number; currency?: string; delivery_days: number;
-          hourly_rate?: number | null; estimated_hours?: number | null; exclusions?: string | null;
+          hourly_rate?: number | null; estimated_hours?: number | null;
+          assumptions?: string[]; reimbursable_expenses_type?: ReimbursableExpensesType;
+          reimbursable_cap?: number | null; additional_services_rate?: number | null;
+          included_revisions_per_phase?: number; decline_reason_code?: DeclineReasonCode | null;
+          decline_note?: string | null; question_answered_at?: string | null;
+          exclusions?: string | null;
           question_for_client?: string | null; client_answer?: string | null;
           sent_at?: string; viewed_at?: string | null; decided_at?: string | null;
           decline_reason?: string | null; withdraw_reason?: string | null;
@@ -391,7 +602,12 @@ export type Database = {
         Update: {
           id?: string; project_id?: string; designer_id?: string; status?: ProposalStatus;
           cover_letter?: string; total_price?: number; currency?: string; delivery_days?: number;
-          hourly_rate?: number | null; estimated_hours?: number | null; exclusions?: string | null;
+          hourly_rate?: number | null; estimated_hours?: number | null;
+          assumptions?: string[]; reimbursable_expenses_type?: ReimbursableExpensesType;
+          reimbursable_cap?: number | null; additional_services_rate?: number | null;
+          included_revisions_per_phase?: number; decline_reason_code?: DeclineReasonCode | null;
+          decline_note?: string | null; question_answered_at?: string | null;
+          exclusions?: string | null;
           question_for_client?: string | null; client_answer?: string | null;
           sent_at?: string; viewed_at?: string | null; decided_at?: string | null;
           decline_reason?: string | null; withdraw_reason?: string | null;
@@ -401,6 +617,94 @@ export type Database = {
           { foreignKeyName: 'proposals_project_id_fkey'; columns: ['project_id']; referencedRelation: 'projects'; referencedColumns: ['id']; },
           { foreignKeyName: 'proposals_designer_id_fkey'; columns: ['designer_id']; referencedRelation: 'profiles'; referencedColumns: ['id']; }
         ];
+      };
+
+      contracts: {
+        Row: {
+          id: string; engagement_id: string; number: string; status: ContractStatus;
+          terms_version_id: string; content: Json; content_hash: string;
+          pdf_file_id: string | null; created_at: string; expires_at: string;
+          activated_at: string | null; cancelled_at: string | null; cancel_reason: string | null;
+        };
+        Insert: {
+          id?: string; engagement_id: string; number: string; status?: ContractStatus;
+          terms_version_id: string; content: Json; content_hash: string;
+          pdf_file_id?: string | null; created_at?: string; expires_at: string;
+          activated_at?: string | null; cancelled_at?: string | null; cancel_reason?: string | null;
+        };
+        Update: {
+          id?: string; engagement_id?: string; number?: string; status?: ContractStatus;
+          terms_version_id?: string; content?: Json; content_hash?: string;
+          pdf_file_id?: string | null; created_at?: string; expires_at?: string;
+          activated_at?: string | null; cancelled_at?: string | null; cancel_reason?: string | null;
+        };
+        Relationships: [];
+      };
+
+      contract_signatures: {
+        Row: {
+          id: string; contract_id: string; signer_id: string; signer_role: UserRole;
+          typed_name: string; signature_style: SignatureStyleType; signature_file_id: string | null;
+          signed_at: string; ip_address: string | null; user_agent: string | null;
+          content_hash_at_signing: string;
+        };
+        Insert: {
+          id?: string; contract_id: string; signer_id: string; signer_role: UserRole;
+          typed_name: string; signature_style?: SignatureStyleType; signature_file_id?: string | null;
+          signed_at?: string; ip_address?: string | null; user_agent?: string | null;
+          content_hash_at_signing: string;
+        };
+        Update: {
+          id?: string; contract_id?: string; signer_id?: string; signer_role?: UserRole;
+          typed_name?: string; signature_style?: SignatureStyleType; signature_file_id?: string | null;
+          signed_at?: string; ip_address?: string | null; user_agent?: string | null;
+          content_hash_at_signing?: string;
+        };
+        Relationships: [];
+      };
+
+      contract_terms_versions: {
+        Row: {
+          id: string; version: string; title: string; body_markdown: string;
+          effective_from: string; created_by: string | null; created_at: string;
+        };
+        Insert: {
+          id?: string; version: string; title: string; body_markdown: string;
+          effective_from?: string; created_by?: string | null; created_at?: string;
+        };
+        Update: {
+          id?: string; version?: string; title?: string; body_markdown?: string;
+          effective_from?: string; created_by?: string | null; created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      reviews: {
+        Row: {
+          id: string; engagement_id: string; client_id: string; designer_id: string;
+          rating: number; communication_rating: number | null; quality_rating: number | null;
+          timeliness_rating: number | null; comment: string; would_hire_again: boolean;
+          designer_reply: string | null; replied_at: string | null; reply_editable_until: string | null;
+          status: 'visible' | 'hidden'; hidden_reason: string | null; hidden_by: string | null;
+          hidden_at: string | null; created_at: string; updated_at: string; editable_until: string;
+        };
+        Insert: {
+          id?: string; engagement_id: string; client_id: string; designer_id: string;
+          rating: number; communication_rating?: number | null; quality_rating?: number | null;
+          timeliness_rating?: number | null; comment: string; would_hire_again?: boolean;
+          designer_reply?: string | null; replied_at?: string | null; reply_editable_until?: string | null;
+          status?: 'visible' | 'hidden'; hidden_reason?: string | null; hidden_by?: string | null;
+          hidden_at?: string | null; created_at?: string; updated_at?: string; editable_until?: string;
+        };
+        Update: {
+          id?: string; engagement_id?: string; client_id?: string; designer_id?: string;
+          rating?: number; communication_rating?: number | null; quality_rating?: number | null;
+          timeliness_rating?: number | null; comment?: string; would_hire_again?: boolean;
+          designer_reply?: string | null; replied_at?: string | null; reply_editable_until?: string | null;
+          status?: 'visible' | 'hidden'; hidden_reason?: string | null; hidden_by?: string | null;
+          hidden_at?: string | null; created_at?: string; updated_at?: string; editable_until?: string;
+        };
+        Relationships: [];
       };
 
       proposal_milestones: {
@@ -442,6 +746,92 @@ export type Database = {
         Row: { user_id: string; designer_id: string; created_at: string; };
         Insert: { user_id: string; designer_id: string; created_at?: string; };
         Update: never;
+        Relationships: [];
+      };
+
+      feedback: {
+        Row: {
+          id: string;
+          author_id: string | null;
+          author_name: string | null;
+          author_email: string | null;
+          type: 'broken' | 'confusing' | 'change' | 'missing';
+          severity: 'blocker' | 'annoying' | 'minor';
+          message: string;
+          screenshot_path: string | null;
+          context: Json;
+          status: 'new' | 'seen' | 'planned' | 'fixed' | 'wont_fix';
+          admin_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          author_id?: string | null;
+          author_name?: string | null;
+          author_email?: string | null;
+          type: 'broken' | 'confusing' | 'change' | 'missing';
+          severity: 'blocker' | 'annoying' | 'minor';
+          message: string;
+          screenshot_path?: string | null;
+          context?: Json;
+          status?: 'new' | 'seen' | 'planned' | 'fixed' | 'wont_fix';
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          author_id?: string | null;
+          author_name?: string | null;
+          author_email?: string | null;
+          type?: 'broken' | 'confusing' | 'change' | 'missing';
+          severity?: 'blocker' | 'annoying' | 'minor';
+          message?: string;
+          screenshot_path?: string | null;
+          context?: Json;
+          status?: 'new' | 'seen' | 'planned' | 'fixed' | 'wont_fix';
+          admin_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      admin_audit_log: {
+        Row: {
+          id: string;
+          admin_id: string;
+          admin_email: string | null;
+          action: string;
+          target_type: string;
+          target_id: string | null;
+          before_state: Json | null;
+          after_state: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_id: string;
+          admin_email?: string | null;
+          action: string;
+          target_type: string;
+          target_id?: string | null;
+          before_state?: Json | null;
+          after_state?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          admin_id?: string;
+          admin_email?: string | null;
+          action?: string;
+          target_type?: string;
+          target_id?: string | null;
+          before_state?: Json | null;
+          after_state?: Json | null;
+          created_at?: string;
+        };
         Relationships: [];
       };
     };
@@ -1238,8 +1628,152 @@ export type Database = {
         };
         Relationships: [];
       };
+
+      files: {
+        Row: {
+          id: string;
+          owner_id: string;
+          bucket: string;
+          path: string;
+          original_name: string;
+          size_bytes: number;
+          mime_type: string;
+          sha256: string | null;
+          purpose: FilePurpose;
+          engagement_id: string | null;
+          milestone_id: string | null;
+          submission_id: string | null;
+          conversation_id: string | null;
+          project_id: string | null;
+          portfolio_project_id: string | null;
+          credential_id: string | null;
+          status: FileStatus;
+          reject_reason: string | null;
+          created_at: string;
+          finalized_at: string | null;
+          attached_at: string | null;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          bucket: string;
+          path: string;
+          original_name: string;
+          size_bytes: number;
+          mime_type: string;
+          sha256?: string | null;
+          purpose: FilePurpose;
+          engagement_id?: string | null;
+          milestone_id?: string | null;
+          submission_id?: string | null;
+          conversation_id?: string | null;
+          project_id?: string | null;
+          portfolio_project_id?: string | null;
+          credential_id?: string | null;
+          status?: FileStatus;
+          reject_reason?: string | null;
+          created_at?: string;
+          finalized_at?: string | null;
+          attached_at?: string | null;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          bucket?: string;
+          path?: string;
+          original_name?: string;
+          size_bytes?: number;
+          mime_type?: string;
+          sha256?: string | null;
+          purpose?: FilePurpose;
+          engagement_id?: string | null;
+          milestone_id?: string | null;
+          submission_id?: string | null;
+          conversation_id?: string | null;
+          project_id?: string | null;
+          portfolio_project_id?: string | null;
+          credential_id?: string | null;
+          status?: FileStatus;
+          reject_reason?: string | null;
+          created_at?: string;
+          finalized_at?: string | null;
+          attached_at?: string | null;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+
+      file_access_log: {
+        Row: {
+          id: string;
+          file_id: string;
+          user_id: string | null;
+          action: 'download' | 'preview';
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          file_id: string;
+          user_id?: string | null;
+          action: 'download' | 'preview';
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          file_id?: string;
+          user_id?: string | null;
+          action?: 'download' | 'preview';
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      publish_project: {
+        Args: { p_project_id: string };
+        Returns: Json;
+      };
+      close_project: {
+        Args: { p_project_id: string };
+        Returns: Json;
+      };
+      cancel_project: {
+        Args: { p_project_id: string; p_reason?: string };
+        Returns: Json;
+      };
+      duplicate_project: {
+        Args: { p_project_id: string };
+        Returns: Json;
+      };
+      delete_project: {
+        Args: { p_project_id: string };
+        Returns: Json;
+      };
+      add_project_update: {
+        Args: { p_project_id: string; p_body: string };
+        Returns: Json;
+      };
+      extend_deadline: {
+        Args: { p_project_id: string; p_new_deadline: string };
+        Returns: Json;
+      };
+      get_site_details: {
+        Args: { p_project_id: string };
+        Returns: Json;
+      };
+      save_onboarding_step: {
+        Args: { p_role: string; p_step: number; p_data: Json };
+        Returns: Json;
+      };
+      complete_onboarding: {
+        Args: { p_role: string; p_data?: Json };
+        Returns: Json;
+      };
       is_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
@@ -1470,6 +2004,48 @@ export type Database = {
         Args: { p_title: string; p_body: string; p_audience?: string };
         Returns: number;
       };
+      request_upload: {
+        Args: {
+          p_purpose: FilePurpose;
+          p_context: Json;
+          p_file_name: string;
+          p_size_bytes: number;
+          p_mime_type: string;
+        };
+        Returns: Json;
+      };
+      finalize_upload: {
+        Args: { p_file_id: string };
+        Returns: Json;
+      };
+      scan_file_internal: {
+        Args: { p_file_id: string };
+        Returns: FileStatus;
+      };
+      get_download_url: {
+        Args: { p_file_id: string; p_action?: string };
+        Returns: Json;
+      };
+      delete_file: {
+        Args: { p_file_id: string };
+        Returns: void;
+      };
+      set_user_avatar: {
+        Args: { p_file_id: string };
+        Returns: void;
+      };
+      attach_credential_certificate: {
+        Args: { p_credential_id: string; p_file_id: string };
+        Returns: void;
+      };
+      purge_soft_deleted_files: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
+      cleanup_orphan_uploads: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -1488,6 +2064,8 @@ export type Database = {
       ticket_type: TicketType;
       approval_source: ApprovalSource;
       notification_type: NotificationType;
+      file_purpose: FilePurpose;
+      file_status: FileStatus;
     };
     CompositeTypes: Record<string, never>;
   };

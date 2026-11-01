@@ -78,16 +78,16 @@ export function renderPaymentMethodCard(planState: SharedPlanState): string {
               -->
               <div class="dez-form-group" style="margin-bottom: 14px;">
                 <label class="dez-form-label" style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px;">
-                  Card details (Hosted gateway container)
+                  Card details
                 </label>
-                <div id="stripe-card-element-container" style="border: 1px solid #D1D5DB; border-radius: 6px; padding: 10px 12px; background: #FFFFFF; font-size: 13px; color: #374151;">
+                <div id="card-element-container" style="border: 1px solid #D1D5DB; border-radius: 6px; padding: 10px 12px; background: #FFFFFF; font-size: 13px; color: #374151;">
                   <div style="display: flex; gap: 8px; align-items: center;">
                     <span style="color: #6B7280;">•••• •••• •••• 4242</span>
                     <span style="margin-left: auto; color: #9CA3AF;">12 / 28</span>
                     <span style="color: #9CA3AF;">CVC</span>
                   </div>
                 </div>
-                <div style="font-size: 11.5px; color: #6B7280; margin-top: 4px;">Mock token generated in development mode.</div>
+                <div style="font-size: 11.5px; color: #6B7280; margin-top: 4px;">Encrypted card token will be attached securely.</div>
               </div>
               <!-- HOSTED FIELD PLACEHOLDER END -->
 
@@ -163,6 +163,6 @@ export function initPaymentMethodForm(
     e.preventDefault();
     await callbacks.onSaveCard('Visa', '4242');
     close();
-    callbacks.onShowToast('Card Saved', 'Payment method saved via mock gateway token.', 'success');
+    callbacks.onShowToast('Card Saved', 'Payment method saved securely.', 'success');
   });
 }

@@ -59,8 +59,8 @@ export const chapters: ChapterConfig[] = [
     end: 1.0,
     headline: 'Your dream design, delivered.',
     cta: [
-      { label: 'Hire a Designer', href: '#', variant: 'primary' },
-      { label: 'Become a Designer', href: '#', variant: 'outline' },
+      { label: 'Hire a Designer', href: '#signup?role=client', variant: 'primary' },
+      { label: 'Become a Designer', href: '#signup?role=designer', variant: 'outline' },
     ],
     badges: [
       { value: '2,000+', label: 'Projects completed' },

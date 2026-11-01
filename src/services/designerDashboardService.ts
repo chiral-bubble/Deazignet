@@ -283,7 +283,7 @@ export async function getActiveProjects(filter: 'all' | 'milestone' | 'hourly' =
           title: p.title,
           clientName: 'Client',
           clientCompany: 'Dezignet Client',
-          clientLocation: 'Nigeria',
+          clientLocation: 'United States',
           paymentType: (p.paymentType === 'hourly' ? 'Hourly' : 'Milestone') as any,
           status: 'awaiting_deliverable' as any,
           statusLabel: p.status === 'active' ? 'Active' : p.status,

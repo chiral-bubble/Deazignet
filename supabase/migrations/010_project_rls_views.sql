@@ -202,7 +202,7 @@ SELECT
     -- Display Name: First name + First letter of Last name + '.'
     CASE
         WHEN POSITION(' ' IN trim(p.full_name)) > 0 THEN
-            SPLIT_PART(trim(p.full_name), 1, 1) || ' ' ||
+            SPLIT_PART(trim(p.full_name), ' ', 1) || ' ' ||
             SUBSTRING(SPLIT_PART(trim(p.full_name), ' ', 2), 1, 1) || '.'
         ELSE
             trim(p.full_name)

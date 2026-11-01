@@ -52,7 +52,7 @@ function mapRowToSharedProposal(
 ): SharedProposal {
   const pSnapshot = row.project_snapshot?.project ?? projectRow ?? {};
   const clientName = clientSummary?.display_name ?? 'Client';
-  const clientLocation = clientSummary?.city ?? pSnapshot?.location_text ?? 'Nigeria';
+  const clientLocation = clientSummary?.city ?? pSnapshot?.location_text ?? 'United States';
 
   // Construct stages timeline
   const timeline = [
@@ -239,18 +239,18 @@ async function realGetProposalDetail(
     title: snapshot.title ?? 'Project Snapshot',
     clientId: snapshot.client_id ?? '',
     clientName: clientSummary?.display_name ?? 'Client',
-    clientLocation: clientSummary?.city ?? snapshot.location_text ?? 'Nigeria',
+    clientLocation: clientSummary?.city ?? snapshot.location_text ?? 'United States',
     paymentType: snapshot.payment_type === 'hourly' ? 'Hourly' : 'Milestone',
     category: snapshot.category ?? 'Architecture',
     budget: Number(snapshot.budget ?? proposalRow.total_price),
     deadline: snapshot.deadline ?? 'Flexible',
-    location: snapshot.location_text ?? 'Nigeria',
+    location: snapshot.location_text ?? 'United States',
     shortDescription: snapshot.description ? snapshot.description.slice(0, 180) + '...' : '',
     fullDescription: snapshot.description ?? '',
     facts: {
       propertyType: snapshot.subcategory ?? 'Residential',
       projectScale: snapshot.area_sqft ? `${snapshot.area_sqft} sq ft` : 'Standard scale',
-      regulatoryZone: snapshot.state_region ?? 'Nigeria',
+      regulatoryZone: snapshot.state_region ?? 'United States',
       estimatedDuration: snapshot.timeline_days ? `${snapshot.timeline_days} days` : '12 weeks'
     },
     status: snapshot.status === 'open' ? 'open' : (snapshot.status === 'awarded' ? 'active' : 'completed')
@@ -259,7 +259,7 @@ async function realGetProposalDetail(
   const mappedClientInfo = {
     id: clientSummary?.user_id ?? snapshot.client_id,
     name: clientSummary?.display_name ?? 'Client',
-    location: clientSummary?.city ?? snapshot.location_text ?? 'Nigeria',
+    location: clientSummary?.city ?? snapshot.location_text ?? 'United States',
     memberSince: clientSummary?.member_since ? new Date(clientSummary.member_since).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown',
     projectsPosted: Number(clientSummary?.projects_posted ?? 1),
     paymentMethodVerified: clientSummary?.payment_verified === true,

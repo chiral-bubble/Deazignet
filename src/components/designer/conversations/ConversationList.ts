@@ -11,9 +11,11 @@ import {
   getConversations,
   type ConversationFilterTab
 } from '../../../services/conversationsService';
+import { getAuthState } from '../../../services/authService';
 import { type SharedConversation } from '../../../mocks/dataset';
 
 export function renderConversationList(): string {
+  const isClient = getAuthState().role === 'client';
   return `
     <div class="dez-conv-sidebar-pane" style="width: 340px; border-right: 1px solid #E5E7EB; background: #FFFFFF; display: flex; flex-direction: column; height: 100%; flex-shrink: 0;">
       <!-- Search & Filters Header -->
@@ -26,7 +28,7 @@ export function renderConversationList(): string {
             type="text"
             id="conv-search-input"
             class="dez-form-input"
-            placeholder="Search by client or project..."
+            placeholder="${isClient ? 'Search by designer or project...' : 'Search by client or project...'}"
             style="height: 36px; font-size: 13px; padding-left: 32px;"
           />
           <svg style="position: absolute; left: 10px; top: 10px; color: #9CA3AF;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,11 +87,14 @@ export function initConversationList(
     if (!itemsContainer) return;
 
     if (conversations.length === 0) {
+      const isClient = getAuthState().role === 'client';
       itemsContainer.innerHTML = `
         <div style="padding: 36px 20px; text-align: center;">
           <div style="font-size: 14px; font-weight: 500; color: #111827; margin-bottom: 6px;">No conversations yet</div>
           <div style="font-size: 12.5px; color: #6B7280; line-height: 1.5;">
-            Clients can message you after they review your proposal. Conversations will appear here automatically.
+            ${isClient
+              ? 'No conversations yet. You can message a designer after you review their proposal.'
+              : 'Clients can message you after they review your proposal. Conversations will appear here automatically.'}
           </div>
         </div>
       `;

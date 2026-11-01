@@ -95,7 +95,7 @@ export function renderAuthPage(): string {
           <div class="form-box register" id="register-form-box">
             <form class="auth-form" id="register-form" onsubmit="return false;">
               <h2 class="auth-title">Create Account</h2>
-              <p class="auth-subtitle">Join the premier network for architects & engineers.</p>
+              <p class="auth-subtitle">Join the premier network for architects & clients.</p>
               
               <!-- Inline Error/Success Box -->
               <div class="auth-feedback-msg" id="register-feedback" style="display: none;"></div>
@@ -137,6 +137,10 @@ export function renderAuthPage(): string {
               <button type="submit" class="btn-auth-submit" id="btn-register-submit">
                 <span>Register</span>
               </button>
+
+              <p style="font-size: 11px; color: #64748B; margin-top: 8px; line-height: 1.4; text-align: center;">
+                By registering, you agree to Dezignet's <a href="#terms" target="_blank" style="color: #2F7BE5;">Terms</a> and <a href="#privacy" target="_blank" style="color: #2F7BE5;">Privacy</a>.
+              </p>
             </form>
           </div>
 
@@ -235,6 +239,11 @@ function showFeedback(elId: string, message: string, isError = true) {
  * Attaches event listeners and handles sliding transitions for AuthPage.
  */
 export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password' = 'login'): void {
+  const authRoot = document.getElementById('auth-view');
+  if (authRoot) {
+    authRoot.innerHTML = renderAuthPage();
+  }
+
   const container = document.getElementById('auth-container');
   const registerToggleBtn = document.getElementById('register-toggle-btn');
   const loginToggleBtn = document.getElementById('login-toggle-btn');
@@ -245,6 +254,20 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
 
   if (!container) return;
 
+  // Check URL params for role or redirect
+  const hashStr = window.location.hash;
+  const queryPart = hashStr.includes('?') ? hashStr.substring(hashStr.indexOf('?')) : '';
+  const searchParams = new URLSearchParams(queryPart);
+  const roleParam = searchParams.get('role');
+
+  if (roleParam === 'client') {
+    const clientRadio = document.querySelector('input[name="signup-role"][value="client"]') as HTMLInputElement | null;
+    if (clientRadio) clientRadio.checked = true;
+  } else if (roleParam === 'designer') {
+    const designerRadio = document.querySelector('input[name="signup-role"][value="designer"]') as HTMLInputElement | null;
+    if (designerRadio) designerRadio.checked = true;
+  }
+
   if (initialMode === 'reset-password') {
     if (resetModal) resetModal.style.display = 'flex';
   } else if (initialMode === 'register') {
@@ -253,14 +276,14 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     container.classList.remove('active');
   }
 
-  // Switch to Registration
+  // Switch to Registration slide
   registerToggleBtn?.addEventListener('click', (e) => {
     e.preventDefault();
     container.classList.add('active');
     history.replaceState(null, '', '#register');
   });
 
-  // Switch to Login
+  // Switch to Login slide
   loginToggleBtn?.addEventListener('click', (e) => {
     e.preventDefault();
     container.classList.remove('active');
@@ -310,7 +333,17 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     showFeedback('login-feedback', 'Login successful! Redirecting...', false);
 
     const hashParts = window.location.hash.split('?redirect=');
-    const targetRedirect = hashParts.length > 1 ? decodeURIComponent(hashParts[1]) : '#dashboard';
+    let targetRedirect = '';
+    if (hashParts.length > 1) {
+      targetRedirect = decodeURIComponent(hashParts[1]);
+    } else {
+      const nextP = new URLSearchParams(window.location.hash.split('?')[1] || '').get('next');
+      if (nextP) {
+        targetRedirect = nextP.startsWith('#') ? nextP : `#${nextP.replace(/^\//, '')}`;
+      } else {
+        targetRedirect = res.user?.role === 'client' ? '#client-dashboard' : '#dashboard';
+      }
+    }
 
     setTimeout(() => {
       window.location.hash = targetRedirect;
@@ -347,7 +380,7 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
       btn.innerHTML = `<span>Creating account...</span>`;
     }
 
-    const res = await signUp({ email, password, fullName, role });
+    const res = await signUp({ email, password, fullName, role, termsAccepted: true });
 
     if (btn) {
       btn.disabled = false;
@@ -368,7 +401,8 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     } else {
       showFeedback('register-feedback', 'Account created! Redirecting to dashboard...', false);
       setTimeout(() => {
-        window.location.hash = '#dashboard';
+        const dest = role === 'client' ? '#client-dashboard' : '#dashboard';
+        window.location.hash = dest;
       }, 500);
     }
   });

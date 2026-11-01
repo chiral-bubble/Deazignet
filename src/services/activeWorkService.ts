@@ -55,9 +55,10 @@ export interface EngagementMilestoneItem {
 }
 
 export interface DeliverableFilePayload {
-  path: string;
-  file_name: string;
-  size_bytes: number;
+  file_id?: string;
+  path?: string;
+  file_name?: string;
+  size_bytes?: number;
   mime_type?: string;
 }
 
@@ -130,16 +131,19 @@ export async function startMilestone(milestoneId: string): Promise<void> {
 export async function submitMilestone(
   milestoneId: string,
   notes: string,
-  files: DeliverableFilePayload[] = []
+  files: (DeliverableFilePayload | string)[] = []
 ): Promise<string> {
   if (USE_MOCKS.active_work) {
     return 'mock-sub-' + Date.now();
   }
 
+  // Format file items for RPC
+  const payloadFiles = files.map((f) => (typeof f === 'string' ? { file_id: f } : f));
+
   const { data, error } = await supabase.rpc('submit_milestone', {
     p_milestone_id: milestoneId,
     p_notes: notes,
-    p_files: files as any
+    p_files: payloadFiles as any
   });
 
   if (error) throw new Error(error.message);

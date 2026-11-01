@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "staging:reset": "npx tsx scripts/seed-staging.ts"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",

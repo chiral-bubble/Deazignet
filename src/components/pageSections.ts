@@ -147,7 +147,7 @@ function exploreProjects(): string {
   const cards = projects
     .map(
       (p, i) => `
-      <div class="project-card" id="project-card-${i + 1}">
+      <a href="#signup?role=designer&next=/client-projects" class="project-card" id="project-card-${i + 1}" style="text-decoration:none; color:inherit; display:block;">
         <div class="project-card__image" style="background: ${p.gradient}; height: 200px;"></div>
         <div class="project-card__body">
           <p class="project-card__category">${p.category}</p>
@@ -157,7 +157,7 @@ function exploreProjects(): string {
             <span class="project-card__meta-item">${p.proposals}</span>
           </div>
         </div>
-      </div>
+      </a>
     `
     )
     .join('');
@@ -315,28 +315,28 @@ function footer(): string {
           <div>
             <h4 class="footer__col-title">Platform</h4>
             <nav class="footer__links">
-              <a href="#" class="footer__link">How It Works</a>
-              <a href="#" class="footer__link">Browse Projects</a>
-              <a href="#" class="footer__link">Find Designers</a>
-              <a href="#" class="footer__link">Pricing</a>
+              <a href="#how-it-works" class="footer__link">How It Works</a>
+              <a href="#signup?role=designer&next=/client-projects" class="footer__link">Browse Projects</a>
+              <a href="#find-designers" class="footer__link">Find Designers</a>
+              <a href="#signup?role=client&next=/post-project" class="footer__link">Post a Project</a>
             </nav>
           </div>
           <div>
             <h4 class="footer__col-title">Company</h4>
             <nav class="footer__links">
-              <a href="#" class="footer__link">About Us</a>
-              <a href="#" class="footer__link">Careers</a>
-              <a href="#" class="footer__link">Blog</a>
-              <a href="#" class="footer__link">Contact</a>
+              <a href="#how-it-works" class="footer__link">About Us</a>
+              <a href="mailto:careers@dezignet.studio" class="footer__link">Careers</a>
+              <a href="mailto:support@dezignet.studio" class="footer__link">Blog</a>
+              <a href="mailto:support@dezignet.studio" class="footer__link">Contact</a>
             </nav>
           </div>
           <div>
             <h4 class="footer__col-title">Support</h4>
             <nav class="footer__links">
-              <a href="#" class="footer__link">Help Center</a>
-              <a href="#" class="footer__link">Terms of Service</a>
-              <a href="#" class="footer__link">Privacy Policy</a>
-              <a href="#" class="footer__link">Trust & Safety</a>
+              <a href="mailto:support@dezignet.studio" class="footer__link">Help Center</a>
+              <a href="#terms" class="footer__link">Terms of Service</a>
+              <a href="#privacy" class="footer__link">Privacy Policy</a>
+              <a href="#terms" class="footer__link">Trust & Safety</a>
             </nav>
           </div>
         </div>

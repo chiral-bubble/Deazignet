@@ -49,6 +49,40 @@ The migrations are sequentially numbered in `/supabase/migrations/`:
 | `021_phase4_rls_realtime.sql` | RLS policies for conversations, messages, and notifications; Supabase Realtime publication setup for `messages`, `conversations`, and `notifications`. |
 | `017_through_021_phase4_all.sql` | Combined all-in-one Phase 4 migration script for single-click execution in Supabase SQL Editor. |
 
+### Phase 6: Supabase Storage, Real Uploads & Security Scanning
+| File | Purpose |
+| :--- | :--- |
+| `022_storage_schema.sql` | `files` table, `file_access_log`, enums (`file_purpose`, `file_status`), `plan_limits.storage_bytes` quotas (2GB, 10GB, 50GB), and retention settings. |
+| `023_storage_buckets.sql` | 6 storage buckets (`avatars`, `portfolio`, `project-files`, `certificates`, `deliverables`, `chat`) with size limits and allowed MIME arrays. |
+| `024_storage_functions.sql` | Security definer functions: `request_upload` (quota, permissions, unguessable path), `finalize_upload`, `scan_file_internal` (magic bytes, EICAR detection, quarantine), `get_download_url`, `delete_file`, and retention cleanup jobs. |
+| `025_storage_attachment_updates.sql` | Tables altered to reference `files(id)`, updated `submit_milestone` and `send_message` to attach file IDs, profile avatar/credential attach helpers. |
+| `026_storage_rls.sql` | RLS on `public.files`, `file_access_log`, and `storage.objects` (users only write to paths issued by `request_upload`, zero overwriting, no public listing). |
+| `022_through_026_phase6_all.sql` | Combined all-in-one Phase 6 migration script for single-click execution in Supabase SQL Editor. |
+
+---
+
+## How to Apply Phase 6 Migrations
+
+### Supabase Dashboard SQL Editor
+1. Open your project on Supabase: [https://supabase.com/dashboard/project/hnssctjagfwdfbagpikv/sql](https://supabase.com/dashboard/project/hnssctjagfwdfbagpikv/sql)
+2. Click **New query** (the `+` tab).
+3. Open `supabase/migrations/022_through_026_phase6_all.sql`.
+4. Copy all contents, paste into the editor, and click **Run**.
+
+---
+
+## Phase 6 Seeding & Running Tests
+
+```bash
+# Seed real avatar, credential PDF, deliverables, and EICAR quarantine sample
+npx tsx scripts/seed-phase6.ts
+
+# Run the automated Phase 6 Storage & Security Test Suite
+npx tsx scripts/test-phase6.ts
+```
+
+---
+
 ---
 
 ## How to Apply Phase 4 Migrations

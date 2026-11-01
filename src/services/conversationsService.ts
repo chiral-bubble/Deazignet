@@ -126,7 +126,7 @@ export async function getConversations(
       id: row.id,
       clientId: row.client_id || '',
       clientName: clientInfo?.display_name || 'Client',
-      clientLocation: [clientInfo?.city, clientInfo?.state_region].filter(Boolean).join(', ') || 'Nigeria',
+      clientLocation: [clientInfo?.city, clientInfo?.state_region].filter(Boolean).join(', ') || 'United States',
       clientAvatarUrl: '',
       projectId: row.project_id || '',
       projectTitle: projectInfo?.title || 'Contract Project',
@@ -264,7 +264,7 @@ export async function getConversation(id: string): Promise<SharedConversation | 
     id: convRow.id,
     clientId: convRow.client_id || '',
     clientName: clientInfo?.display_name || 'Client',
-    clientLocation: [clientInfo?.city, clientInfo?.state_region].filter(Boolean).join(', ') || 'Nigeria',
+    clientLocation: [clientInfo?.city, clientInfo?.state_region].filter(Boolean).join(', ') || 'United States',
     clientAvatarUrl: '',
     projectId: convRow.project_id || '',
     projectTitle: projectInfo?.title || 'Contract Project',
@@ -323,10 +323,11 @@ export async function sendMessage(
     return message;
   }
 
-  const payloadAttachments = (attachments || []).map((att) => ({
+  const payloadAttachments = (attachments || []).map((att: any) => ({
+    file_id: att.file_id || (att.id && att.id.length === 36 ? att.id : undefined),
     path: att.url || `/mock-uploads/${att.name}`,
     file_name: att.name,
-    size_bytes: 1048576, // 1MB mock size
+    size_bytes: att.sizeBytes || 1048576,
     mime_type: 'application/octet-stream'
   }));
 

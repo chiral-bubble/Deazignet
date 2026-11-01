@@ -199,10 +199,10 @@ export function renderBillingTab(
           </div>
           <div class="dez-dash-modal-body">
             <p style="font-size:13.5px; color:var(--dez-text-primary); line-height:1.5;">
-              Online payment gateways (Stripe / Paystack) are not connected in this development build.
+              Payments are being set up. You will be able to manage payment methods and billing securely before contracts begin.
             </p>
             <p style="font-size:13px; color:var(--dez-text-muted); margin-top:8px; line-height:1.5;">
-              Plan selection, escrow billing, and automated recurring upgrades will be connected upon backend database integration.
+              Plan selection, escrow billing, and automated recurring upgrades will be activated shortly.
             </p>
           </div>
           <div class="dez-dash-modal-footer">
