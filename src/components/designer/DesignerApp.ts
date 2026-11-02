@@ -782,7 +782,7 @@ export function initDesignerApp(onLogout: () => void): void {
   // HASH ROUTER WITH ALL CONSOLIDATED ROUTES & REDIRECTS
   // ==========================================================================
   function parseHashRoute() {
-    const raw = window.location.hash.toLowerCase();
+    const raw = (window.location.hash || ('#' + window.location.pathname.replace(/^\//, ''))).toLowerCase();
 
     // 1. Redirect legacy routes:
     // /billing -> /payments

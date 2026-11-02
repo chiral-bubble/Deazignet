@@ -16,6 +16,7 @@
  *   - Log hours modal pre-selects project, updates hours logged and amount to invoice
  */
 
+import { getAuthState } from '../../../services/authService';
 import {
   getDesignerSummary,
   getActiveProjects,
@@ -132,7 +133,8 @@ export async function initDesignerDashboard(
   // Render Header & Dev Switcher
   function renderHeaderAndDevSwitcher() {
     if (headerSlot) {
-      headerSlot.innerHTML = renderDashboardHeader('Alexandre');
+      const firstName = getAuthState().user?.fullName?.split(' ')[0] || 'Designer';
+      headerSlot.innerHTML = renderDashboardHeader(firstName);
     }
     if (devSwitcherSlot) {
       devSwitcherSlot.innerHTML = renderDevStateSwitcher();

@@ -9,7 +9,7 @@ import { initNavbar } from './components/navbar';
 import { initHeroScroll } from './components/heroScroll';
 import { initPageSections } from './components/pageSections';
 import { initAuthPage } from './components/auth/AuthPage';
-import { initDesignerApp } from './components/designer/DesignerApp';
+import { renderDesignerApp, initDesignerApp } from './components/designer/DesignerApp';
 import { renderLegalPage } from './components/legal/LegalPage';
 import { renderLinkAuditPage } from './components/dev/LinkAuditPage';
 import { renderClientDashboardPage } from './components/client/ClientDashboardPage';
@@ -459,9 +459,12 @@ async function main() {
         const lingeringHeroDots = document.getElementById('hero-progress');
         if (lingeringHeroDots) lingeringHeroDots.remove();
 
-        if (!dashboardInitialized) {
+        if (!dashboardInitialized || !document.getElementById('dez-designer-root')) {
+          dashboardContainer.innerHTML = renderDesignerApp();
           initDesignerApp(async () => {
             await logOut();
+            dashboardInitialized = false;
+            dashboardContainer.innerHTML = '';
             navigateTo('/');
           });
           dashboardInitialized = true;
