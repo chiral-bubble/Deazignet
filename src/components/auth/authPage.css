@@ -565,51 +565,117 @@
   }
 }
 
+/* Header switch pill button */
+.auth-header-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(47, 123, 229, 0.15);
+  border: 1px solid rgba(47, 123, 229, 0.35);
+  color: #2F7BE5;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+
+.auth-header-switch-btn:hover {
+  background: rgba(47, 123, 229, 0.25);
+  border-color: #2F7BE5;
+}
+
+/* Inline form switch prompt (prominently visible on mobile & desktop) */
+.auth-mobile-switch {
+  display: block;
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: #64748B;
+  text-align: center;
+}
+
+.auth-mobile-switch a {
+  color: #2F7BE5;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.auth-mobile-switch a:hover {
+  color: #1d4ed8;
+}
+
 @media (max-width: 680px) {
   .auth-slider-container {
     width: 95vw;
-    height: 580px;
+    max-width: 440px;
+    height: 600px;
+    max-height: calc(100vh - 110px);
     border-radius: 20px;
   }
   
   .auth-header {
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .auth-back-text {
+    display: none;
+  }
+
+  .auth-brand-name {
+    display: none;
   }
 
   .form-box {
     width: 100%;
     padding: 24px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    transition: transform 0.35s ease, opacity 0.25s ease, visibility 0.25s;
   }
 
   .form-box.login {
     right: 0;
+    transform: translateY(0);
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
   }
   .auth-slider-container.active .form-box.login {
     transform: translateY(100%);
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .form-box.register {
     left: 0;
     transform: translateY(-100%);
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
   }
   .auth-slider-container.active .form-box.register {
     transform: translateY(0);
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
   }
 
   /* Vertical slide adjustment for small mobile screens */
   .toggle-box {
-    display: none;
+    display: none !important;
   }
 
   .auth-mobile-switch {
     display: block;
-    margin-top: 1rem;
+    margin-top: 14px;
     font-size: 0.85rem;
-    color: #64748b;
-  }
-  .auth-mobile-switch a {
-    color: #2F7BE5;
-    font-weight: 600;
+    color: #64748B;
   }
 }
 

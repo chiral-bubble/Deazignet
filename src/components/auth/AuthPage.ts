@@ -44,9 +44,14 @@ export function renderAuthPage(): string {
           <span class="auth-back-text">Back to Dezignet</span>
         </a>
 
-        <div class="auth-brand-badge">
-          ${icons.logo}
-          <span class="auth-brand-name">Dezignet</span>
+        <div class="auth-header-actions" style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="auth-header-switch-btn" id="header-switch-btn" aria-label="Switch between login and register">
+            <span id="header-switch-text">Create Account</span>
+          </button>
+          <div class="auth-brand-badge">
+            ${icons.logo}
+            <span class="auth-brand-name">Dezignet</span>
+          </div>
         </div>
       </header>
 
@@ -84,6 +89,10 @@ export function renderAuthPage(): string {
               <button type="submit" class="btn-auth-submit" id="btn-login-submit">
                 <span>Login</span>
               </button>
+
+              <p class="auth-mobile-switch">
+                Don't have an account? <a href="#signup" id="link-goto-register">Create Account</a>
+              </p>
             </form>
           </div>
 
@@ -136,6 +145,10 @@ export function renderAuthPage(): string {
 
               <p style="font-size: 11px; color: #64748B; margin-top: 8px; line-height: 1.4; text-align: center;">
                 By registering, you agree to Dezignet's <a href="#terms" target="_blank" style="color: #2F7BE5;">Terms</a> and <a href="#privacy" target="_blank" style="color: #2F7BE5;">Privacy</a>.
+              </p>
+
+              <p class="auth-mobile-switch">
+                Already have an account? <a href="#login" id="link-goto-login">Log In</a>
               </p>
             </form>
           </div>
@@ -243,6 +256,10 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
   const container = document.getElementById('auth-container');
   const registerToggleBtn = document.getElementById('register-toggle-btn');
   const loginToggleBtn = document.getElementById('login-toggle-btn');
+  const linkGotoRegister = document.getElementById('link-goto-register');
+  const linkGotoLogin = document.getElementById('link-goto-login');
+  const headerSwitchBtn = document.getElementById('header-switch-btn');
+  const headerSwitchText = document.getElementById('header-switch-text');
   const backHomeBtn = document.getElementById('auth-back-home');
   const forgotLink = document.getElementById('login-forgot-link');
   const forgotModal = document.getElementById('forgot-modal');
@@ -264,27 +281,65 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     if (designerRadio) designerRadio.checked = true;
   }
 
+  function updateMode(mode: 'login' | 'register') {
+    if (!container) return;
+    if (mode === 'register') {
+      container.classList.add('active');
+      if (headerSwitchText) headerSwitchText.textContent = 'Log In';
+    } else {
+      container.classList.remove('active');
+      if (headerSwitchText) headerSwitchText.textContent = 'Create Account';
+    }
+  }
+
   if (initialMode === 'reset-password') {
     if (resetModal) resetModal.style.display = 'flex';
   } else if (initialMode === 'register') {
-    container.classList.add('active');
+    updateMode('register');
   } else {
-    container.classList.remove('active');
+    updateMode('login');
   }
 
   // Switch to Registration slide
-  registerToggleBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    container.classList.add('active');
-    history.replaceState(null, '', '#register');
-  });
+  const goToRegister = (e?: Event) => {
+    e?.preventDefault();
+    updateMode('register');
+    const roleQ = roleParam ? `?role=${roleParam}` : '';
+    history.replaceState(null, '', `#signup${roleQ}`);
+  };
 
   // Switch to Login slide
-  loginToggleBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    container.classList.remove('active');
+  const goToLogin = (e?: Event) => {
+    e?.preventDefault();
+    updateMode('login');
     history.replaceState(null, '', '#login');
+  };
+
+  registerToggleBtn?.addEventListener('click', goToRegister);
+  linkGotoRegister?.addEventListener('click', goToRegister);
+
+  loginToggleBtn?.addEventListener('click', goToLogin);
+  linkGotoLogin?.addEventListener('click', goToLogin);
+
+  headerSwitchBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (container.classList.contains('active')) {
+      goToLogin();
+    } else {
+      goToRegister();
+    }
   });
+
+  // Hash listener for in-page navigation or back/forward buttons
+  const onHashChange = () => {
+    const currentHash = (window.location.hash || '').toLowerCase();
+    if (currentHash.startsWith('#signup') || currentHash.startsWith('#register')) {
+      updateMode('register');
+    } else if (currentHash.startsWith('#login')) {
+      updateMode('login');
+    }
+  };
+  window.addEventListener('hashchange', onHashChange);
 
   // Back to home
   backHomeBtn?.addEventListener('click', (e) => {

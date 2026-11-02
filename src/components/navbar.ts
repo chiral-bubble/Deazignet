@@ -25,8 +25,8 @@ export function initNavbar(container: HTMLElement): void {
           Dezignet
         </a>
         <div class="navbar__actions">
-          <a href="#how-it-works" class="navbar__link" id="nav-how-it-works">How It Works</a>
-          <a href="#explore" class="navbar__link" id="nav-explore">Explore</a>
+          <a href="#how-it-works" class="navbar__link navbar__link--nav" id="nav-how-it-works">How It Works</a>
+          <a href="#explore" class="navbar__link navbar__link--nav" id="nav-explore">Explore</a>
           
           ${user ? `
             <a href="${dashboardRoute}" class="btn btn--sm navbar__cta" id="nav-goto-dashboard" style="display: inline-flex; align-items: center; gap: 8px;">
@@ -51,8 +51,11 @@ export function initNavbar(container: HTMLElement): void {
               </div>
             </div>
           ` : `
-            <a href="#login" class="navbar__link" id="nav-login">Login</a>
-            <a href="#signup" class="btn btn--sm navbar__cta" id="nav-cta">Let's Get Started</a>
+            <a href="#login" class="navbar__link navbar__link--login" id="nav-login">Log In</a>
+            <a href="#signup" class="btn btn--sm navbar__cta" id="nav-cta">
+              <span class="cta-text-full">Let's Get Started</span>
+              <span class="cta-text-short">Get Started</span>
+            </a>
           `}
         </div>
       </div>

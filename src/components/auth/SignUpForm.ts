@@ -158,6 +158,10 @@ export function renderSignUpForm(role: 'client' | 'designer', _initialRoleChosen
             Back to role selection
           </button>
         </div>
+
+        <div style="text-align: center; margin-top: 14px; font-size: 13px; color: #64748B;">
+          Already have an account? <a href="#login" style="color: #2F7BE5; text-decoration: underline; font-weight: 500;">Log in</a>
+        </div>
       </form>
     </div>
   `;

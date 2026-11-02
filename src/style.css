@@ -284,6 +284,18 @@ ol {
   color: var(--color-primary);
 }
 
+.navbar__link--login {
+  font-weight: 600;
+}
+
+.cta-text-short {
+  display: none;
+}
+
+.cta-text-full {
+  display: inline;
+}
+
 .navbar--transparent .navbar__cta {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -1142,12 +1154,72 @@ ol {
     right: 12px;
   }
 
-  .navbar__link {
-    display: none;
+  .navbar__link--nav {
+    display: none !important;
+  }
+
+  .navbar__inner {
+    padding: 0 16px;
+  }
+
+  .navbar__actions {
+    gap: 8px;
+  }
+
+  .navbar__link--login {
+    display: inline-flex !important;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .navbar--transparent .navbar__link--login {
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  .navbar--solid .navbar__link--login {
+    color: var(--color-dark) !important;
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+  }
+
+  .navbar__cta {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 480px) {
+  .navbar__inner {
+    padding: 0 12px;
+  }
+
+  .navbar__logo {
+    font-size: 1.25rem;
+    gap: 6px;
+  }
+
+  .navbar__logo-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .cta-text-full {
+    display: none !important;
+  }
+
+  .cta-text-short {
+    display: inline !important;
+  }
+
   .hero__cta-row {
     flex-direction: column;
     width: 100%;
