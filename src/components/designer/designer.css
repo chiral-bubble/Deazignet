@@ -3197,8 +3197,51 @@
   }
 }
 
+/* Mobile bottom navigation bar: Hidden on desktop */
+.dez-mobile-bottom-nav {
+  display: none !important;
+}
+
 /* Mobile (Under 768px and 375px) */
 @media (max-width: 768px) {
+  .dez-mobile-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #FFFFFF;
+    border-top: 1px solid #E5E7EB;
+    z-index: 100;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 4px;
+  }
+
+  .dez-m-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #6B7280;
+    background: none;
+    border: none;
+    flex: 1;
+    height: 100%;
+    cursor: pointer;
+    transition: color 150ms;
+    padding: 6px 0;
+  }
+
+  .dez-m-nav-item.is-active {
+    color: #2F7BE5;
+    font-weight: 600;
+  }
+
   .dez-sidebar {
     display: none;
   }
