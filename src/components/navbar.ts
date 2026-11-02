@@ -21,11 +21,7 @@ export function initNavbar(container: HTMLElement): void {
     nav.innerHTML = `
       <div class="navbar__inner">
         <a href="/" class="navbar__logo" id="navbar-logo">
-          <svg class="navbar__logo-icon" viewBox="0 0 36 36" fill="none">
-            <rect width="36" height="36" rx="8" fill="currentColor" fill-opacity="0.15"/>
-            <path d="M10 26V10h5.5c2 0 3.5.5 4.5 1.5s1.5 2.3 1.5 4-.5 3-1.5 4-2.5 1.5-4.5 1.5H14v5h-4z" fill="currentColor"/>
-            <path d="M18 17l8 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
+          <img src="/logo.png" alt="Dezignet" class="navbar__logo-icon" style="width: 32px; height: 32px; border-radius: 6px; object-fit: contain;" />
           Dezignet
         </a>
         <div class="navbar__actions">

@@ -100,7 +100,7 @@ export function renderDesignerApp(): string {
       <!-- Clean Light Sidebar (Consolidated Strictly 5 Items) -->
       <aside class="dez-sidebar" id="dez-designer-sidebar" aria-label="Designer Studio Navigation">
         <div class="dez-sidebar-header">
-          <div class="dez-sidebar-logo">D</div>
+          <img src="/logo.png" alt="Dezignet" class="dez-sidebar-logo" style="width: 28px; height: 28px; border-radius: 6px; object-fit: contain;" />
           <span class="dez-sidebar-brand">Dezignet</span>
         </div>
 

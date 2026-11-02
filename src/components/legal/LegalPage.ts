@@ -20,11 +20,7 @@ export function renderLegalPage(type: 'terms' | 'privacy'): string {
       <header style="border-bottom: 1px solid #E5E7EB; padding: 20px 32px; background: #FFFFFF; position: sticky; top: 0; z-index: 10;">
         <div style="max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
           <a href="/" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #0F172A; font-weight: 700; font-size: 18px;">
-            <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
-              <rect width="36" height="36" rx="8" fill="#2F7BE5" fill-opacity="0.12"/>
-              <path d="M10 26V10h5.5c2 0 3.5.5 4.5 1.5s1.5 2.3 1.5 4-.5 3-1.5 4-2.5 1.5-4.5 1.5H14v5h-4z" fill="#2F7BE5"/>
-              <path d="M18 17l8 9" stroke="#2F7BE5" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
+            <img src="/logo.png" alt="Dezignet" style="width: 28px; height: 28px; border-radius: 6px; object-fit: contain;" />
             Dezignet
           </a>
 

@@ -71,11 +71,7 @@ export function renderFloatingRail(activeTab: NavTabId = 'dashboard'): string {
       <!-- Rail Top Logo Mark -->
       <div class="rail-top">
         <a href="#dashboard" class="rail-logo-btn" title="Dezignet Studio">
-          <svg class="rail-logo-svg" viewBox="0 0 36 36" fill="none">
-            <rect width="36" height="36" rx="10" fill="#2F7BE5" fill-opacity="0.18"/>
-            <path d="M10 26V10h5.5c2 0 3.5.5 4.5 1.5s1.5 2.3 1.5 4-.5 3-1.5 4-2.5 1.5-4.5 1.5H14v5h-4z" fill="#2F7BE5"/>
-            <path d="M18 17l8 9" stroke="#2F7BE5" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
+          <img src="/logo.png" alt="Dezignet" class="rail-logo-svg" style="width: 32px; height: 32px; border-radius: 8px; object-fit: contain;" />
         </a>
         <div class="rail-brand-name">Dezignet</div>
       </div>

@@ -28,9 +28,10 @@ export function renderClientShell(options: ClientLayoutOptions, contentHtml: str
         <div>
           <!-- Brand Logo -->
           <div style="height: 64px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid #E5E7EB;">
-            <a href="#client-dashboard" style="text-decoration: none; display: flex; align-items: baseline; gap: 4px;">
-              <span style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #111827;">Dezignet</span>
-              <span style="font-size: 11px; color: #6B7280; font-weight: 500;">Client</span>
+            <a href="#client-dashboard" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+              <img src="/logo.png" alt="Dezignet" style="width: 30px; height: 30px; border-radius: 6px; object-fit: contain;" />
+              <span style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #111827;">Dezignet</span>
+              <span style="font-size: 11px; color: #6B7280; font-weight: 500; margin-left: 2px;">Client</span>
             </a>
           </div>
 
@@ -79,7 +80,10 @@ export function renderClientShell(options: ClientLayoutOptions, contentHtml: str
         <!-- Header -->
         <header class="client-header">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <a href="#client-dashboard" style="text-decoration: none; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #111827; display: none;" class="mobile-logo-brand">Dezignet</a>
+            <a href="#client-dashboard" style="text-decoration: none; display: none; align-items: center; gap: 6px;" class="mobile-logo-brand">
+              <img src="/logo.png" alt="Dezignet" style="width: 24px; height: 24px; border-radius: 4px; object-fit: contain;" />
+              <span style="font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #111827;">Dezignet</span>
+            </a>
             <h1 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #111827; margin: 0;">${options.pageTitle}</h1>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">

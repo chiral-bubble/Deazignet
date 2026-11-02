@@ -27,7 +27,8 @@ export function renderAdminPage(container: HTMLElement): void {
       <!-- Admin Header -->
       <header style="background: #FFFFFF; border-bottom: 1px solid #E5E7EB; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 16px;">
-          <a href="/" style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #0F172A; text-decoration: none;">
+          <a href="/" style="display: flex; align-items: center; gap: 8px; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #0F172A; text-decoration: none;">
+            <img src="/logo.png" alt="Dezignet" style="width: 28px; height: 28px; border-radius: 6px; object-fit: contain;" />
             Dezignet
           </a>
           <span style="background: #F1F5F9; color: #475569; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">

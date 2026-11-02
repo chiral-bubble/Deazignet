@@ -24,11 +24,7 @@ const icons = {
     <line x1="19" y1="12" x2="5" y2="12"></line>
     <polyline points="12 19 5 12 12 5"></polyline>
   </svg>`,
-  logo: `<svg class="auth-header-logo-icon" viewBox="0 0 36 36" fill="none">
-    <rect width="36" height="36" rx="8" fill="#2F7BE5" fill-opacity="0.2"/>
-    <path d="M10 26V10h5.5c2 0 3.5.5 4.5 1.5s1.5 2.3 1.5 4-.5 3-1.5 4-2.5 1.5-4.5 1.5H14v5h-4z" fill="#2F7BE5"/>
-    <path d="M18 17l8 9" stroke="#2F7BE5" stroke-width="2.5" stroke-linecap="round"/>
-  </svg>`
+  logo: `<img src="/logo.png" alt="Dezignet" class="auth-header-logo-icon" style="width: 32px; height: 32px; border-radius: 6px; object-fit: contain;" />`
 };
 
 export function renderAuthPage(): string {

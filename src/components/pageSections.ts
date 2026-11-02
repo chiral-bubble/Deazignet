@@ -309,7 +309,10 @@ function footer(): string {
       <div class="container">
         <div class="footer__grid">
           <div class="footer__brand">
-            <div class="footer__logo">Dezignet</div>
+            <div class="footer__logo" style="display: flex; align-items: center; gap: 8px;">
+              <img src="/logo.png" alt="Dezignet" style="width: 28px; height: 28px; border-radius: 6px; object-fit: contain;" />
+              Dezignet
+            </div>
             <p class="footer__tagline">The premier marketplace connecting clients with licensed architects, interior designers, landscape architects, and engineers worldwide.</p>
           </div>
           <div>
