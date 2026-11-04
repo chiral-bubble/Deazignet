@@ -34,15 +34,8 @@ import { logClientError } from './lib/errorLogger';
 /**
  * Global navigation helper using HTML5 History API
  */
-export function navigateTo(url: string): void {
-  if (url.startsWith('#')) {
-    const clean = url.replace(/^#\/?/, '/');
-    window.history.pushState(null, '', clean);
-  } else {
-    window.history.pushState(null, '', url);
-  }
-  window.dispatchEvent(new Event('popstate'));
-}
+export { navigateTo } from './utils/navigation';
+import { navigateTo } from './utils/navigation';
 
 async function main() {
   const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -523,6 +516,7 @@ async function main() {
   }
 
   window.addEventListener('popstate', handleRoute);
+  window.addEventListener('hashchange', handleRoute);
 
   // Guard against unnecessary route remounts on token refresh or window focus
   let lastAuthUserId: string | null = null;
@@ -534,6 +528,9 @@ async function main() {
     if (currentUserId !== lastAuthUserId || currentRole !== lastAuthRole) {
       lastAuthUserId = currentUserId;
       lastAuthRole = currentRole;
+      dashboardInitialized = false;
+      dashboardContainer.innerHTML = '';
+      clientContainer.innerHTML = '';
       handleRoute();
     }
   });

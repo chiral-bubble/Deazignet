@@ -124,17 +124,19 @@ export async function initAuth(): Promise<AuthState> {
     
     if (session?.user) {
       const profile = await fetchUserRole(session.user.id);
+      const userRole = profile?.role || (session.user.user_metadata?.role as UserRole) || 'client';
+      const userName = profile?.fullName || session.user.user_metadata?.full_name || 'User';
       currentAuthState = {
         user: {
           id: session.user.id,
           email: session.user.email || '',
-          fullName: profile?.fullName || session.user.user_metadata?.full_name || 'User',
-          role: profile?.role || 'client',
+          fullName: userName,
+          role: userRole,
           onboardingCompleted: profile?.onboardingCompleted ?? false
         },
         session,
         isLoading: false,
-        role: profile?.role || 'client',
+        role: userRole,
         onboardingCompleted: profile?.onboardingCompleted ?? false
       };
     } else {
@@ -175,17 +177,19 @@ export async function initAuth(): Promise<AuthState> {
 
     if (session?.user) {
       const profile = await fetchUserRole(session.user.id);
+      const userRole = profile?.role || (session.user.user_metadata?.role as UserRole) || 'client';
+      const userName = profile?.fullName || session.user.user_metadata?.full_name || 'User';
       currentAuthState = {
         user: {
           id: session.user.id,
           email: session.user.email || '',
-          fullName: profile?.fullName || session.user.user_metadata?.full_name || 'User',
-          role: profile?.role || 'client',
+          fullName: userName,
+          role: userRole,
           onboardingCompleted: profile?.onboardingCompleted ?? false
         },
         session,
         isLoading: false,
-        role: profile?.role || 'client',
+        role: userRole,
         onboardingCompleted: profile?.onboardingCompleted ?? false
       };
     } else {
@@ -333,7 +337,40 @@ export async function signUp(params: SignUpParams): Promise<{
       return { success: false, error: error.message };
     }
 
-    const requiresConfirmation = !data.session;
+    // Ensure active session when email confirmation is disabled or auto-confirmed
+    let session = data.session;
+    if (!session) {
+      try {
+        const loginAttempt = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password
+        });
+        if (loginAttempt.data?.session) {
+          session = loginAttempt.data.session;
+        }
+      } catch {
+        // Ignored if email confirmation is required
+      }
+    }
+
+    if (session?.user) {
+      currentAuthState = {
+        user: {
+          id: session.user.id,
+          email: session.user.email || email,
+          fullName: fullName.trim(),
+          role: role,
+          onboardingCompleted: false
+        },
+        session,
+        isLoading: false,
+        role: role,
+        onboardingCompleted: false
+      };
+      notifyListeners();
+    }
+
+    const requiresConfirmation = !session;
     return { success: true, requiresConfirmation };
   } catch (err: any) {
     return { success: false, error: err.message || 'Registration failed.' };

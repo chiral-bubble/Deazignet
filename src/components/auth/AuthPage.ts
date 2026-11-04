@@ -5,6 +5,7 @@
 
 import './authPage.css';
 import { logIn, signUp, sendPasswordResetEmail, resetPassword } from '../../services/authService';
+import { navigateTo } from '../../utils/navigation';
 
 /* ---- SVG Icons ---- */
 const icons = {
@@ -344,7 +345,7 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
   // Back to home
   backHomeBtn?.addEventListener('click', (e) => {
     e.preventDefault();
-    window.location.hash = '';
+    navigateTo('/');
   });
 
   // Handle Login submission
@@ -390,15 +391,15 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     } else {
       const nextP = new URLSearchParams(window.location.hash.split('?')[1] || '').get('next');
       if (nextP) {
-        targetRedirect = nextP.startsWith('#') ? nextP : `#${nextP.replace(/^\//, '')}`;
+        targetRedirect = nextP.startsWith('#') ? nextP.replace(/^#\/?/, '/') : nextP;
       } else {
-        targetRedirect = res.user?.role === 'client' ? '#client-dashboard' : '#dashboard';
+        targetRedirect = res.user?.role === 'client' ? '/client-dashboard' : '/dashboard';
       }
     }
 
     setTimeout(() => {
-      window.location.hash = targetRedirect;
-    }, 400);
+      navigateTo(targetRedirect);
+    }, 250);
   });
 
   // Handle Registration submission
@@ -451,10 +452,10 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
       );
     } else {
       showFeedback('register-feedback', 'Account created! Redirecting to dashboard...', false);
+      const dest = role === 'client' ? '/client-dashboard' : '/dashboard';
       setTimeout(() => {
-        const dest = role === 'client' ? '#client-dashboard' : '#dashboard';
-        window.location.hash = dest;
-      }, 500);
+        navigateTo(dest);
+      }, 250);
     }
   });
 
@@ -529,8 +530,8 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     } else {
       showFeedback('reset-feedback', 'Password updated successfully! Logging you in...', false);
       setTimeout(() => {
-        window.location.hash = '#dashboard';
-      }, 700);
+        navigateTo('/dashboard');
+      }, 500);
     }
   });
 }
