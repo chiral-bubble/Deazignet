@@ -2082,3 +2082,34 @@ CREATE INDEX IF NOT EXISTS idx_designer_specializations_gin ON public.designer_p
 CREATE INDEX IF NOT EXISTS idx_designer_state ON public.designer_profiles(state);
 CREATE INDEX IF NOT EXISTS idx_designer_city ON public.designer_profiles(city);
 CREATE INDEX IF NOT EXISTS idx_designer_available_search ON public.designer_profiles(user_id) WHERE show_in_search = true AND is_available = true;
+
+-- 14. Optional pg_cron Scheduling (Auto-enables if supported by project tier)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_cron') THEN
+        BEGIN
+            CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA extensions;
+            
+            -- Remove existing jobs if previously scheduled to ensure idempotency
+            PERFORM cron.unschedule('expire-invitations-daily');
+            PERFORM cron.unschedule('check-licenses-daily');
+
+            -- Schedule daily invitation expiry at midnight UTC
+            PERFORM cron.schedule(
+                'expire-invitations-daily',
+                '0 0 * * *',
+                'SELECT public.expire_project_invitations()'
+            );
+
+            -- Schedule daily license expiry at midnight UTC
+            PERFORM cron.schedule(
+                'check-licenses-daily',
+                '0 0 * * *',
+                'SELECT public.check_credential_expirations()'
+            );
+        EXCEPTION WHEN OTHERS THEN
+            NULL;
+        END;
+    END IF;
+END $$;
+
