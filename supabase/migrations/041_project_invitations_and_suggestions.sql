@@ -167,13 +167,13 @@ BEGIN
     END IF;
 
     -- 4. Check limits
-    SELECT COALESCE(value::int, 10) INTO v_max_per_project 
+    SELECT COALESCE((value #>> '{}')::int, 10) INTO v_max_per_project 
     FROM public.app_settings WHERE key = 'invitations_per_project_max';
     
-    SELECT COALESCE(value::int, 20) INTO v_max_per_client_day 
+    SELECT COALESCE((value #>> '{}')::int, 20) INTO v_max_per_client_day 
     FROM public.app_settings WHERE key = 'invitations_per_client_per_day';
 
-    SELECT COALESCE(value::int, 14) INTO v_expiry_days 
+    SELECT COALESCE((value #>> '{}')::int, 14) INTO v_expiry_days 
     FROM public.app_settings WHERE key = 'invitation_expiry_days';
 
     SELECT COUNT(*) INTO v_proj_inv_count
@@ -443,9 +443,9 @@ BEGIN
     SELECT COALESCE(value::jsonb, '{"specialization_match":30,"subcategory_portfolio":10,"state_license":25,"same_city":15,"same_state":10,"verified":10,"rating":10,"completed_projects":5}'::jsonb)
     INTO v_weights FROM public.app_settings WHERE key = 'matching_weights';
 
-    SELECT COALESCE(value::int, 8) INTO v_max_active FROM public.app_settings WHERE key = 'matching_max_active_engagements';
-    SELECT COALESCE(value::boolean, false) INTO v_require_state_license FROM public.app_settings WHERE key = 'matching_require_state_license';
-    SELECT COALESCE(value::int, 5) INTO v_new_boost FROM public.app_settings WHERE key = 'matching_new_designer_boost';
+    SELECT COALESCE((value #>> '{}')::int, 8) INTO v_max_active FROM public.app_settings WHERE key = 'matching_max_active_engagements';
+    SELECT COALESCE((value #>> '{}')::boolean, false) INTO v_require_state_license FROM public.app_settings WHERE key = 'matching_require_state_license';
+    SELECT COALESCE((value #>> '{}')::int, 5) INTO v_new_boost FROM public.app_settings WHERE key = 'matching_new_designer_boost';
 
     FOR v_cand IN
         WITH candidate_pool AS (
@@ -660,7 +660,7 @@ DECLARE
     v_label_mode TEXT;
     v_rec RECORD;
 BEGIN
-    SELECT COALESCE(value, 'label') INTO v_label_mode FROM public.app_settings WHERE key = 'priority_label_mode';
+    SELECT COALESCE(value #>> '{}', 'label') INTO v_label_mode FROM public.app_settings WHERE key = 'priority_label_mode';
 
     -- Query from public_designer_profiles (strictly enforces directory_listing = true)
     WITH filtered AS (
