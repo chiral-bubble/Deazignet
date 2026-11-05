@@ -61,12 +61,6 @@ CREATE TABLE IF NOT EXISTS public.reserved_slugs (
     reason TEXT NOT NULL DEFAULT 'system_reserved'
 );
 
-ALTER TABLE public.reserved_slugs ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Anyone can read reserved slugs" ON public.reserved_slugs
-    FOR SELECT TO authenticated, anon
-    USING (true);
-
 INSERT INTO public.reserved_slugs (slug, reason) VALUES
 ('admin', 'system'),
 ('api', 'system'),

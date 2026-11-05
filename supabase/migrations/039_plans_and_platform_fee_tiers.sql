@@ -98,16 +98,16 @@ CREATE POLICY "Admins can manage fee tiers" ON public.plan_fee_tiers
 
 -- 3. Settings updates for Plans and Fees
 INSERT INTO public.app_settings (key, value) VALUES
-('fee_tier_mode', '"whole_amount"'::jsonb),
-('fee_basis', '"per_milestone"'::jsonb),
-('verified_badge_requires_paid_plan', 'true'::jsonb),
-('free_show_rating_on_proposals', 'true'::jsonb),
-('free_proposal_bio_max_chars', '300'::jsonb),
-('basic_account_note', '"Basic account: portfolio not available"'::jsonb),
-('matching_plan_boost', '{"free": 0, "basic": 5, "upgraded": 15}'::jsonb),
-('priority_label_mode', '"label"'::jsonb),
-('client_service_fee_percent', '0'::jsonb),
-('client_deposit_percent', 'null'::jsonb)
+('fee_tier_mode', 'whole_amount'),
+('fee_basis', 'per_milestone'),
+('verified_badge_requires_paid_plan', 'true'),
+('free_show_rating_on_proposals', 'true'),
+('free_proposal_bio_max_chars', '300'),
+('basic_account_note', 'Basic account: portfolio not available'),
+('matching_plan_boost', '{"free": 0, "basic": 5, "upgraded": 15}'),
+('priority_label_mode', 'label'),
+('client_service_fee_percent', '0'),
+('client_deposit_percent', 'null')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- 4. Calculate Platform Fee Function
@@ -145,8 +145,8 @@ BEGIN
     END IF;
 
     -- Fetch mode and basis
-    SELECT COALESCE(value #>> '{}', 'whole_amount') INTO v_mode FROM public.app_settings WHERE key = 'fee_tier_mode';
-    SELECT COALESCE(value #>> '{}', 'per_milestone') INTO v_basis FROM public.app_settings WHERE key = 'fee_basis';
+    SELECT COALESCE(value, 'whole_amount') INTO v_mode FROM public.app_settings WHERE key = 'fee_tier_mode';
+    SELECT COALESCE(value, 'per_milestone') INTO v_basis FROM public.app_settings WHERE key = 'fee_basis';
 
     IF v_basis = 'cumulative_project' THEN
         v_target_amount := p_cumulative_before_cents + p_amount_cents;
@@ -266,7 +266,7 @@ AS $$
 DECLARE
     v_env TEXT;
 BEGIN
-    SELECT COALESCE(value #>> '{}', 'development') INTO v_env 
+    SELECT COALESCE(value, 'development') INTO v_env 
     FROM public.app_settings 
     WHERE key = 'environment';
 
@@ -386,7 +386,7 @@ SELECT
     dp.years_experience,
     CASE 
         WHEN pl.key = 'free' THEN 
-            LEFT(dp.bio, COALESCE((SELECT (value #>> '{}')::int FROM public.app_settings WHERE key = 'free_proposal_bio_max_chars'), 300))
+            LEFT(dp.bio, COALESCE((SELECT value::int FROM public.app_settings WHERE key = 'free_proposal_bio_max_chars'), 300))
         ELSE dp.bio
     END AS short_bio,
     pl.key AS plan_key,
@@ -395,11 +395,11 @@ SELECT
     pl.portfolio_enabled AS plan_has_portfolio,
     pl.verified_badge AS plan_has_verified_badge,
     COALESCE(
-        (SELECT value #>> '{}' FROM public.app_settings WHERE key = 'basic_account_note'),
+        (SELECT value FROM public.app_settings WHERE key = 'basic_account_note'),
         'Basic account: portfolio not available'
     ) AS basic_account_note,
     CASE
-        WHEN (SELECT value #>> '{}' FROM public.app_settings WHERE key = 'free_show_rating_on_proposals') = 'true' OR pl.key != 'free' THEN
+        WHEN (SELECT value FROM public.app_settings WHERE key = 'free_show_rating_on_proposals') = 'true' OR pl.key != 'free' THEN
             COALESCE(
                 (SELECT ROUND(AVG(rating)::numeric, 1) 
                  FROM public.reviews r 
@@ -409,7 +409,7 @@ SELECT
         ELSE NULL
     END AS rating_average,
     CASE
-        WHEN (SELECT value #>> '{}' FROM public.app_settings WHERE key = 'free_show_rating_on_proposals') = 'true' OR pl.key != 'free' THEN
+        WHEN (SELECT value FROM public.app_settings WHERE key = 'free_show_rating_on_proposals') = 'true' OR pl.key != 'free' THEN
             COALESCE(
                 (SELECT COUNT(*)::INT 
                  FROM public.reviews r 

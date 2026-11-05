@@ -68,30 +68,16 @@ CREATE POLICY "Admins can view suggestion events" ON public.suggestion_events
 
 -- 3. App Settings for Invitations & Matching
 INSERT INTO public.app_settings (key, value) VALUES
-('invitations_per_project_max', '10'::jsonb),
-('invitations_per_client_per_day', '20'::jsonb),
-('invitation_expiry_days', '14'::jsonb),
-('matching_weights', '{"specialization_match": 30, "subcategory_portfolio": 10, "state_license": 25, "same_city": 15, "same_state": 10, "verified": 10, "rating": 10, "completed_projects": 5}'::jsonb),
-('matching_new_designer_boost', '5'::jsonb),
-('matching_max_active_engagements', '8'::jsonb),
-('matching_require_state_license', 'false'::jsonb)
+('invitations_per_project_max', '10'),
+('invitations_per_client_per_day', '20'),
+('invitation_expiry_days', '14'),
+('matching_weights', '{"specialization_match": 30, "subcategory_portfolio": 10, "state_license": 25, "same_city": 15, "same_state": 10, "verified": 10, "rating": 10, "completed_projects": 5}'),
+('matching_new_designer_boost', '5'),
+('matching_max_active_engagements', '8'),
+('matching_require_state_license', 'false')
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
--- 4. Notification Types Table & Seed
-CREATE TABLE IF NOT EXISTS public.notification_types (
-    type TEXT PRIMARY KEY,
-    title_template TEXT NOT NULL,
-    body_template TEXT NOT NULL,
-    email_template TEXT
-);
-
-ALTER TABLE public.notification_types ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Anyone can read notification types" ON public.notification_types;
-CREATE POLICY "Anyone can read notification types" ON public.notification_types
-    FOR SELECT TO authenticated, anon
-    USING (true);
-
+-- 4. Notification Types Insert
 INSERT INTO public.notification_types (type, title_template, body_template, email_template) VALUES
 ('invitation_received', 'Project Invitation', 'You received an invitation to submit a proposal for {{project_title}}.', 'invitation_received'),
 ('invitation_declined', 'Invitation Declined', 'A designer declined your project invitation.', 'invitation_declined'),
@@ -181,13 +167,13 @@ BEGIN
     END IF;
 
     -- 4. Check limits
-    SELECT COALESCE((value #>> '{}')::int, 10) INTO v_max_per_project 
+    SELECT COALESCE(value::int, 10) INTO v_max_per_project 
     FROM public.app_settings WHERE key = 'invitations_per_project_max';
     
-    SELECT COALESCE((value #>> '{}')::int, 20) INTO v_max_per_client_day 
+    SELECT COALESCE(value::int, 20) INTO v_max_per_client_day 
     FROM public.app_settings WHERE key = 'invitations_per_client_per_day';
 
-    SELECT COALESCE((value #>> '{}')::int, 14) INTO v_expiry_days 
+    SELECT COALESCE(value::int, 14) INTO v_expiry_days 
     FROM public.app_settings WHERE key = 'invitation_expiry_days';
 
     SELECT COUNT(*) INTO v_proj_inv_count
@@ -216,12 +202,10 @@ BEGIN
     RETURNING id INTO v_new_inv_id;
 
     -- 6. Send notification to designer
-    INSERT INTO public.notifications (user_id, type, title, body, data, link)
+    INSERT INTO public.notifications (user_id, type, data, link)
     VALUES (
         p_designer_id,
         'invitation_received',
-        'Project Invitation',
-        'You received an invitation to submit a proposal for ' || v_project.title || '.',
         jsonb_build_object(
             'invitation_id', v_new_inv_id,
             'project_id', p_project_id,
@@ -315,12 +299,10 @@ BEGIN
     WHERE id = p_invitation_id;
 
     -- Notify client
-    INSERT INTO public.notifications (user_id, type, title, body, data, link)
+    INSERT INTO public.notifications (user_id, type, data, link)
     VALUES (
         v_inv.client_id,
         'invitation_declined',
-        'Invitation Declined',
-        'A designer declined your project invitation.',
         jsonb_build_object(
             'invitation_id', p_invitation_id,
             'project_id', v_inv.project_id,
@@ -381,12 +363,10 @@ BEGIN
         SET status = 'expired', responded_at = NOW()
         WHERE id = r.id;
 
-        INSERT INTO public.notifications (user_id, type, title, body, data, link)
+        INSERT INTO public.notifications (user_id, type, data, link)
         VALUES (
             r.client_id,
             'invitation_expired',
-            'Invitation Expired',
-            'An invitation for ' || r.project_title || ' has expired.',
             jsonb_build_object(
                 'invitation_id', r.id,
                 'project_id', r.project_id,
@@ -398,35 +378,17 @@ BEGIN
         v_count := v_count + 1;
     END LOOP;
 
-    -- Audit log entry (safe exception block)
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'admin_audit_log') THEN
-        BEGIN
-            INSERT INTO public.admin_audit_log (admin_id, action, target_type, target_id, after_state)
-            VALUES (
-                auth.uid(),
-                'job_expire_invitations',
-                'system',
-                '00000000-0000-0000-0000-000000000000',
-                jsonb_build_object('expired_count', v_count)
-            );
-        EXCEPTION WHEN OTHERS THEN
-            NULL;
-        END;
-    END IF;
+    -- Audit log entry
+    INSERT INTO public.admin_audit_log (admin_id, action, target_type, target_id, details)
+    VALUES (
+        COALESCE(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid),
+        'job_expire_invitations',
+        'system',
+        '00000000-0000-0000-0000-000000000000'::uuid,
+        jsonb_build_object('expired_count', v_count)
+    );
 
     RETURN jsonb_build_object('success', true, 'expired_count', v_count);
-END;
-$$;
-
--- Alias for scheduled background job
-CREATE OR REPLACE FUNCTION public.expire_project_invitations()
-RETURNS JSONB
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-    RETURN public.expire_invitations();
 END;
 $$;
 
@@ -469,9 +431,9 @@ BEGIN
     SELECT COALESCE(value::jsonb, '{"specialization_match":30,"subcategory_portfolio":10,"state_license":25,"same_city":15,"same_state":10,"verified":10,"rating":10,"completed_projects":5}'::jsonb)
     INTO v_weights FROM public.app_settings WHERE key = 'matching_weights';
 
-    SELECT COALESCE((value #>> '{}')::int, 8) INTO v_max_active FROM public.app_settings WHERE key = 'matching_max_active_engagements';
-    SELECT COALESCE((value #>> '{}')::boolean, false) INTO v_require_state_license FROM public.app_settings WHERE key = 'matching_require_state_license';
-    SELECT COALESCE((value #>> '{}')::int, 5) INTO v_new_boost FROM public.app_settings WHERE key = 'matching_new_designer_boost';
+    SELECT COALESCE(value::int, 8) INTO v_max_active FROM public.app_settings WHERE key = 'matching_max_active_engagements';
+    SELECT COALESCE(value::boolean, false) INTO v_require_state_license FROM public.app_settings WHERE key = 'matching_require_state_license';
+    SELECT COALESCE(value::int, 5) INTO v_new_boost FROM public.app_settings WHERE key = 'matching_new_designer_boost';
 
     FOR v_cand IN
         WITH candidate_pool AS (
@@ -686,7 +648,7 @@ DECLARE
     v_label_mode TEXT;
     v_rec RECORD;
 BEGIN
-    SELECT COALESCE(value #>> '{}', 'label') INTO v_label_mode FROM public.app_settings WHERE key = 'priority_label_mode';
+    SELECT COALESCE(value, 'label') INTO v_label_mode FROM public.app_settings WHERE key = 'priority_label_mode';
 
     -- Query from public_designer_profiles (strictly enforces directory_listing = true)
     WITH filtered AS (
