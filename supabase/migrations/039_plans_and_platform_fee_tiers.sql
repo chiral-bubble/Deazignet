@@ -266,7 +266,7 @@ AS $$
 DECLARE
     v_env TEXT;
 BEGIN
-    SELECT COALESCE(value, 'development') INTO v_env 
+    SELECT COALESCE(value #>> '{}', 'development') INTO v_env 
     FROM public.app_settings 
     WHERE key = 'environment';
 

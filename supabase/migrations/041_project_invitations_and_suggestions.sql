@@ -77,7 +77,21 @@ INSERT INTO public.app_settings (key, value) VALUES
 ('matching_require_state_license', 'false'::jsonb)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
--- 4. Notification Types Insert
+-- 4. Notification Types Table & Seed
+CREATE TABLE IF NOT EXISTS public.notification_types (
+    type TEXT PRIMARY KEY,
+    title_template TEXT NOT NULL,
+    body_template TEXT NOT NULL,
+    email_template TEXT
+);
+
+ALTER TABLE public.notification_types ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can read notification types" ON public.notification_types;
+CREATE POLICY "Anyone can read notification types" ON public.notification_types
+    FOR SELECT TO authenticated, anon
+    USING (true);
+
 INSERT INTO public.notification_types (type, title_template, body_template, email_template) VALUES
 ('invitation_received', 'Project Invitation', 'You received an invitation to submit a proposal for {{project_title}}.', 'invitation_received'),
 ('invitation_declined', 'Invitation Declined', 'A designer declined your project invitation.', 'invitation_declined'),
@@ -202,10 +216,12 @@ BEGIN
     RETURNING id INTO v_new_inv_id;
 
     -- 6. Send notification to designer
-    INSERT INTO public.notifications (user_id, type, data, link)
+    INSERT INTO public.notifications (user_id, type, title, body, data, link)
     VALUES (
         p_designer_id,
         'invitation_received',
+        'Project Invitation',
+        'You received an invitation to submit a proposal for ' || v_project.title || '.',
         jsonb_build_object(
             'invitation_id', v_new_inv_id,
             'project_id', p_project_id,
@@ -299,10 +315,12 @@ BEGIN
     WHERE id = p_invitation_id;
 
     -- Notify client
-    INSERT INTO public.notifications (user_id, type, data, link)
+    INSERT INTO public.notifications (user_id, type, title, body, data, link)
     VALUES (
         v_inv.client_id,
         'invitation_declined',
+        'Invitation Declined',
+        'A designer declined your project invitation.',
         jsonb_build_object(
             'invitation_id', p_invitation_id,
             'project_id', v_inv.project_id,
@@ -363,10 +381,12 @@ BEGIN
         SET status = 'expired', responded_at = NOW()
         WHERE id = r.id;
 
-        INSERT INTO public.notifications (user_id, type, data, link)
+        INSERT INTO public.notifications (user_id, type, title, body, data, link)
         VALUES (
             r.client_id,
             'invitation_expired',
+            'Invitation Expired',
+            'An invitation for ' || r.project_title || ' has expired.',
             jsonb_build_object(
                 'invitation_id', r.id,
                 'project_id', r.project_id,
@@ -378,15 +398,21 @@ BEGIN
         v_count := v_count + 1;
     END LOOP;
 
-    -- Audit log entry
-    INSERT INTO public.admin_audit_log (admin_id, action, target_type, target_id, details)
-    VALUES (
-        COALESCE(auth.uid(), '00000000-0000-0000-0000-000000000000'::uuid),
-        'job_expire_invitations',
-        'system',
-        '00000000-0000-0000-0000-000000000000'::uuid,
-        jsonb_build_object('expired_count', v_count)
-    );
+    -- Audit log entry (safe exception block)
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'admin_audit_log') THEN
+        BEGIN
+            INSERT INTO public.admin_audit_log (admin_id, action, target_type, target_id, after_state)
+            VALUES (
+                auth.uid(),
+                'job_expire_invitations',
+                'system',
+                '00000000-0000-0000-0000-000000000000',
+                jsonb_build_object('expired_count', v_count)
+            );
+        EXCEPTION WHEN OTHERS THEN
+            NULL;
+        END;
+    END IF;
 
     RETURN jsonb_build_object('success', true, 'expired_count', v_count);
 END;
