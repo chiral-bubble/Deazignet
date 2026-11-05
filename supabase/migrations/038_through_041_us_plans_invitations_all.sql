@@ -478,16 +478,16 @@ CREATE POLICY "Admins can manage fee tiers" ON public.plan_fee_tiers
 
 -- 3. Settings updates for Plans and Fees
 INSERT INTO public.app_settings (key, value) VALUES
-('fee_tier_mode', 'whole_amount'),
-('fee_basis', 'per_milestone'),
-('verified_badge_requires_paid_plan', 'true'),
-('free_show_rating_on_proposals', 'true'),
-('free_proposal_bio_max_chars', '300'),
-('basic_account_note', 'Basic account: portfolio not available'),
-('matching_plan_boost', '{"free": 0, "basic": 5, "upgraded": 15}'),
-('priority_label_mode', 'label'),
-('client_service_fee_percent', '0'),
-('client_deposit_percent', 'null')
+('fee_tier_mode', '"whole_amount"'::jsonb),
+('fee_basis', '"per_milestone"'::jsonb),
+('verified_badge_requires_paid_plan', 'true'::jsonb),
+('free_show_rating_on_proposals', 'true'::jsonb),
+('free_proposal_bio_max_chars', '300'::jsonb),
+('basic_account_note', '"Basic account: portfolio not available"'::jsonb),
+('matching_plan_boost', '{"free": 0, "basic": 5, "upgraded": 15}'::jsonb),
+('priority_label_mode', '"label"'::jsonb),
+('client_service_fee_percent', '0'::jsonb),
+('client_deposit_percent', 'null'::jsonb)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- 4. Calculate Platform Fee Function
@@ -1316,13 +1316,13 @@ CREATE POLICY "Admins can view suggestion events" ON public.suggestion_events
 
 -- 3. App Settings for Invitations & Matching
 INSERT INTO public.app_settings (key, value) VALUES
-('invitations_per_project_max', '10'),
-('invitations_per_client_per_day', '20'),
-('invitation_expiry_days', '14'),
-('matching_weights', '{"specialization_match": 30, "subcategory_portfolio": 10, "state_license": 25, "same_city": 15, "same_state": 10, "verified": 10, "rating": 10, "completed_projects": 5}'),
-('matching_new_designer_boost', '5'),
-('matching_max_active_engagements', '8'),
-('matching_require_state_license', 'false')
+('invitations_per_project_max', '10'::jsonb),
+('invitations_per_client_per_day', '20'::jsonb),
+('invitation_expiry_days', '14'::jsonb),
+('matching_weights', '{"specialization_match": 30, "subcategory_portfolio": 10, "state_license": 25, "same_city": 15, "same_state": 10, "verified": 10, "rating": 10, "completed_projects": 5}'::jsonb),
+('matching_new_designer_boost', '5'::jsonb),
+('matching_max_active_engagements', '8'::jsonb),
+('matching_require_state_license', 'false'::jsonb)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- 4. Notification Types Insert

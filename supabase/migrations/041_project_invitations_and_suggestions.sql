@@ -68,13 +68,13 @@ CREATE POLICY "Admins can view suggestion events" ON public.suggestion_events
 
 -- 3. App Settings for Invitations & Matching
 INSERT INTO public.app_settings (key, value) VALUES
-('invitations_per_project_max', '10'),
-('invitations_per_client_per_day', '20'),
-('invitation_expiry_days', '14'),
-('matching_weights', '{"specialization_match": 30, "subcategory_portfolio": 10, "state_license": 25, "same_city": 15, "same_state": 10, "verified": 10, "rating": 10, "completed_projects": 5}'),
-('matching_new_designer_boost', '5'),
-('matching_max_active_engagements', '8'),
-('matching_require_state_license', 'false')
+('invitations_per_project_max', '10'::jsonb),
+('invitations_per_client_per_day', '20'::jsonb),
+('invitation_expiry_days', '14'::jsonb),
+('matching_weights', '{"specialization_match": 30, "subcategory_portfolio": 10, "state_license": 25, "same_city": 15, "same_state": 10, "verified": 10, "rating": 10, "completed_projects": 5}'::jsonb),
+('matching_new_designer_boost', '5'::jsonb),
+('matching_max_active_engagements', '8'::jsonb),
+('matching_require_state_license', 'false'::jsonb)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 -- 4. Notification Types Insert
