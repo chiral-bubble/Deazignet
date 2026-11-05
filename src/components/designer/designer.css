@@ -22,6 +22,9 @@
   --dez-text-muted: #6B7280;
   --dez-text-light: #9CA3AF;
   
+  --dez-brand: #2F7BE5;
+  --dez-brand-hover: #2264be;
+  --dez-brand-subtle: #EFF6FF;
   --dez-brand-blue: #2F7BE5;
   --dez-brand-blue-hover: #2264be;
   --dez-brand-blue-subtle: #EFF6FF;
@@ -3659,22 +3662,31 @@
   font-size: 12.5px;
   font-weight: 500;
   border-radius: 6px;
-  background: var(--dez-surface);
-  border: 1px solid var(--dez-border);
-  color: var(--dez-text-secondary);
+  background: var(--dez-surface, #FFFFFF);
+  border: 1px solid var(--dez-border, #E5E7EB);
+  color: var(--dez-text-secondary, #4B5563);
   cursor: pointer;
   transition: all 150ms ease;
+  user-select: none;
 }
 
 .dez-chip-select:hover {
-  border-color: var(--dez-brand);
-  color: var(--dez-text-primary);
+  border-color: var(--dez-brand, #2F7BE5);
+  color: var(--dez-text-primary, #111827);
+  background: var(--dez-surface-hover, #F2F3F5);
 }
 
 .dez-chip-select.is-selected {
-  background: var(--dez-brand);
-  border-color: var(--dez-brand);
-  color: #FFFFFF;
+  background: var(--dez-brand, #2F7BE5) !important;
+  border-color: var(--dez-brand, #2F7BE5) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
+
+.dez-chip-select.is-selected:hover {
+  background: var(--dez-brand-hover, #2264be) !important;
+  border-color: var(--dez-brand-hover, #2264be) !important;
+  color: #FFFFFF !important;
 }
 
 /* Bordered Section Box */
