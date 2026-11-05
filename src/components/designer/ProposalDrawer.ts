@@ -11,8 +11,8 @@ import {
   type Project,
   type ProposalSubmission
 } from '../../services/projectsService';
-
-const PLATFORM_FEE_PERCENT = 10;
+import { calculatePlatformFeeFallback } from '../../services/plansService';
+import { formatUSD } from '../../services/usMarketService';
 
 // Available portfolio items for quick selection
 const mockDesignerPortfolio = [
@@ -475,8 +475,9 @@ export function initProposalDrawer(
   function renderStep3() {
     if (!body) return;
 
-    const platformFee = Math.round((formData.proposedTotal * PLATFORM_FEE_PERCENT) / 100);
-    const netReceivable = formData.proposedTotal - platformFee;
+    const amountCents = Math.round(formData.proposedTotal * 100);
+    const feeCalc = calculatePlatformFeeFallback('free', amountCents);
+    const projectState = (project as any).state || (project as any).state_region || 'this project location';
 
     body.innerHTML = `
       <div class="dez-review-box">
@@ -516,6 +517,20 @@ export function initProposalDrawer(
         }
       </div>
 
+      <!-- State Licensure Warning & Required Acknowledgement -->
+      <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 14px 16px; margin-bottom: 16px;">
+        <div style="font-size: 13px; font-weight: 600; color: #92400E; margin-bottom: 4px;">
+          State Licensure Notice — ${projectState}
+        </div>
+        <p style="font-size: 12.5px; color: #78350F; margin: 0 0 10px 0; line-height: 1.45;">
+          Work in ${projectState} may require a professional architectural or engineering license in that state.
+        </p>
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #92400E; cursor: pointer; line-height: 1.4;">
+          <input type="checkbox" id="dez-license-acknowledgement" required style="margin-top: 2px;" />
+          <span>I understand that work in ${projectState} may require a license in that state and I am responsible for meeting local requirements.</span>
+        </label>
+      </div>
+
       <!-- Financial Net Calculation & Trust Notice -->
       <div class="dez-fee-notice-banner">
         <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
@@ -523,12 +538,12 @@ export function initProposalDrawer(
           <strong>$${formData.proposedTotal.toLocaleString()}</strong>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:var(--dez-text-muted);">
-          <span>Dezignet Studio Platform Fee (${PLATFORM_FEE_PERCENT}%):</span>
-          <span>-$${platformFee.toLocaleString()}</span>
+          <span>Platform service fee (${feeCalc.rate_percent}%):</span>
+          <span>-${formatUSD(feeCalc.fee_cents)}</span>
         </div>
         <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px dashed var(--dez-border); font-weight:600; color:var(--dez-text-primary);">
           <span>Your Net Payout:</span>
-          <span style="color:var(--dez-brand-blue);">$${netReceivable.toLocaleString()}</span>
+          <span style="color:var(--dez-brand-blue);">${formatUSD(feeCalc.net_cents)}</span>
         </div>
       </div>
 
@@ -586,6 +601,12 @@ export function initProposalDrawer(
     } else if (currentStep === 2) {
       if (formData.portfolioItems.length === 0) {
         showError('Please attach at least 1 relevant portfolio design to your proposal.');
+        return false;
+      }
+    } else if (currentStep === 3) {
+      const ackCheckbox = body?.querySelector('#dez-license-acknowledgement') as HTMLInputElement | null;
+      if (ackCheckbox && !ackCheckbox.checked) {
+        showError('Please check the box to acknowledge state licensure requirements before submitting.');
         return false;
       }
     }

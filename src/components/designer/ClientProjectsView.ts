@@ -97,6 +97,15 @@ export function renderClientProjectsView(
             </button>
           </div>
 
+          <!-- Invited Filter Chip for Designer -->
+          <div>
+            <button type="button" class="dez-btn-secondary" id="btn-toggle-invited" style="height: 40px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span>Invited</span>
+              <span id="invited-chip-count" style="font-size: 11.5px; background: #DBEAFE; color: #1E40AF; padding: 1px 6px; border-radius: 10px; font-weight: 600;">0</span>
+            </button>
+          </div>
+
           <!-- In Designers Mode: Open Filters Drawer Button -->
           <div id="designer-filters-btn-wrap" style="display: ${isProj ? 'none' : 'block'};">
             <button type="button" class="dez-btn-secondary" id="btn-open-designer-filters" style="height: 40px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">

@@ -153,15 +153,30 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
             <div style="flex: 1;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0;">
-                  <a href="#designer-profile?id=${p.designer.id}" style="color: inherit; text-decoration: none;">${escapeHtml(p.designer.full_name)}</a>
+                  ${(p.designer as any).plan_key === 'free'
+                    ? `<span>${escapeHtml(p.designer.full_name)}</span>`
+                    : `<a href="#designer-profile?id=${p.designer.id}" style="color: inherit; text-decoration: none;">${escapeHtml(p.designer.full_name)}</a>`
+                  }
                 </h2>
-                ${p.designer.verified ? `<span style="font-size: 11.5px; color: #2F7BE5; font-weight: 600;">✓ Verified</span>` : ''}
+                ${p.designer.verified && (p.designer as any).plan_key !== 'free' ? `<span style="font-size: 11.5px; color: #2F7BE5; font-weight: 600;">✓ Verified</span>` : ''}
               </div>
               <div style="font-size: 13px; color: #64748B; margin-top: 4px;">
                 ${p.designer.title ? `${escapeHtml(p.designer.title)} • ` : ''}${escapeHtml(p.designer.studio_name || '')}
               </div>
               <div style="font-size: 12.5px; color: #94A3B8; margin-top: 4px;">
-                ${escapeHtml([p.designer.city, p.designer.state_region].filter(Boolean).join(', '))} • ${p.designer.years_experience} years experience • ${p.designer.rating_average > 0 ? `★ ${p.designer.rating_average} (${p.designer.rating_count} reviews)` : 'Verified member'}
+                ${escapeHtml([p.designer.city, p.designer.state_region].filter(Boolean).join(', '))} • ${p.designer.years_experience} years experience • ${p.designer.rating_average > 0 ? `★ ${p.designer.rating_average} (${p.designer.rating_count} reviews)` : 'Member'}
+              </div>
+
+              ${(p.designer as any).plan_key === 'free' ? `
+                <div style="font-size: 12px; color: #64748B; margin-top: 6px; font-style: italic;">
+                  Basic account: portfolio not available
+                </div>
+              ` : ''}
+
+              <!-- State Licensure Status Indicator on Client Proposal Detail -->
+              <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 8px 12px; margin-top: 10px; font-size: 12.5px; color: #92400E; display: flex; align-items: center; gap: 8px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Not listed as licensed in ${escapeHtml((p as any).project_state || (p.designer as any).state || 'project state')}</span>
               </div>
             </div>
           </div>

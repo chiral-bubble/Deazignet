@@ -461,6 +461,31 @@ export function simulateNotification(typeKey: NotificationTypeKey): Notification
       detail: 'Certificate scan could not be verified automatically. Please upload a clear PDF.',
       payload: {}
     },
+    credential_expiring: {
+      title: 'Professional license expiring soon',
+      detail: 'Your license is set to expire in 30 days. Please update your license info to stay listed as verified.',
+      payload: {}
+    },
+    credential_expired: {
+      title: 'Professional license expired',
+      detail: 'Your license has expired. Your public profile will no longer show as licensed until renewed.',
+      payload: {}
+    },
+    invitation_received: {
+      title: 'New project invitation received',
+      detail: 'A client has invited you to submit a proposal on their project.',
+      payload: { projectId: 'proj-1', projectTitle: 'Modern Single-Family Residence' }
+    },
+    invitation_declined: {
+      title: 'Project invitation declined',
+      detail: 'The invited designer has declined your project invitation.',
+      payload: { projectId: 'proj-1' }
+    },
+    invitation_expired: {
+      title: 'Project invitation expired',
+      detail: 'An invitation sent to a designer has passed its expiration window.',
+      payload: { projectId: 'proj-1' }
+    },
     plan_renewal: {
       title: 'Dezignet Upgraded subscription renewed',
       detail: 'Annual billing of $479.90 was processed on Visa ••••4242.',

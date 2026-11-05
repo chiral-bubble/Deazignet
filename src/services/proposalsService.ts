@@ -36,7 +36,7 @@ export interface ProposalFilterOptions {
 
 export interface ProposalUsageInfo {
   used: number;
-  limit: number;
+  limit: number | null;
   planName: string;
   isUnlimited: boolean;
 }

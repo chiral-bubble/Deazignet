@@ -18,7 +18,8 @@ import { renderPostProjectWizard } from './components/client/PostProjectWizard';
 import { renderClientProjectDetailsPage } from './components/client/ClientProjectDetailsPage';
 import { renderCompareProposalsView } from './components/client/proposals/CompareProposalsView';
 import { renderProposalDetailPage } from './components/client/proposals/ProposalDetailPage';
-import { renderClientComingSoonPage, renderClientShell, initClientShell } from './components/client/ClientLayout';
+import { renderFindDesignersPage } from './components/client/FindDesignersPage';
+import { renderClientShell, initClientShell } from './components/client/ClientLayout';
 import { renderClientAccountSettings } from './components/client/ClientAccountSettings';
 import { renderClientPaymentsPage } from './components/client/ClientPaymentsPage';
 import { renderHelpSupportPage } from './components/client/HelpSupportPage';
@@ -344,7 +345,25 @@ async function main() {
         (pathname === '/help-support' && authState.role === 'client') ||
         (pathname.startsWith('/conversations') && authState.role === 'client');
 
+      // Client Workspace Routes
+      if (pathname === '/client-dashboard' && authState.role === 'designer') {
+        navigateTo('/dashboard');
+        return;
+      }
+
       if (isClientPath) {
+        if (!USE_MOCKS.auth && authState.isLoading) {
+          clientContainer.style.display = 'block';
+          clientContainer.innerHTML = `
+            <div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; font-family: Inter, sans-serif;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; color: #64748B;">
+                <div style="width: 28px; height: 28px; border: 2px solid #E5E7EB; border-top-color: #2F7BE5; border-radius: 50%; animation: dez-spin 0.8s linear infinite;"></div>
+                <span style="font-size: 13px;">Loading client workspace...</span>
+              </div>
+            </div>
+          `;
+          return;
+        }
         if (!USE_MOCKS.auth && !authState.user) {
           navigateTo(`/login?redirect=${encodeURIComponent(pathname + search)}`);
           return;
@@ -378,7 +397,7 @@ async function main() {
           renderClientProjectDetailsPage(clientContainer, projectId, tab);
         } else if (pathname === '/find-designers') {
           document.title = 'Dezignet | Find Designers';
-          renderClientComingSoonPage(clientContainer, 'Find Designers', 'find-designers', 'Search and match with licensed architectural and interior designers.');
+          renderFindDesignersPage(clientContainer);
         } else if (pathname === '/payments') {
           document.title = 'Dezignet | Payments & Escrow';
           renderClientPaymentsPage(clientContainer);
@@ -433,6 +452,18 @@ async function main() {
         pathname.startsWith('/profile');
 
       if (isDesignerPath || isSharedDashboardPath) {
+        if (!USE_MOCKS.auth && authState.isLoading) {
+          dashboardContainer.style.display = 'block';
+          dashboardContainer.innerHTML = `
+            <div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; font-family: Inter, sans-serif;">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; color: #64748B;">
+                <div style="width: 28px; height: 28px; border: 2px solid #E5E7EB; border-top-color: #2F7BE5; border-radius: 50%; animation: dez-spin 0.8s linear infinite;"></div>
+                <span style="font-size: 13px;">Loading designer studio...</span>
+              </div>
+            </div>
+          `;
+          return;
+        }
         if (!USE_MOCKS.auth && !authState.user) {
           navigateTo(`/login?redirect=${encodeURIComponent(pathname + search)}`);
           return;
@@ -521,8 +552,10 @@ async function main() {
   // Guard against unnecessary route remounts on token refresh or window focus
   let lastAuthUserId: string | null = null;
   let lastAuthRole: string | null = null;
+  let initialRouteHandled = false;
 
   subscribeToAuth((state) => {
+    if (state.isLoading) return;
     const currentUserId = state.user?.id || null;
     const currentRole = state.role || null;
     if (currentUserId !== lastAuthUserId || currentRole !== lastAuthRole) {
@@ -531,12 +564,15 @@ async function main() {
       dashboardInitialized = false;
       dashboardContainer.innerHTML = '';
       clientContainer.innerHTML = '';
+      initialRouteHandled = true;
       handleRoute();
     }
   });
 
-  // Initial Route Load
-  handleRoute();
+  // Initial Route Load if not already triggered by auth subscriber
+  if (!initialRouteHandled) {
+    handleRoute();
+  }
 }
 
 // Start application when DOM is ready

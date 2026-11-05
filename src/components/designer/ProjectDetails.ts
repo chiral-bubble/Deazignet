@@ -4,6 +4,7 @@
  */
 
 import { toggleSaveProject, type Project } from '../../services/projectsService';
+import { formatDate } from '../../services/usMarketService';
 
 export function renderProjectDetails(project: Project, profileComplete: boolean = true): string {
   const isMilestone = project.paymentType === 'Milestone';
@@ -143,6 +144,35 @@ export function renderProjectDetails(project: Project, profileComplete: boolean 
         
         <!-- Left Column: Main Content (Divided by 1px rules) -->
         <div class="dez-details-main">
+          ${(project as any).invitation ? `
+            <!-- Client Project Invitation Banner -->
+            <div class="dez-invitation-banner" style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 18px 20px; margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                  <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #1D4ED8; background: #DBEAFE; padding: 2px 8px; border-radius: 4px;">
+                    Direct Client Invitation
+                  </span>
+                  <h3 style="font-size: 15px; font-weight: 600; color: #1E3A8A; margin: 6px 0 2px 0;">
+                    Invited by ${(project as any).invitation.client_name || 'Client'}
+                  </h3>
+                  <p style="font-size: 13px; color: #1E40AF; margin: 0 0 10px 0;">
+                    "${(project as any).invitation.message || 'We would like to invite you to review our project brief and submit a proposal.'}"
+                  </p>
+                </div>
+                <span style="font-size: 12px; color: #6B7280; white-space: nowrap;">
+                  Expires ${(project as any).invitation.expires_at ? formatDate((project as any).invitation.expires_at) : 'in 14 days'}
+                </span>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button type="button" class="dez-btn-primary" id="btn-invitation-send-proposal" style="height: 34px; padding: 0 16px; font-size: 13px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; cursor: pointer;">
+                  Send proposal
+                </button>
+                <button type="button" class="dez-btn-secondary" id="btn-open-decline-invitation" style="height: 34px; padding: 0 14px; font-size: 13px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; color: #4B5563; cursor: pointer;">
+                  Decline invitation
+                </button>
+              </div>
+            </div>
+          ` : ''}
           
           <!-- Header Area -->
           <div class="dez-details-section">

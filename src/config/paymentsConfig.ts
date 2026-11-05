@@ -1,33 +1,19 @@
 /**
  * Payments & Financial Configuration for Dezignet
- * Centralized financial config values for escrow fees, withdrawals, and plan tiers.
+ * Centralized financial config values for platform fees, plans, and feature matrices
  */
 
 export interface PaymentsConfig {
   minimumWithdrawalAmount: number;
-  platformFeePercentage: {
-    free: number;
-    basic: number;
-    upgraded: number;
-  };
   payoutProcessingFee: number;
   payoutProcessingTimeText: string;
-  allowEditPendingProposalIfUnviewed: boolean;
-  withdrawnProposalRestoresMonthlyLimit: boolean;
   currency: string;
 }
 
 export const PAYMENTS_CONFIG: PaymentsConfig = {
   minimumWithdrawalAmount: 50.0,
-  platformFeePercentage: {
-    free: 10.0,
-    basic: 5.0,
-    upgraded: 2.5
-  },
-  payoutProcessingFee: 0.0, // Free ACH / Direct Wire deposit
-  payoutProcessingTimeText: '1 to 2 business days to verified commercial bank accounts',
-  allowEditPendingProposalIfUnviewed: true,
-  withdrawnProposalRestoresMonthlyLimit: true,
+  payoutProcessingFee: 0.0,
+  payoutProcessingTimeText: 'Processed securely by our payment provider',
   currency: 'USD'
 };
 
@@ -43,11 +29,9 @@ export interface PlanTierConfig {
   name: string;
   monthlyPrice: number;
   yearlyPrice: number;
-  yearlyDiscountPercent: number;
-  proposalsPerMonth: number;
-  escrowPlatformFeePercent: number;
+  proposalsPerMonth: number | null; // null = unlimited
+  platformFeeText: string;
   description: string;
-  popular?: boolean;
   badge?: string;
 }
 
@@ -57,31 +41,27 @@ export const PLAN_TIERS_CONFIG: PlanTierConfig[] = [
     name: 'Free',
     monthlyPrice: 0,
     yearlyPrice: 0,
-    yearlyDiscountPercent: 0,
     proposalsPerMonth: 5,
-    escrowPlatformFeePercent: 10.0,
-    description: 'Essential platform access to submit proposals and build your studio presence.'
+    platformFeeText: '10% (5% on milestones over $5,000)',
+    description: 'Bid on projects: 5 proposals per month. Not listed in the client directory.'
   },
   {
     id: 'basic',
     name: 'Basic',
     monthlyPrice: 29.99,
-    yearlyPrice: 287.9, // 20% discount
-    yearlyDiscountPercent: 20,
-    proposalsPerMonth: 30,
-    escrowPlatformFeePercent: 5.0,
-    description: 'For growing architectural studios seeking enhanced portfolio visibility and lower escrow fees.',
-    popular: true
+    yearlyPrice: 299.00,
+    proposalsPerMonth: 10,
+    platformFeeText: '5% (2.5% on milestones over $20,000)',
+    description: '10 proposals per month, client directory listing, verified badge, and 2 portfolio images per project.'
   },
   {
     id: 'upgraded',
     name: 'Upgraded',
     monthlyPrice: 49.99,
-    yearlyPrice: 479.9, // 20% discount
-    yearlyDiscountPercent: 20,
-    proposalsPerMonth: 100, // Unlimited
-    escrowPlatformFeePercent: 2.5,
-    description: 'For elite architecture & engineering firms requiring dedicated client matching and lowest platform fees.',
+    yearlyPrice: 499.00,
+    proposalsPerMonth: null,
+    platformFeeText: '4% (2% on milestones over $20,000)',
+    description: 'Unlimited proposals, priority directory placement, 12 portfolio images, direct invitations, and studio insights.',
     badge: 'Elite'
   }
 ];
@@ -90,32 +70,32 @@ export const PLAN_FEATURES_TABLE: PlanFeatureRow[] = [
   {
     name: 'Proposals per month',
     free: '5 proposals',
-    basic: '30 proposals',
-    upgraded: 'Unlimited proposals'
+    basic: '10 proposals',
+    upgraded: 'Unlimited'
   },
   {
-    name: 'Escrow platform fee',
-    free: '10.0%',
-    basic: '5.0%',
-    upgraded: '2.5%'
+    name: 'Platform service fee',
+    free: '10% (5% on milestones over $5,000)',
+    basic: '5% (2.5% on milestones over $20,000)',
+    upgraded: '4% (2% on milestones over $20,000)'
   },
   {
-    name: 'Verified accreditation badge',
-    free: true,
+    name: 'Client directory listing & priority placement',
+    free: false,
     basic: true,
-    upgraded: true
+    upgraded: 'Priority Promoted'
   },
   {
-    name: 'High-res image gallery (up to 12 per project)',
+    name: 'Verified badge',
     free: false,
     basic: true,
     upgraded: true
   },
   {
-    name: 'Priority client directory placement',
-    free: false,
-    basic: true,
-    upgraded: true
+    name: 'Portfolio images per project',
+    free: 'None',
+    basic: '2 images',
+    upgraded: '12 high-resolution'
   },
   {
     name: 'Direct client project invitations',
@@ -124,15 +104,9 @@ export const PLAN_FEATURES_TABLE: PlanFeatureRow[] = [
     upgraded: true
   },
   {
-    name: 'Custom studio domain & analytics',
+    name: 'Studio insights and studio web address',
     free: false,
     basic: false,
-    upgraded: true
-  },
-  {
-    name: 'Dedicated account advisor',
-    free: false,
-    basic: false,
-    upgraded: true
+    upgraded: 'Included*'
   }
 ];

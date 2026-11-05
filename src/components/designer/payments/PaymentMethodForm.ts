@@ -1,6 +1,6 @@
 /**
  * PaymentMethodForm Component
- * Card management form with clear integration placeholder for hosted Stripe / Paystack fields:
+ * Card management form with clear integration placeholder for hosted payment gateway fields:
  * - Shows "Payments are not connected yet" notice in dev
  * - Never stores raw card numbers (only brand, mock token, last4, exp)
  * - Add, replace, or remove card
@@ -16,10 +16,10 @@ export function renderPaymentMethodCard(planState: SharedPlanState): string {
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
         <div>
           <h3 style="font-size: 15px; font-weight: 600; color: #111827; margin: 0;">Payment method for your plan</h3>
-          <p style="font-size: 13px; color: #6B7280; margin: 2px 0 0 0;">Used for monthly or annual membership dues and proposal slot renewals.</p>
+          <p style="font-size: 13px; color: #6B7280; margin: 2px 0 0 0;">Used for monthly or annual membership dues.</p>
         </div>
-        <div style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; border-radius: 4px; padding: 3px 8px; font-size: 11.5px; font-weight: 500;">
-          Payments are not connected yet (Dev preview)
+        <div style="background: #F3F4F6; color: #4B5563; border: 1px solid #E5E7EB; border-radius: 4px; padding: 3px 8px; font-size: 11.5px; font-weight: 500;">
+          Available soon
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export function renderPaymentMethodCard(planState: SharedPlanState): string {
               <!-- HOSTED FIELD PLACEHOLDER START -->
               <!-- 
                 DEVELOPER NOTE / INTEGRATION POINT:
-                Mount payment gateway element here (e.g. Stripe Elements or Paystack Inline):
+                Mount payment gateway element here (e.g. Secure Payment Gateway):
                 elements.create('card').mount('#stripe-card-element')
               -->
               <div class="dez-form-group" style="margin-bottom: 14px;">

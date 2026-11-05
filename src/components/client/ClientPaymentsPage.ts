@@ -5,7 +5,7 @@
  * - "How payments will work" (4 plain lines with escrow terms from settings)
  * - "Milestones awaiting funding" table from real engagements with disabled "Available soon" button.
  * - In development mode: "Dev: fund milestone" button calling dev_fund_milestone RPC.
- * - ZERO mentions of Stripe, Flutterwave, internal Phase roadmaps, or emoji icons.
+ * - ZERO mentions of internal Phase roadmaps or emoji icons.
  */
 
 import { getClientAwaitingMilestones, devFundMilestone, type ClientAwaitingMilestone } from '../../services/projectsService';

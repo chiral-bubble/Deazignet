@@ -20,6 +20,11 @@ export type NotificationTypeKey =
   | 'message_received'
   | 'credential_verified'
   | 'credential_rejected'
+  | 'credential_expiring'
+  | 'credential_expired'
+  | 'invitation_received'
+  | 'invitation_declined'
+  | 'invitation_expired'
   | 'plan_renewal'
   | 'system_announcement';
 
@@ -144,6 +149,41 @@ export const NOTIFICATION_TYPES: Record<NotificationTypeKey, NotificationConfigI
     category: 'system',
     iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
     getDestination: () => '#settings/credentials'
+  },
+  credential_expiring: {
+    type: 'credential_expiring',
+    label: 'License Expiring Soon',
+    category: 'system',
+    iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+    getDestination: () => '#settings/credentials'
+  },
+  credential_expired: {
+    type: 'credential_expired',
+    label: 'License Expired',
+    category: 'system',
+    iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    getDestination: () => '#settings/credentials'
+  },
+  invitation_received: {
+    type: 'invitation_received',
+    label: 'Project Invitation',
+    category: 'projects',
+    iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
+    getDestination: (payload) => payload?.projectId ? `#projects/${payload.projectId}` : '#projects'
+  },
+  invitation_declined: {
+    type: 'invitation_declined',
+    label: 'Invitation Declined',
+    category: 'projects',
+    iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    getDestination: (payload) => payload?.projectId ? `#client/projects/${payload.projectId}` : '#client/projects'
+  },
+  invitation_expired: {
+    type: 'invitation_expired',
+    label: 'Invitation Expired',
+    category: 'projects',
+    iconSvg: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    getDestination: (payload) => payload?.projectId ? `#client/projects/${payload.projectId}` : '#client/projects'
   },
   plan_renewal: {
     type: 'plan_renewal',

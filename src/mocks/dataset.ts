@@ -1340,7 +1340,7 @@ export class DezignetSharedDataset {
     prop.withdrawnReason = reason || 'Withdrawn by designer';
     prop.timeline.push({ stage: 'Withdrawn', date: 'Today', completed: true });
 
-    if (PAYMENTS_CONFIG.withdrawnProposalRestoresMonthlyLimit && this.planState.proposalsUsedThisMonth > 0) {
+    if (this.planState.proposalsUsedThisMonth > 0) {
       this.planState.proposalsUsedThisMonth--;
     }
 

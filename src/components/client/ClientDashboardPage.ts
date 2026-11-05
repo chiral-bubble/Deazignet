@@ -297,6 +297,36 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
               </div>
             `}
           </div>
+
+          <!-- Suggested Designers for Recent Open Project -->
+          <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <div>
+                <h2 style="font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 2px;">Suggested Designers</h2>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">Matched professionals for your open projects</p>
+              </div>
+              <a href="#find-designers" style="text-decoration: none; font-size: 13px; font-weight: 600; color: #2F7BE5;">
+                See more →
+              </a>
+            </div>
+            <div id="dashboard-suggested-designers" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Elena Rostova</div>
+                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Architect • Denver, CO</div>
+                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
+              </div>
+              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Marcus Vance</div>
+                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Engineer • Austin, TX</div>
+                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
+              </div>
+              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Claire Dupond</div>
+                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Interior Designer • Chicago, IL</div>
+                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Right Column (Secondary) -->
@@ -361,6 +391,36 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
             ` : `
               <p style="font-size: 12.5px; color: #6B7280; margin: 0;">No unread notifications.</p>
             `}
+          </div>
+
+          <!-- Suggested Designers for Recent Open Project -->
+          <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-top: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <div>
+                <h2 style="font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 2px;">Suggested Designers</h2>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">Matched professionals for your open projects</p>
+              </div>
+              <a href="#find-designers" style="text-decoration: none; font-size: 13px; font-weight: 600; color: #2F7BE5;">
+                See more →
+              </a>
+            </div>
+            <div id="dashboard-suggested-designers" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Elena Rostova</div>
+                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Architect • Denver, CO</div>
+                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
+              </div>
+              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Marcus Vance</div>
+                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Engineer • Austin, TX</div>
+                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
+              </div>
+              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Claire Dupond</div>
+                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Interior Designer • Chicago, IL</div>
+                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
+              </div>
+            </div>
           </div>
         </div>
       </div>

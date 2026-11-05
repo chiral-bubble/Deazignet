@@ -7,6 +7,7 @@
 
 import { getCategories, type CategoryItem } from '../../services/projectsService';
 import { saveOnboardingStep, completeOnboarding } from '../../services/authService';
+import { US_STATES } from '../../services/usMarketService';
 
 export interface OnboardingState {
   role: 'client' | 'designer';
@@ -112,18 +113,27 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
             <div>
               <label for="ob-city" style="display: block; font-size: 13px; font-weight: 500; color: #1E293B; margin-bottom: 6px;">
                 City
               </label>
-              <input type="text" id="ob-city" required placeholder="e.g. Lagos" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
+              <input type="text" id="ob-city" required placeholder="e.g. Austin" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
             </div>
             <div>
               <label for="ob-state" style="display: block; font-size: 13px; font-weight: 500; color: #1E293B; margin-bottom: 6px;">
-                State or Region
+                State
               </label>
-              <input type="text" id="ob-state" required placeholder="e.g. Lagos State" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
+              <select id="ob-state" required style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A; background: #FFFFFF;">
+                <option value="">Select state...</option>
+                ${US_STATES.map(s => `<option value="${s.code}">${s.name} (${s.code})</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label for="ob-zip" style="display: block; font-size: 13px; font-weight: 500; color: #1E293B; margin-bottom: 6px;">
+                ZIP code
+              </label>
+              <input type="text" id="ob-zip" required placeholder="e.g. 78701" pattern="^\\d{5}(-\\d{4})?$" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
             </div>
           </div>
 
@@ -145,7 +155,8 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
       e.preventDefault();
       const profType = (document.getElementById('ob-prof-type') as HTMLSelectElement).value;
       const city = (document.getElementById('ob-city') as HTMLInputElement).value.trim();
-      const state = (document.getElementById('ob-state') as HTMLInputElement).value.trim();
+      const state = (document.getElementById('ob-state') as HTMLSelectElement).value.trim();
+      const zip = (document.getElementById('ob-zip') as HTMLInputElement).value.trim();
       const exp = parseInt((document.getElementById('ob-experience') as HTMLInputElement).value, 10) || 0;
 
       const checkedSpecs: string[] = [];
@@ -155,7 +166,10 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
 
       formData.professional_type = profType;
       formData.specializations = checkedSpecs;
-      formData.location = `${city}, ${state}`;
+      formData.city = city;
+      formData.state = state;
+      formData.zip_code = zip;
+      formData.location = `${city}, ${state} ${zip}`;
       formData.years_experience = exp;
 
       await saveOnboardingStep('designer', 1, formData);
@@ -265,18 +279,27 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
             <input type="text" id="ob-company-name" placeholder="e.g. Sterling Holdings Ltd" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
             <div>
               <label for="ob-client-city" style="display: block; font-size: 13px; font-weight: 500; color: #1E293B; margin-bottom: 6px;">
                 City
               </label>
-              <input type="text" id="ob-client-city" required placeholder="e.g. Abuja" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
+              <input type="text" id="ob-client-city" required placeholder="e.g. Denver" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
             </div>
             <div>
               <label for="ob-client-state" style="display: block; font-size: 13px; font-weight: 500; color: #1E293B; margin-bottom: 6px;">
-                State or Region
+                State
               </label>
-              <input type="text" id="ob-client-state" required placeholder="e.g. FCT" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
+              <select id="ob-client-state" required style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A; background: #FFFFFF;">
+                <option value="">Select state...</option>
+                ${US_STATES.map(s => `<option value="${s.code}">${s.name} (${s.code})</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label for="ob-client-zip" style="display: block; font-size: 13px; font-weight: 500; color: #1E293B; margin-bottom: 6px;">
+                ZIP code
+              </label>
+              <input type="text" id="ob-client-zip" required placeholder="e.g. 80202" pattern="^\\d{5}(-\\d{4})?$" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
             </div>
           </div>
 
@@ -284,7 +307,7 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
             <label for="ob-client-phone" style="display: block; font-size: 13px; font-weight: 500; color: #1E293B; margin-bottom: 6px;">
               Phone number (Optional)
             </label>
-            <input type="tel" id="ob-client-phone" placeholder="e.g. +234 803 123 4567" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
+            <input type="tel" id="ob-client-phone" placeholder="e.g. (303) 555-0144" style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 14px; color: #0F172A;" />
             <span style="font-size: 11px; color: #64748B; margin-top: 4px; display: block;">Private: Your phone number is strictly encrypted and never shown to designers.</span>
           </div>
 
@@ -308,12 +331,16 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
       const isCompany = radioComp && (radioComp as HTMLInputElement).checked;
       const companyName = (document.getElementById('ob-company-name') as HTMLInputElement)?.value.trim();
       const city = (document.getElementById('ob-client-city') as HTMLInputElement).value.trim();
-      const state = (document.getElementById('ob-client-state') as HTMLInputElement).value.trim();
+      const state = (document.getElementById('ob-client-state') as HTMLSelectElement).value.trim();
+      const zip = (document.getElementById('ob-client-zip') as HTMLInputElement).value.trim();
       const phone = (document.getElementById('ob-client-phone') as HTMLInputElement).value.trim();
 
       formData.account_type = isCompany ? 'company' : 'individual';
       formData.company_name = isCompany ? companyName : null;
-      formData.location = `${city}, ${state}`;
+      formData.city = city;
+      formData.state = state;
+      formData.zip_code = zip;
+      formData.location = `${city}, ${state} ${zip}`;
       formData.phone = phone || null;
 
       await saveOnboardingStep('client', 1, formData);

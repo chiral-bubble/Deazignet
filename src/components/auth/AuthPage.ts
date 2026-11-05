@@ -139,6 +139,12 @@ export function renderAuthPage(): string {
                 <span class="input-icon">${icons.lock}</span>
               </div>
 
+              <!-- 18+ Age Confirmation -->
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #475569; margin: 4px 0 10px; cursor: pointer; text-align: left;">
+                <input type="checkbox" id="reg-age-confirm" required style="accent-color: #2F7BE5; cursor: pointer;" />
+                <span>I confirm that I am 18 years of age or older</span>
+              </label>
+
               <!-- Register Submit Button -->
               <button type="submit" class="btn-auth-submit" id="btn-register-submit">
                 <span>Register</span>
@@ -398,7 +404,7 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     }
 
     setTimeout(() => {
-      navigateTo(targetRedirect);
+      window.location.assign(targetRedirect);
     }, 250);
   });
 
@@ -427,6 +433,12 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
       return;
     }
 
+    const ageConfirm = document.getElementById('reg-age-confirm') as HTMLInputElement | null;
+    if (ageConfirm && !ageConfirm.checked) {
+      showFeedback('register-feedback', 'You must confirm that you are 18 years of age or older.', true);
+      return;
+    }
+
     if (btn) {
       btn.disabled = true;
       btn.innerHTML = `<span>Creating account...</span>`;
@@ -440,7 +452,12 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     }
 
     if (!res.success) {
-      showFeedback('register-feedback', res.error || 'Registration failed.', true);
+      const errLower = (res.error || '').toLowerCase();
+      let errorMsg = res.error || 'Registration failed.';
+      if (errLower.includes('too many') || errLower.includes('rate limit')) {
+        errorMsg = 'Rate limit reached. Please wait a few moments before trying again, or sign in with an existing account.';
+      }
+      showFeedback('register-feedback', errorMsg, true);
       return;
     }
 
@@ -453,9 +470,10 @@ export function initAuthPage(initialMode: 'login' | 'register' | 'reset-password
     } else {
       showFeedback('register-feedback', 'Account created! Redirecting to dashboard...', false);
       const dest = role === 'client' ? '/client-dashboard' : '/dashboard';
+      // Direct assignment ensures fresh session load, zero blank screens, and no manual refresh required
       setTimeout(() => {
-        navigateTo(dest);
-      }, 250);
+        window.location.assign(dest);
+      }, 300);
     }
   });
 

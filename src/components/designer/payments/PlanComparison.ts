@@ -43,6 +43,7 @@ export function renderPlanComparison(): string {
           </table>
         </div>
       </div>
+      <p style="font-size: 11.5px; color: #6B7280; margin-top: 8px;">* Upgraded tier includes /studio/{slug} web address; custom domains coming later.</p>
     </div>
   `;
 }

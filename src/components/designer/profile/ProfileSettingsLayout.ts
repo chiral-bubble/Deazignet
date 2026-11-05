@@ -16,9 +16,6 @@ import {
   updatePortfolioItem,
   deletePortfolioItem,
   reorderPortfolio,
-  addCredential,
-  updateCredential,
-  deleteCredential,
   calculateProfileCompleteness,
   type DesignerProfile
 } from '../../../services/designerProfileService';
@@ -249,26 +246,13 @@ export async function initProfileSettings(
         onShowToast: callbacks.onShowToast
       });
     } else if (tab === 'credentials') {
-      tabPane.innerHTML = renderCredentialsTab(activeProfile.credentials || []);
-      initCredentialsTab(tabPane, activeProfile.credentials || [], {
-        onAddCredential: async (cred) => {
-          await addCredential(cred);
-          activeProfile = await getProfile();
-          renderCompleteness();
-          loadTabContent('credentials');
-        },
-        onUpdateCredential: async (id, updates) => {
-          await updateCredential(id, updates);
+      tabPane.innerHTML = renderCredentialsTab((activeProfile.credentials as any) || []);
+      initCredentialsTab(tabPane, {
+        onShowToast: callbacks.onShowToast,
+        onReload: async () => {
           activeProfile = await getProfile();
           loadTabContent('credentials');
-        },
-        onDeleteCredential: async (id) => {
-          await deleteCredential(id);
-          activeProfile = await getProfile();
-          renderCompleteness();
-          loadTabContent('credentials');
-        },
-        onShowToast: callbacks.onShowToast
+        }
       });
     } else if (tab === 'account') {
       tabPane.innerHTML = renderAccountTab(activeProfile);

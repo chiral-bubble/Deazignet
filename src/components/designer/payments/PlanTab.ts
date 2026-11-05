@@ -1,22 +1,19 @@
 /**
- * PlanTab Component
- * Displays:
- * - Current plan tier badge and renewal info
- * - Monthly / Yearly toggle (with 20% discount badge)
- * - 3 plan tier cards (Free, Basic, Upgraded) with Upgrade / Downgrade / Cancel confirm dialogs
- * - Payment method form integration
- * - Plan comparison table integration
- * - Plan charges history
+ * PlanTab Component (US Market Spec)
+ * - Computed annual savings (~17%)
+ * - Plan cards driven from spec data
+ * - "Estimate your fee" box comparing plans via calculatePlatformFee
+ * - Downgrade & Cancel dialogs with exact loss notices
+ * - US Date formatting
  */
 
-import {
-  getPlanState,
-  updatePlanSubscription
-} from '../../../services/paymentsService';
+import { getPlanState, updatePlanSubscription, updatePlanPaymentCard } from '../../../services/paymentsService';
 import { PLAN_TIERS_CONFIG, type PlanTierConfig } from '../../../config/paymentsConfig';
 import { type SharedPlanState } from '../../../mocks/dataset';
 import { renderPlanComparison } from './PlanComparison';
 import { renderPaymentMethodCard, initPaymentMethodForm } from './PaymentMethodForm';
+import { calculatePlatformFeeFallback, computeAnnualSavings } from '../../../services/plansService';
+import { formatUSD } from '../../../services/usMarketService';
 
 export function renderPlanTab(): string {
   return `
@@ -39,6 +36,9 @@ export async function initPlanTab(
   let billingCycle: 'monthly' | 'yearly' = planState.billingCycle;
   let pendingTierChange: { tier: PlanTierConfig; action: 'upgrade' | 'downgrade' | 'cancel' } | null = null;
 
+  // Compute annual savings
+  const annualSavingsPercent = computeAnnualSavings(2999, 29900); // 17%
+
   function render() {
     const isYearly = billingCycle === 'yearly';
 
@@ -58,10 +58,8 @@ export async function initPlanTab(
             class="dez-cycle-toggle-btn ${!isYearly ? 'is-active' : ''}"
             id="btn-cycle-monthly"
             style="border: none; background: ${!isYearly ? '#FFFFFF' : 'transparent'}; color: ${
-      !isYearly ? '#111827' : '#6B7280'
-    }; font-weight: 500; font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 150ms ease; box-shadow: ${
-      !isYearly ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
-    };"
+              !isYearly ? '#111827' : '#6B7280'
+            }; font-weight: 500; font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 150ms ease;"
           >
             Monthly billing
           </button>
@@ -70,18 +68,16 @@ export async function initPlanTab(
             class="dez-cycle-toggle-btn ${isYearly ? 'is-active' : ''}"
             id="btn-cycle-yearly"
             style="border: none; background: ${isYearly ? '#FFFFFF' : 'transparent'}; color: ${
-      isYearly ? '#111827' : '#6B7280'
-    }; font-weight: 500; font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 150ms ease; display: inline-flex; align-items: center; gap: 6px; box-shadow: ${
-      isYearly ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
-    };"
+              isYearly ? '#111827' : '#6B7280'
+            }; font-weight: 500; font-size: 13px; padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 150ms ease; display: inline-flex; align-items: center; gap: 6px;"
           >
             <span>Annual billing</span>
-            <span style="background: #EBF3FD; color: #2F7BE5; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Save 20%</span>
+            <span style="background: #EBF3FD; color: #2F7BE5; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Save ${annualSavingsPercent}%</span>
           </button>
         </div>
       </div>
 
-      <!-- Plan Tiers Grid (3 Equal Cards) -->
+      <!-- Plan Tiers Grid (3 Cards) -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
         ${PLAN_TIERS_CONFIG.map((tier) => {
           const isCurrent = planState.currentPlanId === tier.id;
@@ -95,8 +91,8 @@ export async function initPlanTab(
               ${
                 isCurrent
                   ? `<span class="dez-status-pill pill-blue" style="position: absolute; top: 16px; right: 16px; font-size: 11px;">Current Plan</span>`
-                  : tier.popular
-                  ? `<span class="dez-status-pill pill-amber" style="position: absolute; top: 16px; right: 16px; font-size: 11px;">Most Popular</span>`
+                  : tier.badge
+                  ? `<span class="dez-status-pill pill-amber" style="position: absolute; top: 16px; right: 16px; font-size: 11px;">${tier.badge}</span>`
                   : ''
               }
 
@@ -114,11 +110,17 @@ export async function initPlanTab(
                 <ul style="list-style: none; margin: 0 0 24px 0; padding: 0; font-size: 13px; color: #374151; display: flex; flex-direction: column; gap: 8px;">
                   <li style="display: flex; align-items: center; gap: 8px;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F7BE5" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>${tier.proposalsPerMonth} proposals per month</span>
+                    <span>${tier.proposalsPerMonth === null ? 'Unlimited proposals' : `${tier.proposalsPerMonth} proposals per month`}</span>
                   </li>
                   <li style="display: flex; align-items: center; gap: 8px;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2F7BE5" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>${tier.escrowPlatformFeePercent}% escrow platform fee</span>
+                    <span>Platform service fee: ${tier.platformFeeText}</span>
+                  </li>
+                  <li style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${tier.id === 'free' ? '#9CA3AF' : '#2F7BE5'}" stroke-width="2.5">
+                      ${tier.id === 'free' ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' : '<polyline points="20 6 9 17 4 12"/>'}
+                    </svg>
+                    <span>${tier.id === 'free' ? 'Not listed in client directory' : tier.id === 'upgraded' ? 'Priority client directory placement' : 'Client directory listing'}</span>
                   </li>
                 </ul>
               </div>
@@ -139,165 +141,190 @@ export async function initPlanTab(
         }).join('')}
       </div>
 
+      <!-- Estimate Your Fee Box -->
+      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-top: 28px;">
+        <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 6px 0;">Estimate your fee</h3>
+        <p style="font-size: 13px; color: #6B7280; margin: 0 0 16px 0;">
+          Enter a milestone amount to compare platform service fees and net payout under each plan.
+        </p>
+        <div style="display: flex; gap: 10px; align-items: center; max-width: 320px; margin-bottom: 16px;">
+          <span style="font-weight: 600; color: #374151;">$</span>
+          <input 
+            type="number" 
+            id="inp-milestone-estimator" 
+            value="5000" 
+            min="100" 
+            step="100" 
+            style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 14px; font-variant-numeric: tabular-nums; background: #FFFFFF;" 
+          />
+        </div>
+        <div id="fee-estimator-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
       <!-- Payment Method Form Integration -->
       ${renderPaymentMethodCard(planState)}
 
       <!-- Feature Comparison Table -->
       ${renderPlanComparison()}
 
-      <!-- Plan Charges History -->
-      <div class="dez-dash-panel" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; margin-top: 32px; overflow: hidden;">
-        <div style="padding: 18px 20px; border-bottom: 1px solid #E5E7EB;">
-          <h3 style="font-size: 15px; font-weight: 600; color: #111827; margin: 0;">Plan charges history</h3>
-        </div>
-        <div class="dez-table-responsive" style="overflow-x: auto;">
-          <table class="dez-data-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-            <thead>
-              <tr style="background: #F7F7F8; border-bottom: 1px solid #E5E7EB; color: #4B5563; font-weight: 500;">
-                <th style="padding: 12px 16px;">Date</th>
-                <th style="padding: 12px 16px;">Description</th>
-                <th style="padding: 12px 16px;">Card</th>
-                <th style="padding: 12px 16px; text-align: right;">Amount</th>
-                <th style="padding: 12px 16px; text-align: right;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="border-bottom: 1px solid #F3F4F6;">
-                <td style="padding: 12px 16px; color: #6B7280;">Oct 1, 2026</td>
-                <td style="padding: 12px 16px; font-weight: 500; color: #111827;">Annual Membership — Upgraded Studio Tier</td>
-                <td style="padding: 12px 16px; color: #4B5563;">Visa •••• 4242</td>
-                <td class="dez-tabular-num" style="padding: 12px 16px; text-align: right; font-weight: 600; color: #111827;">$479.90</td>
-                <td style="padding: 12px 16px; text-align: right;"><span class="dez-status-pill pill-green">Paid</span></td>
-              </tr>
-              <tr>
-                <td style="padding: 12px 16px; color: #6B7280;">Oct 1, 2025</td>
-                <td style="padding: 12px 16px; font-weight: 500; color: #111827;">Annual Membership — Basic Studio Tier</td>
-                <td style="padding: 12px 16px; color: #4B5563;">Visa •••• 4242</td>
-                <td class="dez-tabular-num" style="padding: 12px 16px; text-align: right; font-weight: 600; color: #111827;">$287.90</td>
-                <td style="padding: 12px 16px; text-align: right;"><span class="dez-status-pill pill-green">Paid</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Plan Change Confirmation Dialog -->
+      <!-- Downgrade Confirm Dialog -->
       <div class="dez-dash-modal-backdrop" id="modal-plan-confirm-backdrop" style="display: none;" role="dialog" aria-modal="true">
-        <div class="dez-dash-modal" style="max-width: 440px;">
+        <div class="dez-dash-modal" style="max-width: 480px;">
           <div class="dez-dash-modal-header">
-            <h3 class="dez-dash-modal-title" id="modal-plan-confirm-title">Confirm Plan Change</h3>
-            <button type="button" class="dez-dash-modal-close" id="btn-close-plan-confirm">&times;</button>
+            <h3 class="dez-dash-modal-title" id="modal-plan-confirm-title">Plan Change</h3>
+            <button type="button" class="dez-dash-modal-close" id="btn-close-plan-modal">&times;</button>
           </div>
-          <div class="dez-dash-modal-body" style="padding: 20px 24px;">
-            <p style="font-size: 13.5px; color: #374151; line-height: 1.5; margin: 0 0 12px 0;" id="plan-confirm-description">
-            </p>
-            <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px; font-size: 12.5px; color: #4B5563;" id="plan-confirm-effective-note">
-            </div>
+          <div class="dez-dash-modal-body">
+            <p style="font-size: 13.5px; color: #374151; line-height: 1.5;" id="modal-plan-confirm-body"></p>
           </div>
-          <div class="dez-dash-modal-footer" style="padding: 14px 24px; border-top: 1px solid #E5E7EB; display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" class="dez-btn-secondary" id="btn-cancel-plan-confirm" style="height: 36px;">Cancel</button>
-            <button type="button" class="dez-btn-primary" id="btn-proceed-plan-confirm" style="height: 36px; padding: 0 18px;">
-              Confirm change
-            </button>
+          <div class="dez-dash-modal-footer">
+            <button type="button" class="dez-btn-secondary" id="btn-cancel-plan-change">Cancel</button>
+            <button type="button" class="dez-btn-primary" id="btn-confirm-plan-change">Confirm</button>
           </div>
         </div>
       </div>
     `;
 
-    attachEvents();
+    bindEvents();
+    updateFeeEstimator(5000);
   }
 
-  function attachEvents() {
+  function updateFeeEstimator(amountDollars: number) {
+    const container = root.querySelector('#fee-estimator-cards');
+    if (!container) return;
+
+    const amountCents = Math.round(amountDollars * 100);
+    const plans = ['free', 'basic', 'upgraded'];
+    
+    container.innerHTML = plans.map(pKey => {
+      const res = calculatePlatformFeeFallback(pKey, amountCents);
+      const isCurrent = planState.currentPlanId === pKey;
+      return `
+        <div style="background: #FFFFFF; border: ${isCurrent ? '1.5px solid #2F7BE5' : '1px solid #E5E7EB'}; border-radius: 6px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 14px; color: #111827; text-transform: capitalize;">${pKey}</span>
+            <span style="font-size: 11.5px; color: #6B7280; font-weight: 500;">${res.rate_percent}% fee</span>
+          </div>
+          <div style="margin-bottom: 6px; font-size: 13px; color: #4B5563;">
+            Platform fee: <strong style="color: #111827;">${formatUSD(res.fee_cents)}</strong>
+          </div>
+          <div style="font-size: 14px; color: #047857; font-weight: 600;">
+            Net payout: ${formatUSD(res.net_cents)}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function bindEvents() {
+    // Estimator input
+    const estInput = root.querySelector('#inp-milestone-estimator') as HTMLInputElement;
+    estInput?.addEventListener('input', () => {
+      const val = parseFloat(estInput.value) || 0;
+      updateFeeEstimator(val);
+    });
+
+    // Cycle toggles
     root.querySelector('#btn-cycle-monthly')?.addEventListener('click', () => {
       billingCycle = 'monthly';
       render();
     });
-
     root.querySelector('#btn-cycle-yearly')?.addEventListener('click', () => {
       billingCycle = 'yearly';
       render();
     });
 
+    // Downgrade / Upgrade buttons
+    root.querySelectorAll('.btn-plan-downgrade').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tierId = btn.getAttribute('data-tier-id') as 'free' | 'basic';
+        const tier = PLAN_TIERS_CONFIG.find((t) => t.id === tierId);
+        if (!tier) return;
+
+        pendingTierChange = { tier, action: 'downgrade' };
+        openConfirmModal(
+          `Downgrade to ${tier.name}`,
+          tier.id === 'free'
+            ? `Are you sure you want to downgrade to the Free plan? At the end of your billing period (${planState.renewsAt}):
+               <br/><br/>
+               • Your studio profile and portfolio will be removed from client directory search.<br/>
+               • Portfolio images will be hidden (preserved for when you upgrade).<br/>
+               • Monthly proposal limit will decrease to 5 proposals.<br/>
+               • Active engagements and existing submitted proposals will continue normally.`
+            : `Are you sure you want to switch to the Basic plan? You will retain directory listing and 2 portfolio images per project, but lose studio insights and priority placement.`
+        );
+      });
+    });
+
+    root.querySelectorAll('.btn-plan-upgrade').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tierId = btn.getAttribute('data-tier-id') as 'basic' | 'upgraded';
+        const tier = PLAN_TIERS_CONFIG.find((t) => t.id === tierId);
+        if (!tier) return;
+
+        pendingTierChange = { tier, action: 'upgrade' };
+        openConfirmModal(
+          `Upgrade to ${tier.name}`,
+          `Plan changes are processed securely. In development, click Confirm to apply the plan change immediately.`
+        );
+      });
+    });
+
+    // Modal controls
+    const modalBackdrop = root.querySelector('#modal-plan-confirm-backdrop') as HTMLElement;
+    root.querySelector('#btn-close-plan-modal')?.addEventListener('click', () => {
+      modalBackdrop.style.display = 'none';
+      pendingTierChange = null;
+    });
+    root.querySelector('#btn-cancel-plan-change')?.addEventListener('click', () => {
+      modalBackdrop.style.display = 'none';
+      pendingTierChange = null;
+    });
+
+    root.querySelector('#btn-confirm-plan-change')?.addEventListener('click', async () => {
+      if (!pendingTierChange) return;
+      const { tier, action } = pendingTierChange;
+      modalBackdrop.style.display = 'none';
+
+      try {
+        await updatePlanSubscription(tier.id, billingCycle);
+        planState = await getPlanState();
+        callbacks.onShowToast(
+          action === 'upgrade' ? 'Plan upgraded' : 'Plan updated',
+          `Your membership plan has been set to ${tier.name}.`,
+          'success'
+        );
+        render();
+      } catch (err: any) {
+        callbacks.onShowToast('Action unavailable', err.message || 'Plan changes are currently available soon.', 'info');
+      }
+    });
+
     initPaymentMethodForm(root, {
-      onSaveCard: async (brand, last4) => {
-        planState.paymentMethod = {
-          brand,
-          last4,
-          expMonth: 12,
-          expYear: 2028,
-          isDefault: true
-        };
+      onSaveCard: async (brand: 'Visa' | 'Mastercard', last4: string) => {
+        await updatePlanPaymentCard({ brand, last4, expMonth: 12, expYear: 2028 });
+        planState = await getPlanState();
         render();
       },
       onRemoveCard: async () => {
-        (planState as any).paymentMethod = null;
+        planState = await getPlanState();
         render();
       },
       onShowToast: callbacks.onShowToast
     });
+  }
 
-    const confirmModal = root.querySelector('#modal-plan-confirm-backdrop') as HTMLElement;
-    const confirmTitle = root.querySelector('#modal-plan-confirm-title') as HTMLElement;
-    const confirmDesc = root.querySelector('#plan-confirm-description') as HTMLElement;
-    const confirmNote = root.querySelector('#plan-confirm-effective-note') as HTMLElement;
-    const btnProceed = root.querySelector('#btn-proceed-plan-confirm') as HTMLButtonElement;
-    const btnCloseModal = root.querySelector('#btn-close-plan-confirm');
-    const btnCancelModal = root.querySelector('#btn-cancel-plan-confirm');
-
-    function openConfirm(tier: PlanTierConfig, action: 'upgrade' | 'downgrade' | 'cancel') {
-      pendingTierChange = { tier, action };
-      if (!confirmModal) return;
-
-      if (action === 'upgrade') {
-        confirmTitle.textContent = `Upgrade to ${tier.name}?`;
-        confirmDesc.textContent = `You are switching to the ${tier.name} tier (${billingCycle}). You will immediately gain ${tier.proposalsPerMonth} monthly proposals and reduced platform escrow fees of ${tier.escrowPlatformFeePercent}%.`;
-        confirmNote.innerHTML = `<strong>Effective immediately:</strong> Any unused billing from your current cycle will be prorated.`;
-      } else {
-        confirmTitle.textContent = `Downgrade to ${tier.name}?`;
-        confirmDesc.textContent = `You are changing to the ${tier.name} tier. Your platform fee will adjust to ${tier.escrowPlatformFeePercent}% and monthly proposals will be capped at ${tier.proposalsPerMonth}.`;
-        confirmNote.innerHTML = `<strong>Effective at renewal:</strong> Your current benefits remain active until ${planState.renewsAt}.`;
-      }
-
-      confirmModal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
+  function openConfirmModal(title: string, bodyHtml: string) {
+    const modal = root.querySelector('#modal-plan-confirm-backdrop') as HTMLElement;
+    const titleEl = root.querySelector('#modal-plan-confirm-title');
+    const bodyEl = root.querySelector('#modal-plan-confirm-body');
+    if (modal && titleEl && bodyEl) {
+      titleEl.textContent = title;
+      bodyEl.innerHTML = bodyHtml;
+      modal.style.display = 'flex';
     }
-
-    function closeConfirm() {
-      if (confirmModal) {
-        confirmModal.style.display = 'none';
-        document.body.style.overflow = '';
-        pendingTierChange = null;
-      }
-    }
-
-    btnCloseModal?.addEventListener('click', closeConfirm);
-    btnCancelModal?.addEventListener('click', closeConfirm);
-
-    btnProceed?.addEventListener('click', async () => {
-      if (pendingTierChange) {
-        await updatePlanSubscription(pendingTierChange.tier.id, billingCycle);
-        planState = await getPlanState();
-        closeConfirm();
-        callbacks.onShowToast('Plan Updated', `Successfully updated subscription to ${pendingTierChange.tier.name}.`, 'success');
-        render();
-      }
-    });
-
-    root.querySelectorAll<HTMLButtonElement>('.btn-plan-upgrade').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-tier-id');
-        const tier = PLAN_TIERS_CONFIG.find((t) => t.id === id);
-        if (tier) openConfirm(tier, 'upgrade');
-      });
-    });
-
-    root.querySelectorAll<HTMLButtonElement>('.btn-plan-downgrade').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-tier-id');
-        const tier = PLAN_TIERS_CONFIG.find((t) => t.id === id);
-        if (tier) openConfirm(tier, 'downgrade');
-      });
-    });
   }
 
   render();

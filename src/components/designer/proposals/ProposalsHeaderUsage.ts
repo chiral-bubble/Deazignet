@@ -7,7 +7,7 @@
 import { type ProposalUsageInfo } from '../../../services/proposalsService';
 
 export function renderProposalsHeaderUsage(usage: ProposalUsageInfo): string {
-  const percentage = usage.isUnlimited ? 0 : Math.min(100, Math.round((usage.used / usage.limit) * 100));
+  const percentage = usage.isUnlimited || !usage.limit ? 0 : Math.min(100, Math.round((usage.used / usage.limit) * 100));
 
   return `
     <div class="dez-proposals-usage-panel" style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">

@@ -24,6 +24,7 @@ import {
 } from '../../services/projectsService';
 import { FileUploader } from '../common/FileUploader';
 import { renderClientShell, initClientShell } from './ClientLayout';
+import { US_STATES } from '../../services/usMarketService';
 
 interface WizardPhaseItem {
   id?: string;
@@ -470,26 +471,62 @@ function initWizardState(
           <p style="font-size: 13px; color: #6B7280; margin: 0;">Specify your location, site readiness, and floor area.</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
           <div>
             <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">City / Town *</label>
             <input
               type="text"
               id="f-city"
               value="${escapeHtml(state.city || '')}"
-              placeholder="e.g. Lekki, Ikeja, Abuja"
+              placeholder="e.g. Austin, Denver, Chicago"
               style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box;"
             />
           </div>
           <div>
-            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">State / Region *</label>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">State *</label>
+            <select
+              id="f-state"
+              style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box; background: #FFFFFF;"
+            >
+              <option value="">Select State...</option>
+              ${US_STATES.map((s) => `<option value="${s.code}" ${(state.state_region === s.code || state.state_region === s.name) ? 'selected' : ''}>${s.name} (${s.code})</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">ZIP Code *</label>
             <input
               type="text"
-              id="f-state"
-              value="${escapeHtml(state.state_region || '')}"
-              placeholder="e.g. Lagos, FCT, Rivers"
+              id="f-zip"
+              value="${escapeHtml((state as any).zip_code || '')}"
+              placeholder="e.g. 78701"
+              pattern="^\\d{5}(-\\d{4})?$"
               style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box;"
             />
+          </div>
+        </div>
+
+        <!-- Optional US Zoning / Authority fields -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Permit Jurisdiction (optional)</label>
+            <input
+              type="text"
+              id="f-permit-jurisdiction"
+              value="${escapeHtml((state as any).permit_jurisdiction || '')}"
+              placeholder="e.g. City of Austin or Travis County"
+              style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box;"
+            />
+          </div>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">HOA or Historic District (optional)</label>
+            <select
+              id="f-hoa"
+              style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box; background: #FFFFFF;"
+            >
+              <option value="unsure" ${(state as any).hoa_or_historic_district === 'unsure' ? 'selected' : ''}>Unsure</option>
+              <option value="yes" ${(state as any).hoa_or_historic_district === 'yes' ? 'selected' : ''}>Yes</option>
+              <option value="no" ${(state as any).hoa_or_historic_district === 'no' ? 'selected' : ''}>No</option>
+            </select>
           </div>
         </div>
 
@@ -577,7 +614,10 @@ function initWizardState(
 
   function bindStep2Events() {
     const cityInput = document.getElementById('f-city') as HTMLInputElement;
-    const stateInput = document.getElementById('f-state') as HTMLInputElement;
+    const stateInput = document.getElementById('f-state') as HTMLSelectElement;
+    const zipInput = document.getElementById('f-zip') as HTMLInputElement;
+    const permitInput = document.getElementById('f-permit-jurisdiction') as HTMLInputElement;
+    const hoaSelect = document.getElementById('f-hoa') as HTMLSelectElement;
     const bldStatus = document.getElementById('f-building-status') as HTMLSelectElement;
     const siteStatus = document.getElementById('f-site-status') as HTMLSelectElement;
     const areaInput = document.getElementById('f-area') as HTMLInputElement;
@@ -587,7 +627,10 @@ function initWizardState(
     const accessInput = document.getElementById('f-access') as HTMLInputElement;
 
     cityInput?.addEventListener('input', () => { state.city = cityInput.value; triggerAutosave(); });
-    stateInput?.addEventListener('input', () => { state.state_region = stateInput.value; triggerAutosave(); });
+    stateInput?.addEventListener('change', () => { state.state_region = stateInput.value; (state as any).state = stateInput.value; triggerAutosave(); });
+    zipInput?.addEventListener('input', () => { (state as any).zip_code = zipInput.value; triggerAutosave(); });
+    permitInput?.addEventListener('input', () => { (state as any).permit_jurisdiction = permitInput.value; triggerAutosave(); });
+    hoaSelect?.addEventListener('change', () => { (state as any).hoa_or_historic_district = hoaSelect.value; triggerAutosave(); });
     bldStatus?.addEventListener('change', () => { state.building_status = bldStatus.value as any; triggerAutosave(); });
     siteStatus?.addEventListener('change', () => { state.site_status = siteStatus.value as any; triggerAutosave(); });
     areaInput?.addEventListener('input', () => { state.area_sqft = parseFloat(areaInput.value) || undefined; triggerAutosave(); });

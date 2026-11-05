@@ -104,8 +104,8 @@ export function renderClientShell(options: ClientLayoutOptions, contentHtml: str
           </div>
         </main>
 
-        <!-- Mobile Bottom Navigation Bar (5 Items) -->
-        <nav class="client-mobile-bottom-nav" aria-label="Mobile Navigation">
+        <!-- Mobile Bottom Navigation Bar (5 Items) - Hidden on desktop -->
+        <nav class="client-mobile-bottom-nav" aria-label="Mobile Navigation" style="display: none;">
           <a href="#client-dashboard" class="client-mobile-nav-item ${options.activeTab === 'dashboard' ? 'active' : ''}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <span>Dashboard</span>

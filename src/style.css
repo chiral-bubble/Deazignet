@@ -1277,8 +1277,19 @@ ol {
   overflow-y: auto;
 }
 
-.client-mobile-bottom-nav {
+/* Mobile bottom navigation bars: Strictly hidden on desktop (screens > 768px) */
+.client-mobile-bottom-nav,
+.dez-mobile-bottom-nav,
+.dez-mobile-bottom-bar {
   display: none !important;
+}
+
+@media (min-width: 769px) {
+  .client-mobile-bottom-nav,
+  .dez-mobile-bottom-nav,
+  .dez-mobile-bottom-bar {
+    display: none !important;
+  }
 }
 
 /* Tablet & Mobile Breakpoints (<= 768px and 375px) */
@@ -1287,7 +1298,9 @@ ol {
     display: none !important;
   }
 
-  .client-mobile-bottom-nav {
+  .client-mobile-bottom-nav,
+  .dez-mobile-bottom-nav,
+  .dez-mobile-bottom-bar {
     display: flex !important;
     position: fixed !important;
     bottom: 0;
@@ -1374,5 +1387,11 @@ ol {
 
   .client-header h1 {
     font-size: 18px !important;
+  }
+}
+
+@keyframes dez-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

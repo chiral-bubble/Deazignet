@@ -11,6 +11,7 @@ import { changePasswordWithVerification, logOut } from '../../services/authServi
 import { requestAccountDeletion } from '../../services/projectsService';
 import { FileUploader } from '../common/FileUploader';
 import { renderClientShell, initClientShell } from './ClientLayout';
+import { US_STATES } from '../../services/usMarketService';
 
 export async function renderClientAccountSettings(container: HTMLElement, activeTab: 'profile' | 'account' = 'profile'): Promise<void> {
   container.innerHTML = renderClientShell(
@@ -205,7 +206,7 @@ export async function renderClientAccountSettings(container: HTMLElement, active
           />
         </div>
 
-        <!-- Location (City and State/Region) -->
+        <!-- Location (City and State/ZIP) -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
           <div>
             <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">City *</label>
@@ -213,19 +214,19 @@ export async function renderClientAccountSettings(container: HTMLElement, active
               type="text"
               id="f-prof-city"
               value="${escapeHtml(city)}"
-              placeholder="e.g. Lagos, Abuja, Austin"
+              placeholder="e.g. Austin, Denver, Chicago"
               style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box;"
             />
           </div>
           <div>
-            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">State / Region *</label>
-            <input
-              type="text"
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">State *</label>
+            <select
               id="f-prof-state"
-              value="${escapeHtml(stateRegion)}"
-              placeholder="e.g. Lagos State, TX"
-              style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box;"
-            />
+              style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box; background: #FFFFFF;"
+            >
+              <option value="">Select State...</option>
+              ${US_STATES.map(s => `<option value="${s.code}" ${stateRegion === s.code || stateRegion === s.name ? 'selected' : ''}>${s.name} (${s.code})</option>`).join('')}
+            </select>
           </div>
         </div>
 

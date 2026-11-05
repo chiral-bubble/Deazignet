@@ -1,18 +1,23 @@
 /**
- * LegalPage — Readable, clean Terms of Service and Privacy Policy pages.
- * Clearly marked placeholder with full coverage of Dezignet rules:
- * - Milestone-based escrow
- * - 14-day auto-approval of submitted deliverables
- * - 5-day payout security hold period
+ * LegalPage — Terms of Service and Privacy Policy pages.
+ * Placeholder: to be reviewed by legal counsel before launch.
+ * US market compliance placeholders:
+ * - Governing law and venue (State to be set)
  * - Dispute resolution protocol
- * - Data collection, retention (7 years for contract deliverables), and privacy rights.
+ * - Electronic signature consent
+ * - Independent contractor relationship
+ * - Licensure disclaimers & responsibility
+ * - Privacy rights for US residents (access & deletion)
+ * - Cookies & tracking
+ * - Email communication consent
+ * - Accessibility statement
  */
 
 export function renderLegalPage(type: 'terms' | 'privacy'): string {
   const isTerms = type === 'terms';
   const pageTitle = isTerms ? 'Terms of Service' : 'Privacy Policy';
-  const lastUpdated = 'October 29, 2026';
-  const version = '2026.1';
+  const lastUpdated = 'November 4, 2026';
+  const version = '2026.2-US';
 
   return `
     <div class="legal-page" style="min-height: 100vh; background: #FFFFFF; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1E293B;">
@@ -25,8 +30,8 @@ export function renderLegalPage(type: 'terms' | 'privacy'): string {
           </a>
 
           <div style="display: flex; gap: 16px; font-size: 13px;">
-            <a href="/terms" style="color: ${isTerms ? '#2F7BE5' : '#64748B'}; font-weight: ${isTerms ? '600' : '400'}; text-decoration: none;">Terms of Service</a>
-            <a href="/privacy" style="color: ${!isTerms ? '#2F7BE5' : '#64748B'}; font-weight: ${!isTerms ? '600' : '400'}; text-decoration: none;">Privacy Policy</a>
+            <a href="#terms" style="color: ${isTerms ? '#2F7BE5' : '#64748B'}; font-weight: ${isTerms ? '600' : '400'}; text-decoration: none;">Terms of Service</a>
+            <a href="#privacy" style="color: ${!isTerms ? '#2F7BE5' : '#64748B'}; font-weight: ${!isTerms ? '600' : '400'}; text-decoration: none;">Privacy Policy</a>
             <a href="/" style="color: #64748B; text-decoration: none;">Home</a>
           </div>
         </div>
@@ -34,9 +39,9 @@ export function renderLegalPage(type: 'terms' | 'privacy'): string {
 
       <!-- Main Content Container -->
       <main style="max-width: 860px; margin: 0 auto; padding: 48px 24px 96px; line-height: 1.7;">
-        <!-- Draft Review Watermark Banner -->
+        <!-- Legal Counsel Review Banner -->
         <div style="background: #FEF3C7; border: 1px solid #F59E0B; color: #92400E; padding: 14px 18px; border-radius: 6px; font-size: 13px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between;">
-          <span><strong>Draft — For Review Only.</strong> This legal agreement is placeholder copy for testing and will be reviewed and replaced by legal counsel before commercial launch.</span>
+          <span><strong>Placeholder: to be reviewed by legal counsel before launch.</strong> This document contains placeholder legal clauses for development and staging.</span>
           <span style="font-size: 11px; background: #FDE68A; padding: 2px 8px; border-radius: 4px; font-weight: 600;">STAGING</span>
         </div>
 
@@ -50,12 +55,12 @@ export function renderLegalPage(type: 'terms' | 'privacy'): string {
         ${isTerms ? renderTermsContent() : renderPrivacyContent()}
       </main>
 
-      <!-- Minimal Footer -->
+      <!-- Footer -->
       <footer style="border-top: 1px solid #E5E7EB; background: #F8FAFC; padding: 32px 24px; text-align: center; font-size: 13px; color: #64748B;">
-        <div style="max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 12px;">
-          <span>© 2026 Dezignet Technologies Ltd. All rights reserved.</span>
+        <div style="max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <span>© 2026 Dezignet Technologies Inc. All rights reserved.</span>
           <div>
-            <a href="mailto:legal@dezignet.studio" style="color: #2F7BE5; text-decoration: none;">legal@dezignet.studio</a>
+            <a href="mailto:legal@dezignet.com" style="color: #2F7BE5; text-decoration: none;">legal@dezignet.com</a>
           </div>
         </div>
       </footer>
@@ -67,72 +72,66 @@ function renderTermsContent(): string {
   return `
     <section style="display: flex; flex-direction: column; gap: 32px;">
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">1. Acceptance of Terms</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">1. User Eligibility (18+ Requirement)</h2>
         <p style="margin: 0; color: #334155;">
-          By creating an account, posting a project, submitting a proposal, or accessing the Dezignet platform ("Platform"), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must not use or access the Platform.
+          The Dezignet platform ("Platform") is intended solely for users who are eighteen (18) years of age or older. By registering or using the Platform, you represent and warrant that you meet this requirement.
         </p>
       </div>
 
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">2. User Accounts and Role Whitelisting</h2>
-        <p style="margin: 0 0 10px; color: #334155;">
-          Users must register as either a "Client" or a "Designer". An individual email address is strictly limited to one role. Users seeking both roles must maintain separate accounts.
-        </p>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">2. Independent Contractor Relationship</h2>
         <p style="margin: 0; color: #334155;">
-          You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account.
+          Design professionals offering services on Dezignet operate as independent contractors and not as employees, agents, or joint venturers of Dezignet. Dezignet is a technology communications and workflow marketplace platform and is not a party to architectural or engineering service agreements formed between clients and designers.
         </p>
       </div>
 
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">3. Payments, Escrow & Milestone Funding</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">3. Professional Licensure & Regulatory Disclaimers</h2>
         <p style="margin: 0 0 10px; color: #334155;">
-          All financial engagements on Dezignet operate under milestone-based escrow:
+          Professional architectural, engineering, and structural practice is governed by state licensing boards in each respective US state or territory. Design professionals are solely responsible for ensuring they possess all requisite statutory licenses, registrations, and permits for the jurisdiction in which a project is located.
+        </p>
+        <p style="margin: 0; color: #334155;">
+          Dezignet displays state license information as self-reported or administratively verified, but makes no legal warranty of professional qualifications for specific municipal permitting. Clients must independently confirm local building department and permitting jurisdiction requirements.
+        </p>
+      </div>
+
+      <div>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">4. Electronic Signature Consent</h2>
+        <p style="margin: 0; color: #334155;">
+          By executing agreements, proposals, amendments, or contract signatures on the Platform, you consent to conduct business electronically under the Electronic Signatures in Global and National Commerce Act (E-SIGN) and the Uniform Electronic Transactions Act (UETA). Electronic signatures have the same legal force and effect as manual handwritten signatures.
+        </p>
+      </div>
+
+      <div>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">5. Milestone Funding, 14-Day Auto-Approval, and Security Period</h2>
+        <p style="margin: 0 0 10px; color: #334155;">
+          All project milestones operate under scheduled releases:
         </p>
         <ul style="margin: 0; padding-left: 24px; color: #334155;">
-          <li>Clients fund milestones prior to the commencement of design work.</li>
-          <li>Funds remain safely in escrow until deliverables are submitted and approved.</li>
-          <li>Designers submit deliverables (PDFs, CAD, BIM, 3D packages) directly through the platform storage vault.</li>
+          <li>Milestones are funded prior to commencement of design phase deliverables.</li>
+          <li>Upon deliverable submission, clients have fourteen (14) calendar days to review or request revisions. Deliverables are automatically approved if no action is taken within 14 days.</li>
+          <li>Released milestone payouts are subject to a five (5) calendar day security hold period prior to availability for direct deposit withdrawal.</li>
         </ul>
       </div>
 
-      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px;">
-        <h3 style="font-size: 16px; font-weight: 600; color: #0F172A; margin: 0 0 8px;">4. 14-Day Auto-Approval Rule</h3>
-        <p style="margin: 0 0 8px; font-size: 14px; color: #334155;">
-          Upon submission of a milestone deliverable or hourly invoice by the designer, the client is granted a <strong>14 calendar day review window</strong>.
-        </p>
-        <p style="margin: 0; font-size: 14px; color: #334155;">
-          If the client does not approve, request a revision, or raise a dispute within 14 days, the deliverable is <strong>automatically approved</strong> by the system.
-        </p>
-      </div>
-
-      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px;">
-        <h3 style="font-size: 16px; font-weight: 600; color: #0F172A; margin: 0 0 8px;">5. 5-Day Payout Security Period & Disputes</h3>
-        <p style="margin: 0 0 8px; font-size: 14px; color: #334155;">
-          Following any milestone approval (manual client sign-off or automatic approval), funds are placed into a <strong>5 calendar day security hold</strong> (payout status: pending_release).
-        </p>
-        <p style="margin: 0; font-size: 14px; color: #334155;">
-          During this 5-day security window, the client may raise a formal dispute if non-conforming issues are identified. If no dispute is raised, funds are released to the designer immediately upon expiration of the 5-day hold.
+      <div>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">6. Dispute Resolution & Arbitration</h2>
+        <p style="margin: 0; color: #334155;">
+          Any controversy, claim, or dispute arising out of or relating to these Terms or the Platform shall be resolved through binding confidential arbitration administered by the American Arbitration Association (AAA) under its Commercial Arbitration Rules, rather than in court.
         </p>
       </div>
 
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">6. Immutability of Submitted Deliverables</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">7. Governing Law & Venue (Placeholder)</h2>
         <p style="margin: 0; color: #334155;">
-          To ensure contract integrity, auditability, and legal compliance, once deliverables are submitted on a funded milestone, they become permanently immutable. Deliverable files cannot be altered, replaced, or deleted.
+          These Terms and any project engagement shall be governed by and construed in accordance with the laws of the State of [State to be set], without regard to conflict of law principles. Project contracts default to the State of {project state}.
         </p>
       </div>
 
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">7. Prohibited Conduct</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">8. Accessibility Statement</h2>
         <p style="margin: 0; color: #334155;">
-          Users must not circumvent platform escrow, upload malicious or scriptable file formats (.exe, .html, .js, .svg), transmit offensive communications, or engage in unverified credential representations.
-        </p>
-      </div>
-
-      <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">8. Contact Us</h2>
-        <p style="margin: 0; color: #334155;">
-          For questions regarding these Terms, contact our legal department at <a href="mailto:legal@dezignet.studio" style="color: #2F7BE5; text-decoration: underline;">legal@dezignet.studio</a>.
+          Dezignet is committed to providing a digital platform that is accessible to all users, adhering to Web Content Accessibility Guidelines (WCAG) 2.1 Level AA standards. If you encounter any accessibility barriers, please contact our team at accessibility@dezignet.com.
         </p>
       </div>
     </section>
@@ -143,45 +142,44 @@ function renderPrivacyContent(): string {
   return `
     <section style="display: flex; flex-direction: column; gap: 32px;">
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">1. Information We Collect</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">1. Information We Collect</h2>
         <p style="margin: 0 0 10px; color: #334155;">
-          We collect personal and professional information to deliver design marketplace services:
+          We collect account registration data (name, email, password hashes), professional credentials (license type, issuing state, license number), project specifications, and uploaded CAD/BIM/PDF documentation.
         </p>
-        <ul style="margin: 0; padding-left: 24px; color: #334155;">
-          <li><strong>Account Data:</strong> Full name, email address, user role, hashed password, terms acceptance date.</li>
-          <li><strong>Professional Practice:</strong> Licensing registration, educational credentials, design portfolio images.</li>
-          <li><strong>Private Project Details:</strong> Physical street addresses, postal codes, and site access notes (strictly protected by Row Level Security).</li>
+        <p style="margin: 0; color: #334155;">
+          <strong>Private Data Protection:</strong> Personal telephone numbers and physical project street addresses are encrypted at rest and never shared in public directory listings.
+        </p>
+      </div>
+
+      <div>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">2. Privacy Rights for US Residents (Access & Deletion)</h2>
+        <p style="margin: 0 0 10px; color: #334155;">
+          Under the California Consumer Privacy Act (CCPA/CPRA) and comprehensive US state privacy laws, residents have the right to:
+        </p>
+        <ul style="margin: 0 0 10px; padding-left: 24px; color: #334155;">
+          <li>Know and access the specific categories and pieces of personal information collected.</li>
+          <li>Request deletion of their personal information (via in-app Account Settings &gt; Danger Zone or by emailing privacy@dezignet.com).</li>
+          <li>Correct inaccurate personal information.</li>
+          <li>Opt out of the sale or sharing of personal data (Dezignet does not sell personal information).</li>
         </ul>
-      </div>
-
-      <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">2. Site Privacy & Access Control</h2>
         <p style="margin: 0; color: #334155;">
-          Physical site details (street and postal code) are confidential. They are never revealed to browsing designers or the public. Only the project owner, platform administrators, and the specific designer hired on a signed engagement can access private site notes.
+          We process verified deletion requests within forty-five (45) calendar days, subject to regulatory tax and contract retention exemptions.
         </p>
       </div>
 
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">3. Data Retention</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">3. Cookies & Tracking Technologies</h2>
         <p style="margin: 0; color: #334155;">
-          In accordance with statutory architectural and contractual requirements, project milestone records and contractual deliverables are retained for <strong>7 years</strong> following project completion. Soft-deleted files are purged after 7 days.
+          We use strictly necessary cookies to maintain authenticated session tokens and remember interface preferences. We do not use third-party behavioral advertising tracking cookies.
         </p>
       </div>
 
       <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">4. Your Rights</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">4. Email Communication Consent</h2>
         <p style="margin: 0; color: #334155;">
-          You have the right to access, rectify, or request deletion of your personal profile data, subject to legal retention obligations for active financial and escrow contracts.
-        </p>
-      </div>
-
-      <div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">5. Contact Privacy Office</h2>
-        <p style="margin: 0; color: #334155;">
-          For inquiries or data subject requests, please contact <a href="mailto:privacy@dezignet.studio" style="color: #2F7BE5; text-decoration: underline;">privacy@dezignet.studio</a>.
+          By creating an account, you consent to receive transactional and operational email communications regarding milestone escrow funding, deliverable submissions, proposal notifications, and account security. You can manage notification preferences in your Account Settings.
         </p>
       </div>
     </section>
   `;
 }
-

@@ -12,3 +12,4 @@ export function navigateTo(url: string): void {
   }
   window.dispatchEvent(new Event('popstate'));
 }
+

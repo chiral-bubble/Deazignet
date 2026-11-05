@@ -237,8 +237,8 @@ export function renderDesignerApp(): string {
           <!-- Views rendered dynamically here -->
         </div>
 
-        <!-- Mobile Bottom Navigation Bar (5 Items) -->
-        <nav class="dez-mobile-bottom-nav" aria-label="Mobile Navigation">
+        <!-- Mobile Bottom Navigation Bar (5 Items) - Hidden on desktop -->
+        <nav class="dez-mobile-bottom-nav" aria-label="Mobile Navigation" style="display: none;">
           <button type="button" class="dez-m-nav-item is-active" data-designer-tab="dashboard">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <span>Dashboard</span>

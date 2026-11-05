@@ -349,7 +349,7 @@ export function renderPublicProfile(
               <select id="invite-project-select" class="dez-select">
                 <option value="proj-1">Lakefront Contemporary Villa, Lucerne</option>
                 <option value="proj-2">Alpine High-Rise Commercial Atrium</option>
-                <option value="proj-3">Ibadan Heritage Compound Renovation</option>
+                <option value="proj-3">Austin Heritage Compound Renovation</option>
               </select>
             </div>
             <div class="dez-form-group">

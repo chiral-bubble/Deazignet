@@ -127,8 +127,18 @@ export function renderSignUpForm(role: 'client' | 'designer', _initialRoleChosen
           </div>
         ` : ''}
 
-        <!-- Terms of Service & Privacy Checkbox -->
+        <!-- 18 or Older Confirmation Checkbox -->
         <div style="margin-top: 4px;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #475569; cursor: pointer; line-height: 1.5;">
+            <input type="checkbox" id="signup-age-confirm" required style="margin-top: 2px;" />
+            <span>
+              I confirm that I am 18 years of age or older.
+            </span>
+          </label>
+        </div>
+
+        <!-- Terms of Service & Privacy Checkbox -->
+        <div style="margin-top: 2px;">
           <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #475569; cursor: pointer; line-height: 1.5;">
             <input type="checkbox" id="signup-terms" required style="margin-top: 2px;" />
             <span>

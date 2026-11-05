@@ -3197,14 +3197,23 @@
   }
 }
 
-/* Mobile bottom navigation bar: Hidden on desktop */
-.dez-mobile-bottom-nav {
+/* Mobile bottom navigation bar: Hidden on desktop (min-width: 769px) */
+.dez-mobile-bottom-nav,
+.dez-mobile-bottom-bar {
   display: none !important;
+}
+
+@media (min-width: 769px) {
+  .dez-mobile-bottom-nav,
+  .dez-mobile-bottom-bar {
+    display: none !important;
+  }
 }
 
 /* Mobile (Under 768px and 375px) */
 @media (max-width: 768px) {
-  .dez-mobile-bottom-nav {
+  .dez-mobile-bottom-nav,
+  .dez-mobile-bottom-bar {
     display: flex !important;
     position: fixed !important;
     bottom: 0;

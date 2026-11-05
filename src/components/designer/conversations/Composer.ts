@@ -15,7 +15,7 @@ import { type ConversationAttachment } from '../../../mocks/dataset';
 
 const OFF_PLATFORM_KEYWORDS = [
   'paypal',
-  'paystack direct',
+  'payment gateway direct',
   'wire me',
   'transfer directly',
   'whatsapp',

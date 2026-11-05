@@ -1,364 +1,293 @@
 /**
- * CredentialsTab Component (Tab 3: Credentials Settings)
- * Registration details list, Add registration modal, edit rules (only Pending/Rejected,
- * changing Verified resets to Pending with warning), and plain text status tags.
+ * CredentialsTab Component (US Professional Licensing & Insurance)
+ * License types: Architect, Professional Engineer, Landscape Architect, Interior Designer, Other
+ * Issuing State: 50 states + DC
+ * Masked license number (last 3 chars)
+ * Issue year, Expiration date, Certificate upload
+ * Status: Pending, Verified, Rejected, Expired
+ * Professional Liability Insurance section
  */
 
-import type { DesignerCredential } from '../../../services/designerProfileService';
+import {
+  US_STATES,
+  US_LICENSE_TYPES,
+  maskLicenseNumber,
+  formatLicensedStatesLabel,
+  formatDate
+} from '../../../services/usMarketService';
+import { supabase } from '../../../lib/supabase';
 
-const REG_BODIES = ['AIA', 'PE', 'RIBA', 'NCARB', 'TOPREC', 'NIESV', 'Other'];
+export interface UsCredential {
+  id: string;
+  license_type: 'architect' | 'professional_engineer' | 'landscape_architect' | 'interior_designer' | 'other';
+  issuing_state: string;
+  license_number: string;
+  issue_year?: number | null;
+  expiration_date?: string | null;
+  certificate_file?: string | null;
+  status: 'pending' | 'verified' | 'rejected' | 'expired';
+  rejection_reason?: string | null;
+}
 
-export function renderCredentialsTab(credentials: DesignerCredential[]): string {
+export interface DesignerInsurance {
+  id: string;
+  provider: string;
+  expiration_date: string;
+  certificate_file?: string | null;
+  status: 'pending' | 'verified' | 'rejected';
+  rejection_reason?: string | null;
+}
+
+export function renderCredentialsTab(credentials: UsCredential[], insurance?: DesignerInsurance | null): string {
+  const verifiedUnexpiredStates = credentials
+    .filter(c => c.status === 'verified' && (!c.expiration_date || new Date(c.expiration_date) >= new Date()))
+    .map(c => c.issuing_state);
+
+  const licensedSummary = formatLicensedStatesLabel(verifiedUnexpiredStates);
+
   return `
     <div class="dez-settings-panel" id="dez-credentials-tab-content">
-      <div class="dez-panel-header-with-actions">
+      <div class="dez-panel-header-with-actions" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
         <div>
-          <h2 class="dez-panel-title">Professional Credentials & Accreditation</h2>
-          <p class="dez-panel-subtext">Add official statutory registrations and certifications from regulatory councils.</p>
+          <h2 class="dez-panel-title" style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 4px 0;">State Licensure & Credentials</h2>
+          <p class="dez-panel-subtext" style="font-size: 13px; color: #6B7280; margin: 0;">Add your state board professional licenses to display your licensed states on project proposals.</p>
         </div>
-        <button type="button" class="dez-btn-primary" id="btn-add-credential" style="height:36px; padding:0 18px;">
-          + Add registration
+        <button type="button" class="dez-btn-primary" id="btn-add-credential" style="height: 36px; padding: 0 16px; font-size: 13px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; cursor: pointer;">
+          + Add state license
         </button>
       </div>
 
-      <!-- Explanatory Helper Notice -->
-      <div class="dez-info-banner" style="margin-bottom: 24px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--dez-brand); flex-shrink:0;">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        <div style="font-size:13px; color:var(--dez-text-primary); line-height: 1.5;">
-          Credentials are authenticated against official regulatory council registers before the <strong>Verified Designer</strong> mark is displayed on your public profile.
+      <!-- Licensed States Summary Banner -->
+      ${licensedSummary ? `
+        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F7BE5" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style="font-size: 13.5px; font-weight: 600; color: #1E40AF;">${licensedSummary}</span>
+          </div>
+          <span style="font-size: 11.5px; background: #DBEAFE; color: #1E40AF; padding: 2px 8px; border-radius: 4px; font-weight: 500;">
+            Publicly Displayed
+          </span>
         </div>
+      ` : ''}
+
+      <!-- Credentials List -->
+      <div class="dez-credentials-list" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px;">
+        ${credentials.length === 0 ? `
+          <div style="border: 1px dashed #E5E7EB; border-radius: 8px; padding: 32px; text-align: center;">
+            <p style="font-size: 13.5px; color: #6B7280; margin: 0 0 14px 0;">No state licenses added yet. Add a state license to receive the Verified badge on paid plans.</p>
+            <button type="button" class="dez-btn-secondary" id="btn-empty-add-cred" style="height: 36px; padding: 0 14px; font-size: 13px;">
+              Add state license
+            </button>
+          </div>
+        ` : credentials.map(cred => {
+          const typeLabel = US_LICENSE_TYPES.find(t => t.value === cred.license_type)?.label || cred.license_type;
+          const maskedNum = maskLicenseNumber(cred.license_number);
+          const isVerified = cred.status === 'verified';
+          const isPending = cred.status === 'pending';
+          const isExpired = cred.status === 'expired';
+
+          return `
+            <div class="dez-cred-card" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                  <span style="font-weight: 600; font-size: 14px; color: #111827;">${typeLabel} — ${cred.issuing_state}</span>
+                  <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; ${
+                    isVerified ? 'background: #ECFDF5; color: #047857;' :
+                    isPending ? 'background: #EFF6FF; color: #1D4ED8;' :
+                    isExpired ? 'background: #FEF3C7; color: #92400E;' :
+                    'background: #FEF2F2; color: #991B1B;'
+                  }">
+                    ${isVerified ? 'Verified' : isPending ? 'Pending Review' : isExpired ? 'Expired' : 'Rejected'}
+                  </span>
+                </div>
+                <div style="font-size: 13px; color: #4B5563;">
+                  License Number: <span style="font-family: monospace; font-weight: 600;">${maskedNum}</span>
+                  ${cred.issue_year ? ` • Issued ${cred.issue_year}` : ''}
+                  ${cred.expiration_date ? ` • Expires ${formatDate(cred.expiration_date)}` : ''}
+                </div>
+                ${cred.rejection_reason ? `
+                  <div style="font-size: 12px; color: #991B1B; margin-top: 4px;">Reason: ${cred.rejection_reason}</div>
+                ` : ''}
+              </div>
+              <button type="button" class="dez-btn-secondary btn-edit-cred" data-id="${cred.id}" style="height: 32px; font-size: 12px; padding: 0 12px;">
+                Edit
+              </button>
+            </div>
+          `;
+        }).join('')}
       </div>
 
-      <!-- Credentials List or Empty State -->
-      ${
-        credentials.length === 0
-          ? `
-        <div class="dez-empty-portfolio-card">
-          <div class="dez-empty-icon-wrap">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
+      <!-- Professional Liability Insurance Section -->
+      <div style="border-top: 1px solid #E5E7EB; padding-top: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div>
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 4px 0;">Professional Liability Insurance (Optional)</h3>
+            <p style="font-size: 13px; color: #6B7280; margin: 0;">Verified unexpired insurance shows as "Insured" on your profile and proposal card.</p>
           </div>
-          <h3 class="dez-empty-title">No credentials added yet</h3>
-          <p class="dez-empty-subtext">Submit your AIA, PE, or RIBA professional registration number to earn verified status.</p>
-          <button type="button" class="dez-btn-primary" id="btn-empty-add-cred" style="margin-top:14px; height:36px;">
-            Add professional registration
+          <button type="button" class="dez-btn-secondary" id="btn-edit-insurance" style="height: 34px; font-size: 12.5px; padding: 0 14px;">
+            ${insurance ? 'Update Insurance' : '+ Add Insurance'}
           </button>
         </div>
-      `
-          : `
-        <div class="dez-credentials-list">
-          ${credentials
-            .map((cred) => {
-              const isVerified = cred.status === 'verified';
-              const isPending = cred.status === 'pending';
 
-              return `
-              <div class="dez-cred-card" data-cred-id="${cred.id}">
-                <div class="dez-cred-card-left">
-                  <div class="dez-cred-badge-wrap">
-                    <span class="dez-cred-body-code">${cred.registrationBody}</span>
-                  </div>
-                  <div>
-                    <div class="dez-cred-title-row">
-                      <span class="dez-cred-body-name">${getBodyFullName(cred.registrationBody)}</span>
-                      <span class="dez-cred-number">Reg: <strong>${cred.registrationNumber}</strong></span>
-                    </div>
-                    <div class="dez-cred-meta">
-                      ${cred.stateOrRegion} &bull; Registered ${cred.year}
-                      ${cred.certificateUrl ? ` &bull; <a href="${cred.certificateUrl}" target="_blank" rel="noopener" class="dez-link-action">View certificate</a>` : ''}
-                    </div>
-
-                    <!-- Plain Text Status with Small Icon -->
-                    <div class="dez-cred-status-row">
-                      ${
-                        isVerified
-                          ? `
-                        <span class="dez-status-plain is-verified">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                          Verified
-                        </span>
-                      `
-                          : isPending
-                          ? `
-                        <span class="dez-status-plain is-pending">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                          Pending review
-                        </span>
-                      `
-                          : `
-                        <span class="dez-status-plain is-rejected">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                          Rejected: ${cred.rejectionReason || 'Council registration details did not match official registry.'}
-                        </span>
-                      `
-                      }
-                    </div>
-                  </div>
-                </div>
-
-                <div class="dez-cred-card-actions">
-                  <button type="button" class="dez-btn-secondary" data-action="edit-cred" data-cred-id="${cred.id}" style="height:32px; padding:0 12px; font-size:12.5px;">
-                    Edit
-                  </button>
-                  <button type="button" class="dez-btn-danger-outline" data-action="delete-cred" data-cred-id="${cred.id}" style="height:32px; padding:0 12px; font-size:12.5px;">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            `;
-            })
-            .join('')}
-        </div>
-      `
-      }
-
-      <!-- Add / Edit Registration Modal -->
-      <div class="dez-dash-modal-backdrop" id="modal-cred-form" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-cred-title">
-        <div class="dez-dash-modal" style="max-width: 480px;">
-          <div class="dez-dash-modal-header">
-            <h3 class="dez-dash-modal-title" id="modal-cred-title">Add Professional Registration</h3>
-            <button type="button" class="dez-dash-modal-close" id="btn-close-cred-modal" aria-label="Close modal">&times;</button>
+        ${insurance ? `
+          <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 600; font-size: 13.5px; color: #111827;">${insurance.provider}</div>
+              <div style="font-size: 12.5px; color: #6B7280;">Expires: ${formatDate(insurance.expiration_date)}</div>
+            </div>
+            <span style="font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; ${
+              insurance.status === 'verified' ? 'background: #ECFDF5; color: #047857;' :
+              insurance.status === 'pending' ? 'background: #EFF6FF; color: #1D4ED8;' :
+              'background: #FEF2F2; color: #991B1B;'
+            }">
+              ${insurance.status === 'verified' ? 'Insured (Verified)' : insurance.status === 'pending' ? 'Pending Review' : 'Rejected'}
+            </span>
           </div>
-          <div class="dez-dash-modal-body">
-            <!-- Warning Banner if editing a Verified Credential -->
-            <div id="cred-verified-warning" class="dez-warning-banner" style="display: none; margin-bottom: 14px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#B45309; flex-shrink:0;">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <div style="font-size:12.5px; color:#92400E; line-height:1.4;">
-                <strong>Warning:</strong> Modifying a verified credential will reset its status to <em>Pending review</em> until re-authenticated.
+        ` : `
+          <p style="font-size: 13px; color: #9CA3AF; margin: 0;">No insurance record uploaded.</p>
+        `}
+      </div>
+
+      <!-- Add/Edit Credential Modal -->
+      <div class="dez-dash-modal-backdrop" id="modal-cred-backdrop" style="display: none;" role="dialog" aria-modal="true">
+        <div class="dez-dash-modal" style="max-width: 480px; background: #FFFFFF; border-radius: 8px; border: 1px solid #E5E7EB; padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0;" id="modal-cred-title">Add State License</h3>
+            <button type="button" id="btn-close-cred-modal" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #6B7280;">&times;</button>
+          </div>
+          <form id="form-cred">
+            <input type="hidden" id="inp-cred-id" value="" />
+            
+            <div style="margin-bottom: 14px;">
+              <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">License Type *</label>
+              <select id="inp-cred-type" required style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF;">
+                ${US_LICENSE_TYPES.map(t => `<option value="${t.value}">${t.label}</option>`).join('')}
+              </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">Issuing State *</label>
+                <select id="inp-cred-state" required style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF;">
+                  <option value="">Select state...</option>
+                  ${US_STATES.map(s => `<option value="${s.code}">${s.name} (${s.code})</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">License Number *</label>
+                <input type="text" id="inp-cred-number" required placeholder="e.g. ARC-98213" style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; box-sizing: border-box;" />
               </div>
             </div>
 
-            <form id="form-credential" novalidate>
-              <div class="dez-form-group">
-                <label for="cred-body-select" class="dez-label">Registration body <span class="dez-req">*</span></label>
-                <select id="cred-body-select" class="dez-select" required>
-                  ${REG_BODIES.map((b) => `<option value="${b}">${b} - ${getBodyFullName(b)}</option>`).join('')}
-                </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">Issue Year</label>
+                <input type="number" id="inp-cred-year" min="1950" max="2100" placeholder="e.g. 2018" style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; box-sizing: border-box;" />
               </div>
-
-              <div class="dez-form-group">
-                <label for="cred-number-input" class="dez-label">Registration number <span class="dez-req">*</span></label>
-                <input type="text" id="cred-number-input" class="dez-input" placeholder="e.g. F-2491" required />
-                <div class="dez-field-error" id="err-cred-number"></div>
+              <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px;">Expiration Date</label>
+                <input type="date" id="inp-cred-exp" style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; box-sizing: border-box;" />
               </div>
+            </div>
 
-              <div class="dez-form-grid-2">
-                <div class="dez-form-group">
-                  <label for="cred-state-input" class="dez-label">State / Region <span class="dez-req">*</span></label>
-                  <input type="text" id="cred-state-input" class="dez-input" placeholder="e.g. Zurich Canton" required />
-                  <div class="dez-field-error" id="err-cred-state"></div>
-                </div>
+            <div id="cred-edit-warning" style="display: none; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #92400E; margin-bottom: 16px;">
+              Editing a verified license will reset its status to pending review until verified by an administrator.
+            </div>
 
-                <div class="dez-form-group">
-                  <label for="cred-year-input" class="dez-label">Registration year <span class="dez-req">*</span></label>
-                  <input type="number" id="cred-year-input" class="dez-input" min="1970" max="2026" value="2018" required />
-                  <div class="dez-field-error" id="err-cred-year"></div>
-                </div>
-              </div>
-
-              <div class="dez-form-group">
-                <label for="cred-cert-url" class="dez-label">Certificate document link <span class="dez-opt">(Optional)</span></label>
-                <input type="url" id="cred-cert-url" class="dez-input" placeholder="https://example.com/certificate.pdf" />
-                <span class="dez-field-hint">PDF or scanned certificate link to expedite verification.</span>
-              </div>
-            </form>
-          </div>
-          <div class="dez-dash-modal-footer">
-            <button type="button" class="dez-btn-secondary" id="btn-cancel-cred-modal" style="height:36px;">Cancel</button>
-            <button type="button" class="dez-btn-primary" id="btn-save-cred-modal" style="height:36px; padding:0 20px;">
-              Submit for review
-            </button>
-          </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" class="dez-btn-secondary" id="btn-cancel-cred" style="height: 36px; padding: 0 14px; font-size: 13px;">Cancel</button>
+              <button type="submit" class="dez-btn-primary" id="btn-save-cred" style="height: 36px; padding: 0 18px; font-size: 13px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; cursor: pointer;">Save license</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   `;
 }
 
-function getBodyFullName(code: string): string {
-  switch (code) {
-    case 'AIA':
-      return 'American Institute of Architects (AIA)';
-    case 'PE':
-      return 'National Council of Examiners for Engineering (NCEES / PE)';
-    case 'RIBA':
-      return 'Royal Institute of British Architects (RIBA)';
-    case 'NCARB':
-      return 'National Council of Architectural Registration Boards (NCARB)';
-    case 'TOPREC':
-      return 'Town Planners Registration Council';
-    case 'NIESV':
-      return 'Royal Institution of Chartered Surveyors (RICS)';
-    default:
-      return 'Regulatory Professional Council';
-  }
-}
-
 export function initCredentialsTab(
   container: HTMLElement,
-  credentials: DesignerCredential[],
   callbacks: {
-    onAddCredential: (cred: Omit<DesignerCredential, 'id' | 'status'>) => Promise<void>;
-    onUpdateCredential: (id: string, updates: Partial<DesignerCredential>) => Promise<void>;
-    onDeleteCredential: (id: string) => Promise<void>;
     onShowToast: (title: string, msg: string, type?: 'success' | 'info' | 'error') => void;
+    onReload: () => void;
   }
-): void {
-  const root = container.querySelector('#dez-credentials-tab-content') as HTMLElement;
-  if (!root) return;
+) {
+  const modal = container.querySelector('#modal-cred-backdrop') as HTMLElement;
+  const form = container.querySelector('#form-cred') as HTMLFormElement;
+  const editWarning = container.querySelector('#cred-edit-warning') as HTMLElement;
+  const modalTitle = container.querySelector('#modal-cred-title');
 
-  const modal = root.querySelector('#modal-cred-form') as HTMLElement;
-  const modalTitle = root.querySelector('#modal-cred-title') as HTMLElement;
-  const warningBanner = root.querySelector('#cred-verified-warning') as HTMLElement;
-  const btnClose = root.querySelector('#btn-close-cred-modal') as HTMLButtonElement;
-  const btnCancel = root.querySelector('#btn-cancel-cred-modal') as HTMLButtonElement;
-  const btnSave = root.querySelector('#btn-save-cred-modal') as HTMLButtonElement;
-
-  const bodySelect = root.querySelector('#cred-body-select') as HTMLSelectElement;
-  const numberInput = root.querySelector('#cred-number-input') as HTMLInputElement;
-  const stateInput = root.querySelector('#cred-state-input') as HTMLInputElement;
-  const yearInput = root.querySelector('#cred-year-input') as HTMLInputElement;
-  const certInput = root.querySelector('#cred-cert-url') as HTMLInputElement;
-
-  let editingCredId: string | null = null;
-  let editingOriginalStatus: string | null = null;
-
-  const openModal = (cred?: DesignerCredential) => {
-    if (!modal) return;
-    editingCredId = cred ? cred.id : null;
-    editingOriginalStatus = cred ? cred.status : null;
-
-    if (modalTitle) {
-      modalTitle.textContent = cred ? 'Edit Professional Registration' : 'Add Professional Registration';
-    }
-
-    if (warningBanner) {
-      warningBanner.style.display = cred && cred.status === 'verified' ? 'flex' : 'none';
-    }
-
-    if (cred) {
-      if (bodySelect) bodySelect.value = cred.registrationBody;
-      if (numberInput) numberInput.value = cred.registrationNumber;
-      if (stateInput) stateInput.value = cred.stateOrRegion;
-      if (yearInput) yearInput.value = String(cred.year);
-      if (certInput) certInput.value = cred.certificateUrl || '';
-    } else {
-      if (bodySelect) bodySelect.value = 'AIA';
-      if (numberInput) numberInput.value = '';
-      if (stateInput) stateInput.value = 'Zurich Canton';
-      if (yearInput) yearInput.value = '2018';
-      if (certInput) certInput.value = '';
-    }
-
-    ['err-cred-number', 'err-cred-state', 'err-cred-year'].forEach((id) => {
-      const el = root.querySelector(`#${id}`);
-      if (el) el.textContent = '';
-    });
-
-    modal.style.display = 'flex';
-    modal.classList.add('is-open');
-    document.body.style.overflow = 'hidden';
-  };
-
-  const closeModal = () => {
-    if (modal) {
-      modal.style.display = 'none';
-      modal.classList.remove('is-open');
-      document.body.style.overflow = '';
-      editingCredId = null;
-    }
-  };
-
-  root.querySelector('#btn-add-credential')?.addEventListener('click', () => openModal());
-  root.querySelector('#btn-empty-add-cred')?.addEventListener('click', () => openModal());
-
-  btnClose?.addEventListener('click', closeModal);
-  btnCancel?.addEventListener('click', closeModal);
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
+  container.querySelector('#btn-add-credential')?.addEventListener('click', () => {
+    form.reset();
+    (container.querySelector('#inp-cred-id') as HTMLInputElement).value = '';
+    if (modalTitle) modalTitle.textContent = 'Add State License';
+    if (editWarning) editWarning.style.display = 'none';
+    if (modal) modal.style.display = 'flex';
   });
 
-  // Edit action
-  root.querySelectorAll('[data-action="edit-cred"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-cred-id');
-      const cred = credentials.find((c) => c.id === id);
-      if (cred) openModal(cred);
-    });
+  container.querySelector('#btn-empty-add-cred')?.addEventListener('click', () => {
+    form.reset();
+    (container.querySelector('#inp-cred-id') as HTMLInputElement).value = '';
+    if (modalTitle) modalTitle.textContent = 'Add State License';
+    if (editWarning) editWarning.style.display = 'none';
+    if (modal) modal.style.display = 'flex';
   });
 
-  // Delete action
-  root.querySelectorAll('[data-action="delete-cred"]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-cred-id');
-      if (!id) return;
-      if (confirm('Delete this professional registration?')) {
-        await callbacks.onDeleteCredential(id);
-        callbacks.onShowToast('Credential Deleted', 'Registration details removed.', 'info');
-      }
-    });
+  container.querySelector('#btn-close-cred-modal')?.addEventListener('click', () => {
+    if (modal) modal.style.display = 'none';
+  });
+  container.querySelector('#btn-cancel-cred')?.addEventListener('click', () => {
+    if (modal) modal.style.display = 'none';
   });
 
-  // Save Modal
-  btnSave?.addEventListener('click', async () => {
-    const regBody = bodySelect.value;
-    const regNum = numberInput.value.trim();
-    const stateVal = stateInput.value.trim();
-    const yearVal = parseInt(yearInput.value, 10);
-    const certUrl = certInput.value.trim();
-
-    let valid = true;
-    const setErr = (id: string, msg: string) => {
-      const el = root.querySelector(`#${id}`);
-      if (el) el.textContent = msg;
-      valid = false;
-    };
-
-    if (!regNum) setErr('err-cred-number', 'Registration number is required.');
-    if (!stateVal) setErr('err-cred-state', 'State or region is required.');
-    if (!yearVal || yearVal < 1970 || yearVal > 2026) setErr('err-cred-year', 'Valid registration year required.');
-
-    if (!valid) return;
-
-    btnSave.disabled = true;
-    btnSave.textContent = 'Submitting...';
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const credId = (container.querySelector('#inp-cred-id') as HTMLInputElement).value;
+    const type = (container.querySelector('#inp-cred-type') as HTMLSelectElement).value;
+    const state = (container.querySelector('#inp-cred-state') as HTMLSelectElement).value;
+    const number = (container.querySelector('#inp-cred-number') as HTMLInputElement).value.trim();
+    const year = parseInt((container.querySelector('#inp-cred-year') as HTMLInputElement).value, 10) || null;
+    const exp = (container.querySelector('#inp-cred-exp') as HTMLInputElement).value || null;
 
     try {
-      if (editingCredId) {
-        await callbacks.onUpdateCredential(editingCredId, {
-          registrationBody: regBody,
-          registrationNumber: regNum,
-          stateOrRegion: stateVal,
-          year: yearVal,
-          certificateUrl: certUrl || undefined
-        });
-        const msg = editingOriginalStatus === 'verified'
-          ? 'Credential modified and resubmitted for verification.'
-          : 'Registration details updated.';
-        callbacks.onShowToast('Credential Saved', msg, 'info');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (credId) {
+        // Update
+        const { error } = await (supabase.from as any)('credentials')
+          .update({
+            license_type: type,
+            issuing_state: state,
+            license_number: number,
+            issue_year: year,
+            expiration_date: exp
+          })
+          .eq('id', credId)
+          .eq('designer_id', user.id);
+
+        if (error) throw error;
+        callbacks.onShowToast('License updated', 'Saved changes. If modified, review will reset to pending.', 'success');
       } else {
-        await callbacks.onAddCredential({
-          registrationBody: regBody,
-          registrationNumber: regNum,
-          stateOrRegion: stateVal,
-          year: yearVal,
-          certificateUrl: certUrl || undefined
-        });
-        callbacks.onShowToast('Credential Submitted', 'Submitted for council verification.', 'success');
+        // Insert
+        const { error } = await (supabase.from as any)('credentials')
+          .insert({
+            designer_id: user.id,
+            license_type: type,
+            issuing_state: state,
+            license_number: number,
+            issue_year: year,
+            expiration_date: exp
+          });
+
+        if (error) throw error;
+        callbacks.onShowToast('License added', 'Submitted for admin verification.', 'success');
       }
-      closeModal();
-    } finally {
-      btnSave.disabled = false;
-      btnSave.textContent = 'Submit for review';
+
+      if (modal) modal.style.display = 'none';
+      callbacks.onReload();
+    } catch (err: any) {
+      callbacks.onShowToast('Save failed', err.message || 'Could not save credential.', 'error');
     }
   });
 }

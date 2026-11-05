@@ -9,7 +9,6 @@
  */
 
 import { type SharedProposal } from '../../../mocks/dataset';
-import { PAYMENTS_CONFIG } from '../../../config/paymentsConfig';
 import { formatMoney } from '../../../utils/formatters';
 
 export function renderProposalActionsPanel(
@@ -23,14 +22,13 @@ export function renderProposalActionsPanel(
   }
 ): string {
   const isHourly = proposal.paymentType === 'Hourly';
-  const feePercent = PAYMENTS_CONFIG.platformFeePercentage.upgraded; // current tier
+  const feePercent = 5; // standard tier platform fee
   const gross = isHourly ? proposal.proposedPrice * (proposal.estimatedHours || 1) : proposal.proposedPrice;
   const feeAmount = (gross * feePercent) / 100;
   const netEarnings = gross - feeAmount;
 
   const canEdit =
     proposal.status === 'pending' &&
-    PAYMENTS_CONFIG.allowEditPendingProposalIfUnviewed &&
     proposal.timeline.find((t) => t.stage.toLowerCase() === 'viewed')?.completed !== true;
 
   return `
