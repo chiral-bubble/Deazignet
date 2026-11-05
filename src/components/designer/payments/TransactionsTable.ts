@@ -177,15 +177,15 @@ export function initTransactionsTable(
         <td style="padding: 12px 16px; color: #4B5563;">${tx.projectName || '—'}</td>
         <td style="padding: 12px 16px; color: #4B5563;">${tx.type}</td>
         <td class="dez-tabular-num" style="padding: 12px 16px; text-align: right; color: #111827; font-weight: 500;">
-          ${tx.grossAmount < 0 ? '-' : ''}$${formatMoney(Math.abs(tx.grossAmount))}
+          ${tx.grossAmount < 0 ? '-' : ''}${formatMoney(Math.abs(tx.grossAmount))}
         </td>
         <td class="dez-tabular-num" style="padding: 12px 16px; text-align: right; color: #6B7280;">
-          ${tx.feeAmount > 0 ? `-$${formatMoney(tx.feeAmount)}` : '—'}
+          ${tx.feeAmount > 0 ? `-${formatMoney(tx.feeAmount)}` : '—'}
         </td>
         <td class="dez-tabular-num" style="padding: 12px 16px; text-align: right; font-weight: 600; color: ${
           tx.netAmount < 0 ? '#DC2626' : '#111827'
         };">
-          ${tx.netAmount < 0 ? '-' : '+'}$${formatMoney(Math.abs(tx.netAmount))}
+          ${tx.netAmount < 0 ? '-' : '+'}${formatMoney(Math.abs(tx.netAmount))}
         </td>
         <td style="padding: 12px 16px; text-align: right;">
           <span class="dez-status-pill ${

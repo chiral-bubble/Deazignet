@@ -37,3 +37,4 @@ SELECT cron.schedule(
 
 -- 5. Verify scheduled jobs
 SELECT jobid, jobname, schedule, command, active FROM cron.job;
+

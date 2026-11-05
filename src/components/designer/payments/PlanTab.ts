@@ -208,10 +208,10 @@ export async function initPlanTab(
             <span style="font-size: 11.5px; color: #6B7280; font-weight: 500;">${res.rate_percent}% fee</span>
           </div>
           <div style="margin-bottom: 6px; font-size: 13px; color: #4B5563;">
-            Platform fee: <strong style="color: #111827;">${formatUSD(res.fee_cents)}</strong>
+            Platform fee: <strong style="color: #111827;">${formatUSD(res.fee_cents / 100)}</strong>
           </div>
           <div style="font-size: 14px; color: #047857; font-weight: 600;">
-            Net payout: ${formatUSD(res.net_cents)}
+            Net payout: ${formatUSD(res.net_cents / 100)}
           </div>
         </div>
       `;

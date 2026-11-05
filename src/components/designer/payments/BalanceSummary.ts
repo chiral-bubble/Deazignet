@@ -22,7 +22,7 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
               <span class="dez-balance-indicator dez-indicator-green" aria-hidden="true"></span>
               <span class="dez-balance-label">Available to withdraw</span>
             </div>
-            <div class="dez-balance-value dez-tabular-num">$${formatMoney(balances.availableToWithdraw)}</div>
+            <div class="dez-balance-value dez-tabular-num">${formatMoney(balances.availableToWithdraw)}</div>
             <p class="dez-balance-hint">Cleared earnings available for immediate bank transfer</p>
           </div>
 
@@ -32,7 +32,7 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
               <span class="dez-balance-indicator dez-indicator-blue" aria-hidden="true"></span>
               <span class="dez-balance-label">Pending release</span>
             </div>
-            <div class="dez-balance-value dez-tabular-num">$${formatMoney(balances.pendingRelease)}</div>
+            <div class="dez-balance-value dez-tabular-num">${formatMoney(balances.pendingRelease)}</div>
             <p class="dez-balance-hint">Waiting on client approval of submitted deliverables</p>
           </div>
 
@@ -42,7 +42,7 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
               <span class="dez-balance-indicator dez-indicator-amber" aria-hidden="true"></span>
               <span class="dez-balance-label">In escrow</span>
             </div>
-            <div class="dez-balance-value dez-tabular-num">$${formatMoney(balances.inEscrow)}</div>
+            <div class="dez-balance-value dez-tabular-num">${formatMoney(balances.inEscrow)}</div>
             <p class="dez-balance-hint">Client-funded milestone deposits not yet completed</p>
           </div>
 
@@ -52,7 +52,7 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
               <span class="dez-balance-indicator dez-indicator-neutral" aria-hidden="true"></span>
               <span class="dez-balance-label">Total earned</span>
             </div>
-            <div class="dez-balance-value dez-tabular-num">$${formatMoney(balances.totalEarned)}</div>
+            <div class="dez-balance-value dez-tabular-num">${formatMoney(balances.totalEarned)}</div>
             <p class="dez-balance-hint">Lifetime gross earnings across all accepted commissions</p>
           </div>
         </div>
@@ -126,7 +126,7 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
                       </div>
                     </div>
                     <div style="text-align: right; flex-shrink: 0;">
-                      <div class="dez-tabular-num" style="font-size: 15px; font-weight: 700; color: #111827;">+$${formatMoney(m.amount)}</div>
+                      <div class="dez-tabular-num" style="font-size: 15px; font-weight: 700; color: #111827;">+${formatMoney(m.amount)}</div>
                       <span class="dez-status-pill pill-amber" style="font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 3px;">
                         ${m.statusText}
                       </span>
@@ -190,7 +190,7 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
                     </div>
                     <div style="text-align: right; flex-shrink: 0; padding-left: 12px;">
                       <div class="dez-tabular-num" style="font-size: 14px; font-weight: 600; color: ${tx.netAmount < 0 ? '#DC2626' : '#111827'};">
-                        ${tx.netAmount < 0 ? '-' : '+'}$${formatMoney(Math.abs(tx.netAmount))}
+                        ${tx.netAmount < 0 ? '-' : ''}${formatMoney(Math.abs(tx.netAmount))}
                       </div>
                       <span class="dez-status-pill ${
                         tx.status === 'Completed'

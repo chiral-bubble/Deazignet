@@ -73,6 +73,7 @@ import {
   type NotificationItem
 } from '../../services/notificationsService';
 import { sharedDataset } from '../../mocks/dataset';
+import { navigateTo } from '../../utils/navigation';
 
 export type DesignerViewTab =
   | 'dashboard'
@@ -577,7 +578,7 @@ export function initDesignerApp(onLogout: () => void): void {
         activeTab: myWorkActiveTab,
         subId: myWorkSubId,
         onNavigate: (route: string) => {
-          window.location.hash = route;
+          navigateTo(route);
         },
         onShowToast: showToast
       });
@@ -838,8 +839,8 @@ export function initDesignerApp(onLogout: () => void): void {
 
     // 2. Public Designer Profile (/designers/:id)
     if (raw.startsWith('#/designers/') || raw.startsWith('#designers/')) {
-      const parts = window.location.hash.split('/');
-      const id = parts[parts.length - 1];
+      const parts = raw.split('/');
+      const id = parts[parts.length - 1]?.split(/[?#]/)[0];
       if (id) {
         selectedPublicDesignerId = id;
         currentActiveTab = 'public-profile';
@@ -858,12 +859,12 @@ export function initDesignerApp(onLogout: () => void): void {
       currentActiveTab = 'my-work';
       if (raw.includes('/proposals')) {
         myWorkActiveTab = 'proposals';
-        const parts = window.location.hash.split('/proposals/');
-        myWorkSubId = parts[1] || undefined;
+        const parts = raw.split('/proposals/');
+        myWorkSubId = parts[1] ? parts[1].split(/[?#]/)[0] : undefined;
       } else if (raw.includes('/projects')) {
         myWorkActiveTab = 'projects';
-        const parts = window.location.hash.split('/projects/');
-        myWorkSubId = parts[1] || undefined;
+        const parts = raw.split('/projects/');
+        myWorkSubId = parts[1] ? parts[1].split(/[?#]/)[0] : undefined;
       } else {
         // Default redirect: /my-work -> /my-work/projects (or proposals if 0 projects)
         if (sharedDataset.activeProjects.length > 0) {
@@ -886,7 +887,7 @@ export function initDesignerApp(onLogout: () => void): void {
       }
 
       // Extract ?q=
-      const matchQ = window.location.hash.match(/[?&]q=([^&]+)/);
+      const matchQ = (window.location.hash || window.location.search).match(/[?&]q=([^&]+)/);
       clientProjectsQuery = matchQ ? decodeURIComponent(matchQ[1]) : '';
       return;
     }
@@ -894,9 +895,9 @@ export function initDesignerApp(onLogout: () => void): void {
     // 6. Conversations (/conversations)
     if (raw.startsWith('#conversations')) {
       currentActiveTab = 'conversations';
-      const parts = window.location.hash.split('/');
+      const parts = raw.split('/');
       if (parts.length > 1 && parts[1]) {
-        selectedConversationId = parts[1];
+        selectedConversationId = parts[1].split(/[?#]/)[0];
       } else {
         selectedConversationId = undefined;
       }
@@ -920,7 +921,7 @@ export function initDesignerApp(onLogout: () => void): void {
       else if (raw.includes('credentials')) initialSettingsTab = 'credentials';
       else if (raw.includes('account') || raw.includes('security') || raw.includes('notifications')) initialSettingsTab = 'account';
       else if (raw.includes('billing')) {
-        window.location.hash = '#payments';
+        navigateTo('/payments');
         currentActiveTab = 'payments';
       } else initialSettingsTab = 'profile';
       return;
@@ -931,10 +932,12 @@ export function initDesignerApp(onLogout: () => void): void {
   }
 
   parseHashRoute();
-  window.addEventListener('hashchange', () => {
+  const onRouteTrigger = () => {
     parseHashRoute();
     loadAndRender();
-  });
+  };
+  window.addEventListener('hashchange', onRouteTrigger);
+  window.addEventListener('popstate', onRouteTrigger);
 
   // Initial load
   loadAndRender();

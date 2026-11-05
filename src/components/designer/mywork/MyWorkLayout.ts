@@ -152,8 +152,8 @@ function renderActiveProjectsList(
                   <div style="font-size: 13px; color: #6B7280; display: flex; gap: 16px; flex-wrap: wrap;">
                     <span>📍 ${p.clientLocation}</span>
                     <span>📂 ${p.category}</span>
-                    <span>💰 Total Value: <strong>$${formatMoney(p.totalBudget)}</strong></span>
-                    ${p.inEscrowAmount ? `<span>🔒 Escrow: <strong style="color: #059669;">$${formatMoney(p.inEscrowAmount)}</strong></span>` : ''}
+                    <span>💰 Total Value: <strong>${formatMoney(p.totalBudget)}</strong></span>
+                    ${p.inEscrowAmount ? `<span>🔒 Escrow: <strong style="color: #059669;">${formatMoney(p.inEscrowAmount)}</strong></span>` : ''}
                   </div>
                 </div>
 
@@ -183,7 +183,7 @@ function renderActiveProjectsList(
                 <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #F3F4F6; display: flex; gap: 24px; font-size: 13px; color: #4B5563;">
                   <div>Rate: <strong>$${p.hourlyRate || 0}/hr</strong></div>
                   <div>Logged this week: <strong>${p.hoursThisWeek || 0} hrs</strong></div>
-                  <div>Unbilled earnings: <strong style="color: #059669;">$${formatMoney(p.unbilledAmount || 0)}</strong></div>
+                  <div>Unbilled earnings: <strong style="color: #059669;">${formatMoney(p.unbilledAmount || 0)}</strong></div>
                 </div>
               `
               }
@@ -264,7 +264,7 @@ function renderActiveProjectWorkspace(
               ${currentProj.title}
             </h2>
             <div style="font-size: 13px; color: #4B5563;">
-              Category: <strong>${currentProj.category}</strong> • Total Budget: <strong>$${formatMoney(currentProj.totalBudget)}</strong>
+              Category: <strong>${currentProj.category}</strong> • Total Budget: <strong>${formatMoney(currentProj.totalBudget)}</strong>
             </div>
           </div>
         </div>
@@ -339,10 +339,10 @@ function renderWorkspaceTabContent(
             </p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 13px;">
               <div><span style="color: #6B7280;">Contract Type:</span> <strong>${project.paymentType}</strong></div>
-              <div><span style="color: #6B7280;">Total Commission (Gross):</span> <strong>$${formatMoney(project.totalBudget)}</strong></div>
-              <div><span style="color: #6B7280;">Estimated Net Payout:</span> <strong style="color: #16A34A;">$${formatMoney(totalNet)}</strong></div>
-              <div><span style="color: #6B7280;">Funds in Escrow (Gross):</span> <strong style="color: #059669;">$${formatMoney(project.inEscrowAmount)}</strong></div>
-              <div><span style="color: #6B7280;">Escrow Net Value:</span> <strong style="color: #16A34A;">$${formatMoney(escrowNet)}</strong></div>
+              <div><span style="color: #6B7280;">Total Commission (Gross):</span> <strong>${formatMoney(project.totalBudget)}</strong></div>
+              <div><span style="color: #6B7280;">Estimated Net Payout:</span> <strong style="color: #16A34A;">${formatMoney(totalNet)}</strong></div>
+              <div><span style="color: #6B7280;">Funds in Escrow (Gross):</span> <strong style="color: #059669;">${formatMoney(project.inEscrowAmount)}</strong></div>
+              <div><span style="color: #6B7280;">Escrow Net Value:</span> <strong style="color: #16A34A;">${formatMoney(escrowNet)}</strong></div>
               <div><span style="color: #6B7280;">Current Deadline:</span> <strong>${project.relativeDeadline || 'In 14 days'}</strong></div>
             </div>
           </div>
@@ -407,7 +407,7 @@ function renderWorkspaceTabContent(
             </div>
             <div style="padding: 14px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px;">
               <div style="font-size: 12px; color: #6B7280;">Unbilled Amount</div>
-              <div style="font-size: 20px; font-weight: 600; color: #059669; margin-top: 4px;">$${formatMoney(project.unbilledAmount || 0)}</div>
+              <div style="font-size: 20px; font-weight: 600; color: #059669; margin-top: 4px;">${formatMoney(project.unbilledAmount || 0)}</div>
             </div>
             <div style="padding: 14px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 6px;">
               <div style="font-size: 12px; color: #6B7280;">Total Hours To Date</div>
@@ -446,8 +446,8 @@ function renderWorkspaceTabContent(
                   <div style="font-size: 12px; color: #6B7280;">Due: <strong>${m.dueDate}</strong></div>
                 </div>
                 <div style="text-align: right;">
-                  <div style="font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 2px;">$${formatMoney(m.amount)} <span style="font-size: 11px; font-weight: 400; color: #6B7280;">gross</span></div>
-                  <div style="font-size: 13px; font-weight: 600; color: #16A34A; margin-bottom: 4px;">Net: $${formatMoney(mNet)}</div>
+                  <div style="font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 2px;">${formatMoney(m.amount)} <span style="font-size: 11px; font-weight: 400; color: #6B7280;">gross</span></div>
+                  <div style="font-size: 13px; font-weight: 600; color: #16A34A; margin-bottom: 4px;">Net: ${formatMoney(mNet)}</div>
                   <span class="dez-status-pill ${m.status === 'approved_released' ? 'pill-green' : m.status === 'in_review' ? 'pill-amber' : 'pill-blue'}">
                     ${m.status.replace('_', ' ')}
                   </span>
@@ -675,7 +675,7 @@ function renderProposalsList(
                     <td style="padding: 14px 16px; color: #4B5563;">${p.paymentType}</td>
                     <td style="padding: 14px 16px; color: #6B7280; white-space: nowrap;">${p.sentDate}</td>
                     <td class="dez-tabular-num" style="padding: 14px 16px; text-align: right; font-weight: 600; color: #111827;">
-                      $${formatMoney(p.proposedPrice)}
+                      ${formatMoney(p.proposedPrice)}
                     </td>
                     <td style="padding: 14px 16px; text-align: right;">
                       <span class="dez-status-pill ${statusPillClass}" style="text-transform: capitalize;">

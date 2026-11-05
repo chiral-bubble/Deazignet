@@ -205,11 +205,7 @@ async function main() {
   // Environment & Staging Banner Setup
   const env = await getEnvironment();
   if (env === 'staging') {
-    stagingBannerHost.innerHTML = `
-      <div style="background: #FFFBEB; border-bottom: 1px solid #FDE68A; color: #92400E; padding: 8px 16px; font-size: 12.5px; font-weight: 500; text-align: center; font-family: Inter, sans-serif; position: relative; z-index: 1001;">
-        <span><strong>Test environment</strong> — Payments and emails are simulated. Please use test data only.</span>
-      </div>
-    `;
+    stagingBannerHost.innerHTML = '';
 
     // Initialize Tester UI
     const testerActive = await isTester();

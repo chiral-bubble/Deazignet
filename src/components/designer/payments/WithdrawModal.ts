@@ -30,7 +30,7 @@ export function renderWithdrawModal(): string {
               <div>
                 <div style="font-size: 12px; color: #6B7280;">Available balance</div>
                 <div class="dez-tabular-num" id="withdraw-available-display" style="font-size: 18px; font-weight: 600; color: #111827; margin-top: 2px;">
-                  $${formatMoney(sharedDataset.balances.availableToWithdraw)}
+                  ${formatMoney(sharedDataset.balances.availableToWithdraw)}
                 </div>
               </div>
               <button type="button" class="dez-btn-secondary" id="btn-withdraw-all-shortcut" style="height: 32px; font-size: 12px; padding: 0 12px;">
@@ -129,7 +129,7 @@ export function initWithdrawModal(
 
     // Populate balances
     if (availDisplay) {
-      availDisplay.textContent = `$${formatMoney(sharedDataset.balances.availableToWithdraw)}`;
+      availDisplay.textContent = formatMoney(sharedDataset.balances.availableToWithdraw);
     }
     if (totalDebited) totalDebited.textContent = '$0.00';
 
@@ -168,7 +168,7 @@ export function initWithdrawModal(
   amountInput?.addEventListener('input', () => {
     const val = parseFloat(amountInput.value) || 0;
     if (totalDebited) {
-      totalDebited.textContent = `$${formatMoney(val)}`;
+      totalDebited.textContent = formatMoney(val);
     }
     if (errAmount) errAmount.style.display = 'none';
   });
@@ -178,7 +178,7 @@ export function initWithdrawModal(
     const max = sharedDataset.balances.availableToWithdraw;
     if (amountInput) {
       amountInput.value = max.toFixed(2);
-      if (totalDebited) totalDebited.textContent = `$${formatMoney(max)}`;
+      if (totalDebited) totalDebited.textContent = formatMoney(max);
       if (errAmount) errAmount.style.display = 'none';
     }
   });
@@ -202,7 +202,7 @@ export function initWithdrawModal(
       valid = false;
     } else if (amt > avail) {
       if (errAmount) {
-        errAmount.textContent = `Amount cannot exceed your available balance of $${formatMoney(avail)}.`;
+        errAmount.textContent = `Amount cannot exceed your available balance of ${formatMoney(avail)}.`;
         errAmount.style.display = 'block';
       }
       valid = false;
@@ -231,7 +231,7 @@ export function initWithdrawModal(
       callbacks.onWithdrawalCompleted();
       callbacks.onShowToast(
         'Withdrawal Requested',
-        `$${formatMoney(amt)} submitted to bank clearing. Balances updated.`,
+        `${formatMoney(amt)} submitted to bank clearing. Balances updated.`,
         'success'
       );
     } catch (err: any) {

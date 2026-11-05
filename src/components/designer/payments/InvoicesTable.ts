@@ -80,7 +80,7 @@ export function initInvoicesTable(
         <td style="padding: 12px 16px; font-family: monospace; font-size: 12px; color: #111827; font-weight: 500;">${inv.number}</td>
         <td style="padding: 12px 16px; color: #374151;">${inv.description}</td>
         <td class="dez-tabular-num" style="padding: 12px 16px; text-align: right; font-weight: 600; color: #111827;">
-          $${formatMoney(inv.amount)}
+          ${formatMoney(inv.amount)}
         </td>
         <td style="padding: 12px 16px; text-align: right;">
           <span class="dez-status-pill pill-green">${inv.status}</span>

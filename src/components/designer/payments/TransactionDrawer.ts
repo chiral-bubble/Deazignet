@@ -76,12 +76,12 @@ export function initTransactionDrawer(container: HTMLElement): {
         
         <div style="display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 6px; color: #4B5563;">
           <span>Gross amount</span>
-          <span class="dez-tabular-num" style="font-weight: 500; color: #111827;">$${formatMoney(Math.abs(tx.grossAmount))}</span>
+          <span class="dez-tabular-num" style="font-weight: 500; color: #111827;">${formatMoney(Math.abs(tx.grossAmount))}</span>
         </div>
 
         <div style="display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 8px; color: #4B5563;">
           <span>Platform fee (${tx.feePercentage}%)</span>
-          <span class="dez-tabular-num" style="font-weight: 500; color: #DC2626;">-$${formatMoney(tx.feeAmount)}</span>
+          <span class="dez-tabular-num" style="font-weight: 500; color: #DC2626;">-${formatMoney(tx.feeAmount)}</span>
         </div>
 
         <div style="height: 1px; background: #E5E7EB; margin: 8px 0;"></div>
@@ -89,7 +89,7 @@ export function initTransactionDrawer(container: HTMLElement): {
         <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 600; color: #111827;">
           <span>Net ${tx.netAmount < 0 ? 'debited' : 'credited'}</span>
           <span class="dez-tabular-num" style="color: ${tx.netAmount < 0 ? '#DC2626' : '#111827'};">
-            ${tx.netAmount < 0 ? '-' : '+'}$${formatMoney(Math.abs(tx.netAmount))}
+            ${tx.netAmount < 0 ? '-' : '+'}${formatMoney(Math.abs(tx.netAmount))}
           </span>
         </div>
       </div>

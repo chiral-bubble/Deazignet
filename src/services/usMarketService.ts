@@ -108,7 +108,7 @@ export function formatUsPhone(phone: string): string {
  * Formats money as USD tabular currency ($12,500.00)
  */
 export function formatUSD(amount: number | string): string {
-  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  const num = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]/g, '')) : amount;
   if (isNaN(num)) return '$0.00';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

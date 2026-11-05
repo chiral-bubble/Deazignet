@@ -566,11 +566,11 @@ export function initProposalDrawer(
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size: 13px; color: #64748B;">
           <span>Platform service fee (${feeCalc.rate_percent}%):</span>
-          <span style="color: #DC2626; font-weight: 500;">-${formatUSD(feeCalc.fee_cents)}</span>
+          <span style="color: #DC2626; font-weight: 500;">-${formatUSD(feeCalc.fee_cents / 100)}</span>
         </div>
         <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid #E5E7EB; font-weight:600; font-size: 14px; color: #0F172A;">
           <span>Your Net Payout:</span>
-          <span style="color: #16A34A;">${formatUSD(feeCalc.net_cents)}</span>
+          <span style="color: #16A34A;">${formatUSD(feeCalc.net_cents / 100)}</span>
         </div>
       </div>
 

@@ -24,10 +24,10 @@ export function renderOfferBreakdown(proposal: SharedProposal): string {
         <div>
           <div style="font-size: 12px; color: #6B7280;">Proposed fee</div>
           <div class="dez-tabular-num" style="font-size: 18px; font-weight: 700; color: #111827; margin-top: 2px;">
-            ${isHourly ? `$${proposal.proposedPrice}/hr` : `$${formatMoney(proposal.proposedPrice)}`}
+            ${isHourly ? `$${proposal.proposedPrice}/hr` : `${formatMoney(proposal.proposedPrice)}`}
           </div>
           <div style="font-size: 11.5px; color: #6B7280; margin-top: 1px;">
-            Client budget: $${formatMoney(proposal.clientBudget)}
+            Client budget: ${formatMoney(proposal.clientBudget)}
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export function renderOfferBreakdown(proposal: SharedProposal): string {
                       ${ph.feePercentage}%
                     </td>
                     <td class="dez-tabular-num" style="padding: 10px 14px; text-align: right; font-weight: 600; color: #111827;">
-                      $${formatMoney(ph.amount)}
+                      ${formatMoney(ph.amount)}
                     </td>
                   </tr>
                 `
@@ -103,7 +103,7 @@ export function renderOfferBreakdown(proposal: SharedProposal): string {
           <div style="display: flex; gap: 24px; font-size: 13px; color: #4B5563;">
             <div>Hourly rate: <strong>$${proposal.hourlyRate}/hr</strong></div>
             <div>Estimated scope: <strong>${proposal.estimatedHours} hours</strong></div>
-            <div>Estimated total: <strong>$${formatMoney((proposal.hourlyRate || 0) * (proposal.estimatedHours || 0))}</strong></div>
+            <div>Estimated total: <strong>${formatMoney((proposal.hourlyRate || 0) * (proposal.estimatedHours || 0))}</strong></div>
           </div>
         </div>
       `

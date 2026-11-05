@@ -65,16 +65,16 @@ export function renderProposalActionsPanel(
         <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px; margin-bottom: 18px; font-size: 13px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #4B5563;">
             <span>Gross proposed</span>
-            <span class="dez-tabular-num" style="font-weight: 500; color: #111827;">$${formatMoney(gross)}</span>
+            <span class="dez-tabular-num" style="font-weight: 500; color: #111827;">${formatMoney(gross)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #4B5563;">
             <span>Studio escrow fee (${feePercent}%)</span>
-            <span class="dez-tabular-num" style="color: #6B7280;">-$${formatMoney(feeAmount)}</span>
+            <span class="dez-tabular-num" style="color: #6B7280;">-${formatMoney(feeAmount)}</span>
           </div>
           <div style="height: 1px; background: #E5E7EB; margin: 8px 0;"></div>
           <div style="display: flex; justify-content: space-between; font-weight: 600; color: #111827;">
             <span>Net take-home</span>
-            <span class="dez-tabular-num" style="color: #059669;">+$${formatMoney(netEarnings)}</span>
+            <span class="dez-tabular-num" style="color: #059669;">+${formatMoney(netEarnings)}</span>
           </div>
         </div>
 
