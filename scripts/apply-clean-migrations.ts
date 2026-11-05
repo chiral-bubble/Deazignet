@@ -414,3 +414,4 @@ INSERT INTO public.notification_types (type, title_template, body_template, emai
 }
 
 applyClean();
+

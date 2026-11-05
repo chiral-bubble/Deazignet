@@ -1,4 +1,4 @@
--- Safe enum additions for notification_type
+-- Safe enum additions for notification_type & project_status
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_type') THEN
@@ -7,6 +7,10 @@ BEGIN
         BEGIN ALTER TYPE public.notification_type ADD VALUE IF NOT EXISTS 'invitation_received'; EXCEPTION WHEN OTHERS THEN NULL; END;
         BEGIN ALTER TYPE public.notification_type ADD VALUE IF NOT EXISTS 'invitation_declined'; EXCEPTION WHEN OTHERS THEN NULL; END;
         BEGIN ALTER TYPE public.notification_type ADD VALUE IF NOT EXISTS 'invitation_expired'; EXCEPTION WHEN OTHERS THEN NULL; END;
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'project_status') THEN
+        BEGIN ALTER TYPE public.project_status ADD VALUE IF NOT EXISTS 'completed'; EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN ALTER TYPE public.project_status ADD VALUE IF NOT EXISTS 'published'; EXCEPTION WHEN OTHERS THEN NULL; END;
     END IF;
 END $$;
 
@@ -1429,7 +1433,7 @@ BEGIN
         RAISE EXCEPTION 'project_not_found' USING ERRCODE = '42501';
     END IF;
 
-    IF v_project.status NOT IN ('open', 'published') THEN
+    IF v_project.status::text NOT IN ('open', 'published') THEN
         RAISE EXCEPTION 'project_not_open' USING ERRCODE = '22023';
     END IF;
 
@@ -1673,7 +1677,7 @@ BEGIN
         WHERE pi.status IN ('sent', 'viewed')
           AND (
               pi.expires_at < NOW() 
-              OR p.status IN ('closed', 'cancelled', 'completed')
+              OR p.status::text IN ('closed', 'cancelled', 'completed')
               OR (p.proposal_deadline IS NOT NULL AND p.proposal_deadline < CURRENT_DATE)
           )
     LOOP

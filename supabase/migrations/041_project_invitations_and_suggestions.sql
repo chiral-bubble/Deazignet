@@ -115,7 +115,7 @@ BEGIN
         RAISE EXCEPTION 'project_not_found' USING ERRCODE = '42501';
     END IF;
 
-    IF v_project.status NOT IN ('open', 'published') THEN
+    IF v_project.status::text NOT IN ('open', 'published') THEN
         RAISE EXCEPTION 'project_not_open' USING ERRCODE = '22023';
     END IF;
 
@@ -355,7 +355,7 @@ BEGIN
         WHERE pi.status IN ('sent', 'viewed')
           AND (
               pi.expires_at < NOW() 
-              OR p.status IN ('closed', 'cancelled', 'completed')
+              OR p.status::text IN ('closed', 'cancelled', 'completed')
               OR (p.proposal_deadline IS NOT NULL AND p.proposal_deadline < CURRENT_DATE)
           )
     LOOP
