@@ -4,15 +4,12 @@ import path from 'path';
 function buildCombinedMigration() {
     console.log('Building clean 038-041 migrations...');
 
-    const header = `-- ==============================================================================
--- DEZIGNET SUPABASE CONSOLIDATED MIGRATION - US MARKET, PLANS, STUDIO & INVITATIONS
--- Combined 038_us_market_tax_license_updates.sql
---          039_plans_and_platform_fee_tiers.sql
---          040_studio_insights_and_slugs.sql
---          041_project_invitations_and_suggestions.sql
--- ==============================================================================
+    // Restore clean f038 from git first or read file
+    // Let's read f038
+    let f038 = fs.readFileSync('supabase/migrations/038_us_market_tax_license_updates.sql', 'utf8');
 
--- Safe enum additions for notification_type
+    // Notification enum & helper
+    const notifHelper = `-- Safe enum additions for notification_type
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notification_type') THEN
@@ -35,10 +32,6 @@ BEGIN
 END $$;
 `;
 
-    // Process 038
-    let f038 = fs.readFileSync('supabase/migrations/038_us_market_tax_license_updates.sql', 'utf8');
-    // Ensure safe credentials creation without DROP TABLE
-    const credOld = /-- 7\. US Professional Credentials Table[\s\S]*?-- Trigger: protect review fields and reset status on edit/;
     const credSafe = `-- 7. US Professional Credentials Table (Idempotent schema)
 CREATE TABLE IF NOT EXISTS public.credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -87,12 +80,14 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
 
 -- Trigger: protect review fields and reset status on edit`;
 
-    f038 = f038.replace(credOld, credSafe);
+    // Fix any broken DO $ in f038 first
+    const credBrokenRegex = /-- 7\. US Professional Credentials Table[\s\S]*?-- Trigger: protect review fields and reset status on edit/;
+    f038 = f038.replace(credBrokenRegex, () => credSafe);
 
     // Notification inserts in 038
     f038 = f038.replace(
         /INSERT INTO public\.notifications \(user_id, type, data, link\)\s*VALUES \(\s*r\.designer_id,\s*'credential_expired',/g,
-        `INSERT INTO public.notifications (user_id, type, title, body, data, link)
+        () => `INSERT INTO public.notifications (user_id, type, title, body, data, link)
         VALUES (
             r.designer_id,
             'credential_expired',
@@ -102,7 +97,7 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
 
     f038 = f038.replace(
         /INSERT INTO public\.notifications \(user_id, type, data, link\)\s*VALUES \(\s*r\.designer_id,\s*'credential_expiring',/g,
-        `INSERT INTO public.notifications (user_id, type, title, body, data, link)
+        () => `INSERT INTO public.notifications (user_id, type, title, body, data, link)
         VALUES (
             r.designer_id,
             'credential_expiring',
@@ -110,68 +105,67 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
             'Your ' || r.license_type || ' license in ' || r.issuing_state || ' expires in 30 days.',`
     );
 
-    // Write updated 038
     fs.writeFileSync('supabase/migrations/038_us_market_tax_license_updates.sql', f038, 'utf8');
 
     // Process 039
     let f039 = fs.readFileSync('supabase/migrations/039_plans_and_platform_fee_tiers.sql', 'utf8');
     f039 = f039.replace(
         "SELECT COALESCE(value, 'development') INTO v_env",
-        "SELECT COALESCE(value #>> '{}', 'development') INTO v_env"
+        () => "SELECT COALESCE(value #>> '{}', 'development') INTO v_env"
     );
     f039 = f039.replace(
         "('fee_tier_mode', 'whole_amount'),",
-        "('fee_tier_mode', '\"whole_amount\"'::jsonb),"
+        () => "('fee_tier_mode', '\"whole_amount\"'::jsonb),"
     );
     f039 = f039.replace(
         "('fee_basis', 'per_milestone'),",
-        "('fee_basis', '\"per_milestone\"'::jsonb),"
+        () => "('fee_basis', '\"per_milestone\"'::jsonb),"
     );
     f039 = f039.replace(
         "('basic_account_note', 'Basic account: portfolio not available'),",
-        "('basic_account_note', '\"Basic account: portfolio not available\"'::jsonb),"
+        () => "('basic_account_note', '\"Basic account: portfolio not available\"'::jsonb),"
     );
     f039 = f039.replace(
         "('priority_label_mode', 'label'),",
-        "('priority_label_mode', '\"label\"'::jsonb),"
+        () => "('priority_label_mode', '\"label\"'::jsonb),"
     );
     f039 = f039.replace(
         "('verified_badge_requires_paid_plan', 'true'),",
-        "('verified_badge_requires_paid_plan', 'true'::jsonb),"
+        () => "('verified_badge_requires_paid_plan', 'true'::jsonb),"
     );
     f039 = f039.replace(
         "('free_show_rating_on_proposals', 'true'),",
-        "('free_show_rating_on_proposals', 'true'::jsonb),"
+        () => "('free_show_rating_on_proposals', 'true'::jsonb),"
     );
     f039 = f039.replace(
         "('free_proposal_bio_max_chars', '300'),",
-        "('free_proposal_bio_max_chars', '300'::jsonb),"
+        () => "('free_proposal_bio_max_chars', '300'::jsonb),"
     );
     f039 = f039.replace(
         "('matching_plan_boost', '{\"free\": 0, \"basic\": 5, \"upgraded\": 15}'),",
-        "('matching_plan_boost', '{\"free\": 0, \"basic\": 5, \"upgraded\": 15}'::jsonb),"
+        () => "('matching_plan_boost', '{\"free\": 0, \"basic\": 5, \"upgraded\": 15}'::jsonb),"
     );
     f039 = f039.replace(
         "('client_service_fee_percent', '0'),",
-        "('client_service_fee_percent', '0'::jsonb),"
+        () => "('client_service_fee_percent', '0'::jsonb),"
     );
     f039 = f039.replace(
         "('client_deposit_percent', 'null')",
-        "('client_deposit_percent', 'null'::jsonb)"
+        () => "('client_deposit_percent', 'null'::jsonb)"
     );
 
     // Coalesce fix in view
     f039 = f039.replace(
         "(SELECT value FROM public.app_settings WHERE key = 'basic_account_note')",
-        "(SELECT value #>> '{}' FROM public.app_settings WHERE key = 'basic_account_note')"
+        () => "(SELECT value #>> '{}' FROM public.app_settings WHERE key = 'basic_account_note')"
     );
     f039 = f039.replace(
         "(SELECT value FROM public.app_settings WHERE key = 'free_show_rating_on_proposals')",
-        "(SELECT value #>> '{}' FROM public.app_settings WHERE key = 'free_show_rating_on_proposals')"
+        () => "(SELECT value #>> '{}' FROM public.app_settings WHERE key = 'free_show_rating_on_proposals')"
     );
     f039 = f039.replace(
         "(SELECT value::int FROM public.app_settings WHERE key = 'free_proposal_bio_max_chars')",
-        "(SELECT (value #>> '{}')::int FROM public.app_settings WHERE key = 'free_proposal_bio_max_chars')"
+        () => "(SELECT (value #>> '{}')::int FROM public.app_settings WHERE key = 'free_proposal_bio_max_chars')"
     );
     fs.writeFileSync('supabase/migrations/039_plans_and_platform_fee_tiers.sql', f039, 'utf8');
 
@@ -181,7 +175,6 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
 
     // Process 041
     let f041 = fs.readFileSync('supabase/migrations/041_project_invitations_and_suggestions.sql', 'utf8');
-    // Audit log safe block in 041
     const auditLogTarget = `    -- Audit log entry
     INSERT INTO public.admin_audit_log (admin_id, action, target_type, target_id, details)
     VALUES (
@@ -208,12 +201,12 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
         END;
     END IF;`;
 
-    f041 = f041.replace(auditLogTarget, auditLogSafe);
+    f041 = f041.replace(auditLogTarget, () => auditLogSafe);
 
     // Notification inserts in 041
     f041 = f041.replace(
         /INSERT INTO public\.notifications \(user_id, type, data, link\)\s*VALUES \(\s*p_designer_id,\s*'invitation_received',/g,
-        `INSERT INTO public.notifications (user_id, type, title, body, data, link)
+        () => `INSERT INTO public.notifications (user_id, type, title, body, data, link)
     VALUES (
         p_designer_id,
         'invitation_received',
@@ -223,7 +216,7 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
 
     f041 = f041.replace(
         /INSERT INTO public\.notifications \(user_id, type, data, link\)\s*VALUES \(\s*v_inv\.client_id,\s*'invitation_declined',/g,
-        `INSERT INTO public.notifications (user_id, type, title, body, data, link)
+        () => `INSERT INTO public.notifications (user_id, type, title, body, data, link)
     VALUES (
         v_inv.client_id,
         'invitation_declined',
@@ -233,7 +226,7 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
 
     f041 = f041.replace(
         /INSERT INTO public\.notifications \(user_id, type, data, link\)\s*VALUES \(\s*r\.client_id,\s*'invitation_expired',/g,
-        `INSERT INTO public.notifications (user_id, type, title, body, data, link)
+        () => `INSERT INTO public.notifications (user_id, type, title, body, data, link)
         VALUES (
             r.client_id,
             'invitation_expired',
@@ -242,8 +235,8 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
     );
     fs.writeFileSync('supabase/migrations/041_project_invitations_and_suggestions.sql', f041, 'utf8');
 
-    // Combine all 4 into 038_through_041
-    let combined = header + '\n\n' + f038 + '\n\n' + f039 + '\n\n' + f040 + '\n\n' + f041;
+    // Combine all 4
+    let combined = notifHelper + '\n\n' + f038 + '\n\n' + f039 + '\n\n' + f040 + '\n\n' + f041;
 
     // Apply policy drops across combined
     const policies: [string, string][] = [
@@ -275,7 +268,7 @@ CREATE INDEX IF NOT EXISTS idx_credentials_issuing_state ON public.credentials(i
     }
 
     fs.writeFileSync('supabase/migrations/038_through_041_us_plans_invitations_all.sql', combined, 'utf8');
-    console.log('Successfully generated clean combined migration!');
+    console.log('Successfully regenerated combined migration without dollar escaping bugs!');
 }
 
 buildCombinedMigration();
