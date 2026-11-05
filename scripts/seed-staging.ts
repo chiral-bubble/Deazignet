@@ -40,9 +40,12 @@ interface AccountSpec {
   fullName: string;
   role: 'client' | 'designer' | 'admin';
   password: string;
-  location?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   isTester: boolean;
   completeOnboarding: boolean;
+  planKey?: 'free' | 'basic' | 'upgraded';
   professionalType?: string;
   specializations?: string[];
   hourlyRate?: number;
@@ -64,7 +67,9 @@ const ACCOUNTS: AccountSpec[] = [
     fullName: 'Dr. Eleanor Vance',
     role: 'client',
     password: TESTER_PASSWORD,
-    location: 'Austin, TX',
+    city: 'Austin',
+    state: 'TX',
+    zipCode: '78701',
     isTester: true,
     completeOnboarding: true
   },
@@ -73,9 +78,12 @@ const ACCOUNTS: AccountSpec[] = [
     fullName: 'Marcus Vance, AIA',
     role: 'designer',
     password: TESTER_PASSWORD,
-    location: 'Austin, TX',
+    city: 'Austin',
+    state: 'TX',
+    zipCode: '78701',
     isTester: true,
     completeOnboarding: true,
+    planKey: 'upgraded',
     professionalType: 'architect',
     specializations: ['Residential', 'Commercial'],
     hourlyRate: 145
@@ -86,7 +94,9 @@ const ACCOUNTS: AccountSpec[] = [
     fullName: 'David Miller',
     role: 'client',
     password: TESTER_PASSWORD,
-    location: 'Denver, CO',
+    city: 'Denver',
+    state: 'CO',
+    zipCode: '80202',
     isTester: true,
     completeOnboarding: true
   },
@@ -95,22 +105,28 @@ const ACCOUNTS: AccountSpec[] = [
     fullName: 'Sarah Jenkins',
     role: 'designer',
     password: TESTER_PASSWORD,
-    location: 'San Francisco, CA',
+    city: 'San Francisco',
+    state: 'CA',
+    zipCode: '94102',
     isTester: true,
     completeOnboarding: true,
+    planKey: 'basic',
     professionalType: 'interior_designer',
     specializations: ['Residential', 'Commercial'],
     hourlyRate: 110
   },
-  // Empty Designer to test initial Onboarding
+  // Empty Designer to test initial Onboarding (Free tier)
   {
     email: 'new.designer@dezignet.com',
     fullName: 'Alex Rivera',
     role: 'designer',
     password: USER_PASSWORD,
-    location: 'Seattle, WA',
+    city: 'Seattle',
+    state: 'WA',
+    zipCode: '98101',
     isTester: true,
-    completeOnboarding: false
+    completeOnboarding: false,
+    planKey: 'free'
   },
   // Additional browse accounts
   {
@@ -118,9 +134,12 @@ const ACCOUNTS: AccountSpec[] = [
     fullName: 'Jennifer Hayes, AIA',
     role: 'designer',
     password: USER_PASSWORD,
-    location: 'Chicago, IL',
+    city: 'Chicago',
+    state: 'IL',
+    zipCode: '60601',
     isTester: false,
     completeOnboarding: true,
+    planKey: 'upgraded',
     professionalType: 'architect',
     specializations: ['Commercial', 'Institutional'],
     hourlyRate: 160
@@ -130,7 +149,9 @@ const ACCOUNTS: AccountSpec[] = [
     fullName: 'Beacon Crest Development LLC',
     role: 'client',
     password: USER_PASSWORD,
-    location: 'Miami, FL',
+    city: 'Miami',
+    state: 'FL',
+    zipCode: '33139',
     isTester: false,
     completeOnboarding: true
   }
@@ -173,8 +194,11 @@ async function getOrCreateUser(spec: AccountSpec): Promise<string> {
     id: userId,
     full_name: spec.fullName,
     role: spec.role,
-    location: spec.location || 'United States',
+    location: spec.city && spec.state ? `${spec.city}, ${spec.state}` : 'United States',
     is_tester: spec.isTester,
+    plan_key: spec.planKey || 'free',
+    time_zone: 'America/New_York',
+    tax_info_status: spec.role === 'designer' ? 'provided' : 'not_provided',
     onboarding_completed_at: spec.completeOnboarding ? new Date().toISOString() : null,
     updated_at: new Date().toISOString()
   });
@@ -189,11 +213,17 @@ async function getOrCreateUser(spec: AccountSpec): Promise<string> {
   } else if (spec.role === 'designer') {
     await adminClient.from('designer_profiles').upsert({
       user_id: userId,
+      city: spec.city || 'Austin',
+      state: spec.state || 'TX',
+      zip_code: spec.zipCode || '78701',
       professional_type: spec.professionalType || 'architect',
       hourly_rate: spec.hourlyRate || 125,
       specializations: spec.specializations || ['Residential'],
       years_experience: 12,
-      bio: 'Licensed architect (AIA, NCARB Certified) specializing in contemporary, energy-efficient residential and commercial architecture across the United States.'
+      is_available: true,
+      show_in_search: true,
+      accepts_invitations: true,
+      bio: 'Licensed design professional (AIA, NCARB Certified) specializing in contemporary, energy-efficient residential and commercial architecture across the United States.'
     });
   }
 
@@ -213,7 +243,7 @@ async function seedStaging() {
   console.log('🏗️  DEZIGNET STAGING DATABASE SEED & RESET (UNITED STATES)');
   console.log('===============================================================\n');
 
-  // 1. Ensure staging environment setting
+  // 1. Ensure staging environment settings
   await adminClient.from('app_settings').upsert([
     { key: 'environment', value: 'staging' },
     { key: 'auto_approval_days', value: 5 },
@@ -236,36 +266,85 @@ async function seedStaging() {
   const client1Id = userIds['partner.client@dezignet.com'];
   const architectId = userIds['partner.architect@dezignet.com'];
   const client2Id = userIds['partner.client2@dezignet.com'];
+  const sarahId = userIds['partner.designer2@dezignet.com'];
 
-  // 3. Seed Verified Credentials for Marcus Vance, AIA
-  console.log('\n📜 Adding verified AIA / NCARB credentials for Marcus Vance, AIA...');
-  await adminClient.from('credentials').upsert({
+  // 3. Seed Verified Credentials for Marcus Vance, AIA (TX, CO) and Sarah Jenkins (CA)
+  console.log('\n📜 Adding verified US credentials...');
+  
+  // Clean existing credentials for clean seed
+  await adminClient.from('credentials').delete().in('designer_id', [architectId, sarahId]);
+  
+  // Marcus in TX (Active)
+  await adminClient.from('credentials').insert([
+    {
+      designer_id: architectId,
+      license_type: 'architect',
+      issuing_state: 'TX',
+      license_number: 'TBAE-24180',
+      issue_year: 2017,
+      expiration_date: '2028-12-31',
+      status: 'verified',
+      certificate_file: '/assets/demo/sample-schematic.svg'
+    },
+    // Marcus in CO (Active)
+    {
+      designer_id: architectId,
+      license_type: 'architect',
+      issuing_state: 'CO',
+      license_number: 'ARC-91024',
+      issue_year: 2019,
+      expiration_date: '2027-06-30',
+      status: 'verified',
+      certificate_file: '/assets/demo/sample-schematic.svg'
+    },
+    // Marcus in CA (Expired control benchmark)
+    {
+      designer_id: architectId,
+      license_type: 'architect',
+      issuing_state: 'CA',
+      license_number: 'CAB-10294',
+      issue_year: 2015,
+      expiration_date: '2023-01-01',
+      status: 'expired'
+    },
+    // Sarah Jenkins in CA (Active)
+    {
+      designer_id: sarahId,
+      license_type: 'interior_designer',
+      issuing_state: 'CA',
+      license_number: 'CID-5521',
+      issue_year: 2020,
+      expiration_date: '2029-05-15',
+      status: 'verified'
+    }
+  ]);
+
+  // Professional liability insurance
+  await adminClient.from('designer_insurance').upsert({
     designer_id: architectId,
-    body_name: 'National Council of Architectural Registration Boards (NCARB)',
-    license_number: 'NCARB-78921 / TBAE-24180',
-    state_region: 'Texas',
-    verification_year: 2017,
-    status: 'verified',
-    certificate_path: '/assets/demo/sample-schematic.svg',
-    submitted_at: new Date(Date.now() - 86400000 * 30).toISOString(),
-    verified_at: new Date(Date.now() - 86400000 * 28).toISOString()
+    provider: 'Travelers Casualty & Surety',
+    policy_number: 'POL-TX-882194',
+    expiration_date: '2028-09-01',
+    status: 'verified'
   });
 
   // 4. Seed Projects Across Every Lifecycle Stage
   console.log('\n📁 Seeding US architectural projects across all workflow stages...');
 
   // --------------------------------------------------------------------------
-  // Stage 1: Open project with proposals (one shortlisted, one with a question)
+  // Stage 1: Open project with proposals
   // --------------------------------------------------------------------------
   const { data: projOpen } = await adminClient.from('projects').upsert({
     client_id: client1Id,
     title: 'Luxury 5-Bedroom Hillside Villa, Austin TX',
     category: 'Residential',
-    subcategory: 'Detached house / bungalow',
+    subcategory: 'Single-family home',
     disciplines: ['architect', 'engineer'],
-    description: 'Seeking a licensed architect to develop schematic design through construction documents for a 5,200 sq ft modern hillside villa with an infinity pool and passive solar shading.',
+    description: 'Seeking a licensed design professional to develop schematic design through construction documents for a 5,200 sq ft modern hillside villa with an infinity pool and passive solar shading.',
     location_city: 'Austin',
     location_state: 'Texas',
+    state: 'TX',
+    zip_code: '78701',
     design_budget: 65000,
     payment_type: 'milestone',
     status: 'open',
@@ -291,6 +370,8 @@ async function seedStaging() {
       designer_id: architectId,
       status: 'shortlisted',
       total_fee: 62000,
+      license_acknowledgement: true,
+      license_acknowledgement_text: 'I understand that work in Texas may require a license in that state and I am responsible for meeting local requirements.',
       cover_letter: 'Dear Dr. Vance, our practice has extensive experience designing hillside homes in the Austin Hill Country. We will integrate post-tension foundation coordination and IBC/IRC code compliance.',
       assumptions: ['Client provides boundary & topographic survey and geotechnical soils report', 'City of Austin municipal plan review fees paid directly by client'],
       reimbursable_expenses_type: 'at_cost',
@@ -307,12 +388,14 @@ async function seedStaging() {
   const { data: projContract } = await adminClient.from('projects').upsert({
     client_id: client1Id,
     title: 'Boutique Hotel & Rooftop Lounge, Miami Beach FL',
-    category: 'Commercial',
-    subcategory: 'Hotel & hospitality',
+    category: 'Hospitality',
+    subcategory: 'Hotel',
     disciplines: ['architect', 'interior_designer'],
     description: 'Full architectural redesign for a 32-key historic Art Deco boutique hotel with a modern rooftop lounge in South Beach.',
     location_city: 'Miami Beach',
     location_state: 'Florida',
+    state: 'FL',
+    zip_code: '33139',
     design_budget: 110000,
     payment_type: 'milestone',
     status: 'in_progress',
@@ -343,6 +426,7 @@ async function seedStaging() {
         client_signature: null,
         client_signed_at: null,
         contract_terms: {
+          governing_law: 'State of Florida',
           milestones: [
             { title: 'Schematic Concepts & Spatial Massing', amount: 21000 },
             { title: 'Design Development & MEP Coordination', amount: 31500 },
@@ -356,17 +440,19 @@ async function seedStaging() {
   }
 
   // --------------------------------------------------------------------------
-  // Stage 3: Active Milestone Project (in review & funded)
+  // Stage 3: Active Milestone Project
   // --------------------------------------------------------------------------
   const { data: projActive } = await adminClient.from('projects').upsert({
     client_id: client1Id,
     title: 'Contemporary Duplex with Cantilevered Terrace, Seattle WA',
     category: 'Residential',
-    subcategory: 'Duplex',
+    subcategory: 'Townhome',
     disciplines: ['architect'],
     description: 'Active design execution: 4-bedroom urban duplex overlooking Puget Sound.',
     location_city: 'Seattle',
     location_state: 'Washington',
+    state: 'WA',
+    zip_code: '98101',
     design_budget: 72000,
     payment_type: 'milestone',
     status: 'in_progress'
@@ -435,11 +521,13 @@ async function seedStaging() {
     client_id: client2Id,
     title: 'Corporate Innovation Campus, Denver Tech Center CO',
     category: 'Commercial',
-    subcategory: 'Office building',
+    subcategory: 'Office',
     disciplines: ['architect'],
     description: 'Hourly consultation for commercial office space planning and sustainable wellness interior design.',
     location_city: 'Denver',
     location_state: 'Colorado',
+    state: 'CO',
+    zip_code: '80202',
     design_budget: 25000,
     payment_type: 'hourly',
     hourly_rate_max: 120,
@@ -451,17 +539,19 @@ async function seedStaging() {
   }
 
   // --------------------------------------------------------------------------
-  // Stage 5: Completed Project with Review & Designer Reply
+  // Stage 5: Completed Project with Review
   // --------------------------------------------------------------------------
   const { data: projDone } = await adminClient.from('projects').upsert({
     client_id: client1Id,
     title: 'Modern Minimalist Penthouse Renovation, Manhattan NY',
     category: 'Residential',
-    subcategory: 'Apartment block',
+    subcategory: 'Multifamily',
     disciplines: ['interior_designer', 'architect'],
     description: 'Complete architectural gut renovation of a 3,500 sq ft pre-war loft penthouse.',
     location_city: 'New York',
     location_state: 'New York',
+    state: 'NY',
+    zip_code: '10001',
     design_budget: 50000,
     payment_type: 'milestone',
     status: 'completed'
@@ -492,6 +582,8 @@ async function seedStaging() {
     description: 'Feasibility design for a multi-bay industrial distribution center.',
     location_city: 'Chicago',
     location_state: 'Illinois',
+    state: 'IL',
+    zip_code: '60601',
     design_budget: 35000,
     status: 'cancelled',
     cancelled_reason: 'Client site acquisition postponed by zoning authority.'
@@ -505,11 +597,13 @@ async function seedStaging() {
     client_id: client1Id,
     title: 'Civic Arts Pavilion & Sculpture Garden, Portland OR',
     category: 'Institutional',
-    subcategory: 'Cultural & civic',
+    subcategory: 'Cultural',
     disciplines: ['architect'],
     description: 'Preliminary design concept for a municipal exhibition and pavilion space.',
     location_city: 'Portland',
     location_state: 'Oregon',
+    state: 'OR',
+    zip_code: '97201',
     design_budget: 75000,
     payment_type: 'milestone',
     status: 'draft'
