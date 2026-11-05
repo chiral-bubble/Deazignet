@@ -17,6 +17,9 @@ import {
   toggleSaveDesigner
 } from '../../../services/designerProfileService';
 import { renderProjectLightboxModal, initProjectLightboxModal } from './ProjectLightboxModal';
+import { supabase } from '../../../lib/supabase';
+import { getAuthState } from '../../../services/authService';
+import { inviteDesigner } from '../../../services/invitationsService';
 
 export function renderPublicProfile(
   designer: DesignerProfile,
@@ -439,8 +442,8 @@ function renderRoleActions(
         </button>
       `
           : `
-        <div class="dez-pub-message-disabled-hint" title="You can message a designer after reviewing their proposal.">
-          <span class="dez-hint-text">You can message a designer after reviewing their proposal.</span>
+        <div class="dez-pub-message-disabled-hint" title="You can message a designer after reviewing their proposal" style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 6px 12px; font-size: 12px; color: #6B7280; line-height: 1.4; display: inline-flex; align-items: center;">
+          <span class="dez-hint-text">You can message a designer after reviewing their proposal</span>
         </div>
       `
       }
@@ -473,8 +476,31 @@ export async function initPublicProfile(
     return;
   }
 
-  const viewerRole = getViewerRole();
-  const hasReceivedProp = hasClientReceivedProposal(designer.id);
+  const authState = getAuthState();
+  let viewerRole = getViewerRole();
+  if (authState.user) {
+    if (authState.role === 'client') {
+      viewerRole = 'client';
+    } else if (authState.role === 'designer') {
+      viewerRole = (designer.id === authState.user.id || designer.email === authState.user.email) ? 'self' : 'designer';
+    }
+  }
+
+  let hasReceivedProp = hasClientReceivedProposal(designer.id);
+  if (authState.user && authState.role === 'client') {
+    try {
+      const { data: props } = await (supabase.from as any)('proposals')
+        .select('id, viewed_at, projects!inner(client_id)')
+        .eq('designer_id', designer.id)
+        .eq('projects.client_id', authState.user.id)
+        .not('viewed_at', 'is', null)
+        .limit(1);
+      if (props && props.length > 0) {
+        hasReceivedProp = true;
+      }
+    } catch {}
+  }
+
   const isSelf = viewerRole === 'self' || designer.id === getActiveLoggedUserId();
 
   // Re-render with resolved designer
@@ -530,6 +556,31 @@ export async function initPublicProfile(
   const btnSendInvite = newRoot.querySelector('#btn-send-invitation') as HTMLButtonElement;
   const inviteSelect = newRoot.querySelector('#invite-project-select') as HTMLSelectElement;
 
+  // Load client projects into select
+  if (inviteSelect) {
+    try {
+      let clientProjects: Array<{ id: string; title: string }> = [];
+      if (authState.user) {
+        const { data: projs } = await supabase
+          .from('projects')
+          .select('id, title, status')
+          .eq('client_id', authState.user.id)
+          .in('status', ['open', 'draft'] as any);
+        if (projs && projs.length > 0) {
+          clientProjects = projs;
+        }
+      }
+      if (clientProjects.length === 0) {
+        clientProjects = [
+          { id: 'proj-1', title: 'Lakefront Contemporary Villa, Lucerne' },
+          { id: 'proj-2', title: 'Alpine High-Rise Commercial Atrium' },
+          { id: 'proj-3', title: 'Austin Heritage Compound Renovation' }
+        ];
+      }
+      inviteSelect.innerHTML = clientProjects.map(p => `<option value="${p.id}">${escapeHtml(p.title)}</option>`).join('');
+    } catch {}
+  }
+
   const openInvite = () => {
     if (inviteModal) {
       inviteModal.style.display = 'flex';
@@ -553,10 +604,29 @@ export async function initPublicProfile(
     if (e.target === inviteModal) closeInvite();
   });
 
-  btnSendInvite?.addEventListener('click', () => {
+  btnSendInvite?.addEventListener('click', async () => {
+    const projId = inviteSelect.value;
     const projName = inviteSelect.options[inviteSelect.selectedIndex]?.text || 'Project';
-    closeInvite();
-    callbacks.onShowToast('Invitation Sent', `Invited ${designer.name} to bid on "${projName}".`, 'success');
+    const note = (newRoot.querySelector('#invite-custom-note') as HTMLTextAreaElement)?.value.trim();
+
+    if (!projId) {
+      alert('Please select a project to invite the designer to.');
+      return;
+    }
+
+    btnSendInvite.disabled = true;
+    btnSendInvite.textContent = 'Sending...';
+
+    try {
+      await inviteDesigner(projId, designer.id, note);
+      closeInvite();
+      callbacks.onShowToast('Invitation Sent', `Invited ${designer.name} to submit a proposal for "${projName}".`, 'success');
+    } catch (err: any) {
+      alert('Failed to send invitation: ' + (err?.message || 'Server error'));
+    } finally {
+      btnSendInvite.disabled = false;
+      btnSendInvite.textContent = 'Send invitation';
+    }
   });
 
   // Message modal
@@ -611,4 +681,13 @@ export async function initPublicProfile(
       });
     });
   });
+}
+
+function escapeHtml(str: string): string {
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }

@@ -182,8 +182,8 @@ Allows designer to withdraw a proposal while in `pending`, `viewed`, or `shortli
 npx tsx scripts/seed-phase2.ts
 ```
 Seeds:
-- 4 Nigerian clients (`client1@dezignet.test` through `client4@dezignet.test`, password `Password123!`).
-- 12 realistic Nigerian architectural projects across Lagos, Abuja, Port Harcourt, and Kano (mix of milestone and hourly, 1 awarded, 1 closed, 2 drafts, 8 open).
+- 4 US clients (`client1@dezignet.test` through `client4@dezignet.test`, password `Password123!`).
+- 12 realistic US architectural projects across Austin TX, Denver CO, Chicago IL, and San Francisco CA (mix of milestone and hourly, 1 awarded, 1 closed, 2 drafts, 8 open).
 - Proposals from test designers in every status (`pending`, `viewed`, `shortlisted`, `declined`, `withdrawn`).
 
 ### 2. Run Phase 2 Security & Logic Test Suite

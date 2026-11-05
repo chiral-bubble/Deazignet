@@ -29,6 +29,9 @@ import {
   US_STATES
 } from '../src/services/usMarketService';
 import { PLAN_TIERS_CONFIG } from '../src/config/paymentsConfig';
+import { mapCategoryToUs, mapSpecializationsToUs, US_CATEGORIES } from './migrate-categories-to-us';
+import { runLicenseExpiryJob } from './run-license-expiry-job';
+import { runInvitationExpiryJob } from './run-invitation-expiry-job';
 import fs from 'fs';
 import path from 'path';
 
@@ -194,6 +197,58 @@ async function runTests() {
   }
 
   assert('Zero occurrences of forbidden legacy terms in src/', totalForbiddenFound === 0, `Found ${totalForbiddenFound} forbidden terms`);
+
+  // Target files for migration scripts & docs
+  const cleanedFiles = [
+    path.resolve(process.cwd(), 'scripts/clean-mock-data.cjs'),
+    path.resolve(process.cwd(), 'scripts/seed-phase1.ts'),
+    path.resolve(process.cwd(), 'scripts/seed-phase2.ts'),
+    path.resolve(process.cwd(), 'supabase/README.md')
+  ];
+
+  let cleanedFilesForbidden = 0;
+  for (const f of cleanedFiles) {
+    if (fs.existsSync(f)) {
+      const content = fs.readFileSync(f, 'utf8');
+      for (const term of forbiddenTerms) {
+        const regex = new RegExp(`\\b${term}\\b`, 'gi');
+        const matches = content.match(regex);
+        if (matches) {
+          cleanedFilesForbidden += matches.length;
+          console.error(`     Forbidden term "${term}" found in cleaned file ${f}`);
+        }
+      }
+    }
+  }
+
+  assert('Zero occurrences of forbidden legacy terms in cleaned scripts & docs', cleanedFilesForbidden === 0, `Found ${cleanedFilesForbidden} forbidden terms`);
+
+  // --- TEST GROUP 5: US CATEGORIES & MIGRATION MAPPINGS ---
+  console.log('\n--- TEST GROUP 5: US Categories & Migration Logic ---');
+  assert('US_CATEGORIES contains exactly 6 official categories', US_CATEGORIES.length === 6);
+  assert('Residential, Commercial, Hospitality, Institutional, Healthcare, Industrial present',
+    ['Residential', 'Commercial', 'Hospitality', 'Institutional', 'Healthcare', 'Industrial'].every(c => US_CATEGORIES.includes(c as any)));
+
+  assert('Category mapper maps "Civic" -> "Institutional"', mapCategoryToUs('Civic') === 'Institutional');
+  assert('Category mapper maps "Cultural" -> "Institutional"', mapCategoryToUs('Cultural') === 'Institutional');
+  assert('Category mapper maps "Hotel & hospitality" -> "Hospitality"', mapCategoryToUs('Hotel & hospitality') === 'Hospitality');
+  assert('Category mapper maps "Logistics" -> "Industrial"', mapCategoryToUs('Logistics') === 'Industrial');
+  assert('Category mapper maps "Landscape" -> "Residential"', mapCategoryToUs('Landscape') === 'Residential');
+  assert('Category mapper preserves "Commercial"', mapCategoryToUs('Commercial') === 'Commercial');
+  assert('Category mapper preserves "Healthcare"', mapCategoryToUs('Healthcare') === 'Healthcare');
+
+  const mappedSpecs = mapSpecializationsToUs(['Sustainable', 'Civic', 'BIM']);
+  assert('Specialization mapper maps and deduplicates legacy specs',
+    mappedSpecs.length === 3 &&
+    mappedSpecs.includes('Residential') &&
+    mappedSpecs.includes('Institutional') &&
+    mappedSpecs.includes('Commercial')
+  );
+
+  // --- TEST GROUP 6: BACKGROUND JOB RUNNERS ---
+  console.log('\n--- TEST GROUP 6: Background Job Runners ---');
+  assert('runLicenseExpiryJob is defined and callable', typeof runLicenseExpiryJob === 'function');
+  assert('runInvitationExpiryJob is defined and callable', typeof runInvitationExpiryJob === 'function');
 
   // --- SUMMARY ---
   console.log('\n===============================================================');

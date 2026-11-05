@@ -11,7 +11,12 @@ import {
   type Project,
   type ProposalSubmission
 } from '../../services/projectsService';
-import { calculatePlatformFeeFallback } from '../../services/plansService';
+import {
+  calculatePlatformFeeFallback,
+  getTieredScheduleDescription
+} from '../../services/plansService';
+import { sharedDataset } from '../../mocks/dataset';
+import { getCurrentDesignerPlan } from '../../services/designerProfileService';
 import { formatUSD } from '../../services/usMarketService';
 
 // Available portfolio items for quick selection
@@ -170,6 +175,9 @@ export function initProposalDrawer(
   function renderStep1() {
     if (!body) return;
 
+    const currentPlan = (sharedDataset?.planState?.currentPlanId as 'free' | 'basic' | 'upgraded') || getCurrentDesignerPlan();
+    const scheduleDescription = getTieredScheduleDescription(currentPlan);
+
     let offerSectionHtml = '';
     if (project.paymentType === 'Milestone' && project.milestones) {
       // Calculate current percentage sum
@@ -197,13 +205,18 @@ export function initProposalDrawer(
         <div class="dez-form-group">
           <label class="dez-form-label">Milestone Fee Allocation</label>
           <span class="dez-form-sublabel">Specify the percentage for each phase. Percentages must add up to exactly 100%.</span>
+
+          <div style="font-size:12px; color:#475569; background:#F7F7F8; border:1px solid #E5E7EB; border-radius:6px; padding:8px 12px; margin: 8px 0 12px; line-height: 1.45;">
+            <strong>Platform fee schedule (${currentPlan.toUpperCase()} Plan):</strong> ${scheduleDescription}
+          </div>
           
           <table class="dez-milestone-table">
             <thead>
               <tr>
                 <th>Phase</th>
-                <th style="width:80px; text-align:right">Fee %</th>
-                <th style="width:110px; text-align:right">Amount ($)</th>
+                <th style="width:75px; text-align:right">Fee %</th>
+                <th style="width:105px; text-align:right">Gross ($)</th>
+                <th style="width:115px; text-align:right">Net Payout ($)</th>
               </tr>
             </thead>
             <tbody>
@@ -211,6 +224,8 @@ export function initProposalDrawer(
                 .map((m) => {
                   const pct = formData.milestonePercentages[m.id] ?? m.defaultFeePercentage;
                   const amt = Math.round((formData.proposedTotal * pct) / 100);
+                  const mFee = calculatePlatformFeeFallback(currentPlan, Math.round(amt * 100));
+                  const netAmt = Math.round(mFee.net_cents / 100);
                   return `
                   <tr>
                     <td><strong>${m.name}</strong></td>
@@ -226,6 +241,9 @@ export function initProposalDrawer(
                     </td>
                     <td style="text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">
                       $${amt.toLocaleString()}
+                    </td>
+                    <td style="text-align:right; font-variant-numeric:tabular-nums; font-weight:500; color:#16A34A;">
+                      $${netAmt.toLocaleString()}
                     </td>
                   </tr>
                 `;
@@ -475,8 +493,10 @@ export function initProposalDrawer(
   function renderStep3() {
     if (!body) return;
 
+    const currentPlan = (sharedDataset?.planState?.currentPlanId as 'free' | 'basic' | 'upgraded') || getCurrentDesignerPlan();
     const amountCents = Math.round(formData.proposedTotal * 100);
-    const feeCalc = calculatePlatformFeeFallback('free', amountCents);
+    const feeCalc = calculatePlatformFeeFallback(currentPlan, amountCents);
+    const scheduleDescription = getTieredScheduleDescription(currentPlan);
     const projectState = (project as any).state || (project as any).state_region || 'this project location';
 
     body.innerHTML = `
@@ -531,19 +551,26 @@ export function initProposalDrawer(
         </label>
       </div>
 
-      <!-- Financial Net Calculation & Trust Notice -->
-      <div class="dez-fee-notice-banner">
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-          <span>Client Total Escrow Deposit:</span>
-          <strong>$${formData.proposedTotal.toLocaleString()}</strong>
+      <!-- Financial Net Calculation & Exact Tiered Schedule Preview -->
+      <div class="dez-fee-notice-banner" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748B; letter-spacing: 0.5px;">Platform Fee Schedule (${currentPlan.toUpperCase()} Plan)</span>
+          <span style="font-size: 12px; font-weight: 600; color: #2F7BE5; background: #F1F5F9; padding: 2px 8px; border-radius: 4px;">Effective Rate: ${feeCalc.rate_percent}%</span>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:var(--dez-text-muted);">
+        <div style="font-size: 12.5px; color: #334155; margin-bottom: 12px; background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 8px 12px; line-height: 1.45;">
+          <strong style="color: #0F172A;">Tiered fee schedule:</strong> ${scheduleDescription}
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size: 13px;">
+          <span style="color: #475569;">Client Total Escrow Deposit:</span>
+          <strong style="color: #0F172A;">$${formData.proposedTotal.toLocaleString()}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size: 13px; color: #64748B;">
           <span>Platform service fee (${feeCalc.rate_percent}%):</span>
-          <span>-${formatUSD(feeCalc.fee_cents)}</span>
+          <span style="color: #DC2626; font-weight: 500;">-${formatUSD(feeCalc.fee_cents)}</span>
         </div>
-        <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px dashed var(--dez-border); font-weight:600; color:var(--dez-text-primary);">
+        <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:1px solid #E5E7EB; font-weight:600; font-size: 14px; color: #0F172A;">
           <span>Your Net Payout:</span>
-          <span style="color:var(--dez-brand-blue);">${formatUSD(feeCalc.net_cents)}</span>
+          <span style="color: #16A34A;">${formatUSD(feeCalc.net_cents)}</span>
         </div>
       </div>
 

@@ -25,6 +25,7 @@ import {
 import { FileUploader } from '../common/FileUploader';
 import { renderClientShell, initClientShell } from './ClientLayout';
 import { US_STATES } from '../../services/usMarketService';
+import { suggestDesigners, inviteDesigner } from '../../services/invitationsService';
 
 interface WizardPhaseItem {
   id?: string;
@@ -1619,26 +1620,269 @@ function initWizardState(
 
   function renderPublishSuccess(projectId: string, title: string) {
     if (!mainArea) return;
-    mainArea.innerHTML = `
-      <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 40px 32px; text-align: center; max-width: 560px; margin: 40px auto;">
-        <div style="width: 48px; height: 48px; border-radius: 50%; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        </div>
-        <h2 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 8px;">Project Successfully Posted!</h2>
-        <p style="font-size: 13.5px; color: #4B5563; line-height: 1.5; margin: 0 0 24px;">
-          "${escapeHtml(title)}" is now live. Verified designers and architects can review your requirements and submit proposals.
-        </p>
 
-        <div style="display: flex; justify-content: center; gap: 12px;">
-          <a href="#my-projects" style="background: transparent; border: 1px solid #E5E7EB; color: #374151; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 6px; text-decoration: none;">
-            My Projects
-          </a>
-          <a href="#project-details?id=${projectId}" style="background: #2F7BE5; color: #FFFFFF; font-size: 13px; font-weight: 600; padding: 10px 24px; border-radius: 6px; text-decoration: none;">
-            View Project Details
-          </a>
+    mainArea.innerHTML = `
+      <div style="max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 60px;">
+        <!-- Top Success Banner -->
+        <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 36px 28px; text-align: center;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <h2 style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 8px;">Project Successfully Posted!</h2>
+          <p style="font-size: 13.5px; color: #4B5563; line-height: 1.5; max-width: 580px; margin: 0 auto 20px;">
+            "${escapeHtml(title)}" is now published and open for proposals from verified architects and design professionals.
+          </p>
+
+          <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+            <a href="#my-projects" style="background: #FFFFFF; border: 1px solid #E5E7EB; color: #374151; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 6px; text-decoration: none;">
+              My Projects
+            </a>
+            <a href="#project-details?id=${projectId}" style="background: #2F7BE5; color: #FFFFFF; font-size: 13px; font-weight: 600; padding: 9px 20px; border-radius: 6px; text-decoration: none;">
+              View Project Details
+            </a>
+          </div>
+        </div>
+
+        <!-- Matched Designers Section -->
+        <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 4px;">
+                Designers who match your project
+              </h3>
+              <p style="font-size: 13px; color: #6B7280; margin: 0;">
+                These verified professionals match your project typology, scope, and licensing requirements.
+              </p>
+            </div>
+            <a href="#find-designers?project=${encodeURIComponent(projectId)}" style="font-size: 13px; font-weight: 600; color: #2F7BE5; text-decoration: none;">
+              See more designers &rarr;
+            </a>
+          </div>
+
+          <!-- Cards Grid -->
+          <div id="wizard-matched-designers-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px;">
+            ${Array(6).fill(0).map(() => `
+              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; height: 210px;"></div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Invite Modal Host -->
+      <div id="modal-wizard-invite" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 250; align-items: center; justify-content: center;">
+        <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; width: 100%; max-width: 480px; padding: 24px; margin: 16px; box-sizing: border-box;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0;">Invite to Project</h3>
+            <button type="button" id="btn-close-wizard-modal" style="background: none; border: none; font-size: 20px; color: #6B7280; cursor: pointer; line-height: 1;">&times;</button>
+          </div>
+          
+          <p style="font-size: 13px; color: #4B5563; margin: 0 0 16px 0;">
+            Invite <strong id="modal-wizard-designer-name"></strong> to review and bid on <strong>${escapeHtml(title)}</strong>.
+          </p>
+
+          <form id="form-wizard-invite">
+            <input type="hidden" id="modal-wizard-designer-id" value="" />
+            
+            <div style="margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="font-size: 12.5px; font-weight: 600; color: #374151;">Invitation Note (Optional)</label>
+                <span id="wizard-invite-char-count" style="font-size: 11.5px; color: #9CA3AF;">0 / 500</span>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px;">
+                <button type="button" class="btn-wizard-quick-starter" data-text="We love your architectural portfolio and would appreciate your proposal for our project." style="text-align: left; background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 4px; padding: 6px 10px; font-size: 11.5px; color: #4B5563; cursor: pointer;">
+                  "We love your architectural portfolio and would appreciate your proposal..."
+                </button>
+                <button type="button" class="btn-wizard-quick-starter" data-text="Our project matches your exact design specialization. Please take a look at the scope." style="text-align: left; background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 4px; padding: 6px 10px; font-size: 11.5px; color: #4B5563; cursor: pointer;">
+                  "Our project matches your exact design specialization..."
+                </button>
+              </div>
+
+              <textarea id="modal-wizard-invite-note" maxlength="500" rows="3" placeholder="Add an optional personal message to the designer..." style="width: 100%; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; font-size: 13px; font-family: inherit; box-sizing: border-box;"></textarea>
+            </div>
+
+            <p style="font-size: 12px; color: #6B7280; line-height: 1.45; margin: 0 0 18px 0;">
+              The designer will receive an email and notification. They will be able to review the project scope and submit a detailed proposal.
+            </p>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" id="btn-cancel-wizard-modal" style="height: 36px; padding: 0 16px; border: 1px solid #E5E7EB; border-radius: 6px; background: #FFFFFF; font-size: 13px; color: #4B5563; cursor: pointer;">Cancel</button>
+              <button type="submit" id="btn-submit-wizard-invite" style="height: 36px; padding: 0 18px; border: none; border-radius: 6px; background: #2F7BE5; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer;">Send Invitation</button>
+            </div>
+          </form>
         </div>
       </div>
     `;
+
+    initMatchedDesignersSection(projectId);
+  }
+
+  async function initMatchedDesignersSection(projectId: string) {
+    const grid = mainArea?.querySelector('#wizard-matched-designers-grid') as HTMLElement;
+    const modal = mainArea?.querySelector('#modal-wizard-invite') as HTMLElement;
+    const modalNameEl = mainArea?.querySelector('#modal-wizard-designer-name');
+    const modalIdInput = mainArea?.querySelector('#modal-wizard-designer-id') as HTMLInputElement;
+    const modalNoteArea = mainArea?.querySelector('#modal-wizard-invite-note') as HTMLTextAreaElement;
+    const charCountEl = mainArea?.querySelector('#wizard-invite-char-count');
+    const closeBtn = mainArea?.querySelector('#btn-close-wizard-modal');
+    const cancelBtn = mainArea?.querySelector('#btn-cancel-wizard-modal');
+    const inviteForm = mainArea?.querySelector('#form-wizard-invite') as HTMLFormElement;
+
+    const closeModal = () => {
+      if (modal) modal.style.display = 'none';
+      if (modalNoteArea) modalNoteArea.value = '';
+      if (charCountEl) charCountEl.textContent = '0 / 500';
+    };
+
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    modalNoteArea?.addEventListener('input', () => {
+      if (charCountEl) charCountEl.textContent = `${modalNoteArea.value.length} / 500`;
+    });
+
+    mainArea?.querySelectorAll<HTMLButtonElement>('.btn-wizard-quick-starter').forEach(b => {
+      b.addEventListener('click', () => {
+        const text = b.getAttribute('data-text') || '';
+        if (modalNoteArea) {
+          modalNoteArea.value = text;
+          if (charCountEl) charCountEl.textContent = `${text.length} / 500`;
+        }
+      });
+    });
+
+    try {
+      const suggestions = await suggestDesigners(projectId, 6);
+      if (!grid) return;
+
+      if (!suggestions || suggestions.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; padding: 36px; text-align: center; color: #6B7280; border: 1px dashed #E5E7EB; border-radius: 8px;">
+            <p style="font-size: 13.5px; margin: 0 0 6px 0;">No direct match suggestions generated yet.</p>
+            <a href="#find-designers?project=${encodeURIComponent(projectId)}" style="font-size: 13px; color: #2F7BE5; font-weight: 500; text-decoration: underline;">
+              Browse all verified designers
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = suggestions.map((s) => {
+        const initials = (s.full_name || 'D').slice(0, 2).toUpperCase();
+        const licensedInfo = (s.licensed_states && s.licensed_states.length > 0)
+          ? `Licensed in ${s.licensed_states.join(', ')}`
+          : (s.is_verified ? 'Verified state license' : 'Accredited professional');
+
+        return `
+          <div class="wizard-designer-card" data-id="${s.designer_id}" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+            <div>
+              <!-- Header: Avatar, Name, Verified, Score -->
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <div style="width: 38px; height: 38px; border-radius: 6px; background: #F3F4F6; color: #374151; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    ${initials}
+                  </div>
+                  <div>
+                    <div style="font-weight: 600; font-size: 14px; color: #111827; display: flex; align-items: center; gap: 5px;">
+                      <span>${escapeHtml(s.full_name)}</span>
+                      ${s.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified Professional">✓</span>` : ''}
+                    </div>
+                    <div style="font-size: 12px; color: #6B7280; margin-top: 1px;">
+                      ${escapeHtml(s.discipline || 'Architect')} &bull; ${escapeHtml([s.city, s.state].filter(Boolean).join(', '))}
+                    </div>
+                  </div>
+                </div>
+
+                <span style="font-size: 11px; font-weight: 600; background: #F7F7F8; color: #374151; border: 1px solid #E5E7EB; padding: 2px 7px; border-radius: 4px; white-space: nowrap;">
+                  ${s.match_score}% match
+                </span>
+              </div>
+
+              <!-- State License Status -->
+              <div style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #047857; margin-bottom: 8px; font-weight: 500;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>${escapeHtml(licensedInfo)}</span>
+              </div>
+
+              <!-- Rating & Experience -->
+              <div style="font-size: 12px; color: #6B7280; margin-bottom: 10px;">
+                ${s.years_experience} yrs exp &bull; ${s.rating_average > 0 ? `★ ${s.rating_average.toFixed(1)} (${s.rating_count})` : 'New talent'} &bull; ${s.completed_projects_count} completed
+              </div>
+
+              <!-- Match Reasons -->
+              <div style="display: flex; flex-direction: column; gap: 3px; margin-bottom: 14px; background: #F7F7F8; padding: 8px 10px; border-radius: 6px;">
+                ${(s.reasons || []).slice(0, 2).map(r => `
+                  <div style="font-size: 11.5px; color: #374151; display: flex; align-items: flex-start; gap: 5px; line-height: 1.35;">
+                    <span style="color: #047857; font-weight: 700;">&bull;</span>
+                    <span>${escapeHtml(r.text)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Card Invite Button -->
+            <button type="button" class="btn-open-card-invite" data-id="${s.designer_id}" data-name="${escapeHtml(s.full_name)}" style="width: 100%; height: 34px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background 150ms;">
+              Invite to project
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      // Bind Invite Modal triggers
+      grid.querySelectorAll<HTMLButtonElement>('.btn-open-card-invite').forEach(b => {
+        b.addEventListener('click', () => {
+          const dId = b.getAttribute('data-id') || '';
+          const dName = b.getAttribute('data-name') || '';
+          if (modalNameEl) modalNameEl.textContent = dName;
+          if (modalIdInput) modalIdInput.value = dId;
+          if (modal) modal.style.display = 'flex';
+        });
+      });
+
+      // Submit Invitation
+      inviteForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const dId = modalIdInput?.value;
+        const note = modalNoteArea?.value.trim();
+        const submitBtn = mainArea?.querySelector('#btn-submit-wizard-invite') as HTMLButtonElement;
+
+        if (!dId) return;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Sending...';
+        }
+
+        try {
+          await inviteDesigner(projectId, dId, note);
+          closeModal();
+
+          // Update card button to Invited
+          const targetCardBtn = grid.querySelector(`.btn-open-card-invite[data-id="${dId}"]`) as HTMLButtonElement;
+          if (targetCardBtn) {
+            targetCardBtn.disabled = true;
+            targetCardBtn.style.background = '#F3F4F6';
+            targetCardBtn.style.color = '#047857';
+            targetCardBtn.style.border = '1px solid #E5E7EB';
+            targetCardBtn.style.cursor = 'default';
+            targetCardBtn.textContent = '✓ Invitation Sent';
+          }
+        } catch (err: any) {
+          alert('Could not send invitation: ' + (err?.message || 'Server error'));
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Invitation';
+          }
+        }
+      });
+    } catch {
+      if (grid) {
+        grid.innerHTML = `<div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: #6B7280; font-size: 13px;">Could not load matched designers.</div>`;
+      }
+    }
   }
 
   function renderWizard(): void {

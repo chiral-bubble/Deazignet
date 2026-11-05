@@ -14,6 +14,7 @@ import {
   getContractPdfUrl,
   type ContractDetail
 } from '../../../services/contractsService';
+import { calculatePlatformFeeFallback, getTieredScheduleDescription } from '../../../services/plansService';
 import { supabase } from '../../../lib/supabase';
 
 export function renderContractTab(_engagementId?: string): string {
@@ -182,7 +183,15 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
   const sec4 = c.content?.section_4_compensation || {};
   const sec5 = c.content?.section_5_reimbursable_additional || {};
   const sec6 = c.content?.section_6_revisions || {};
+  const sec8 = (c.content as any)?.section_8_payment_terms || {};
   const sec9 = c.content?.section_9_standard_terms || {};
+
+  const contractPlanKey = (c as any).plan_key || (sec8 as any).plan_key || 'free';
+  const tieredSchedule = (sec8 as any).fee_schedule_text || getTieredScheduleDescription(contractPlanKey);
+  const totalGrossPrice = sec4.total_price || 0;
+  const totalFeeCalc = calculatePlatformFeeFallback(contractPlanKey, Math.round(totalGrossPrice * 100));
+  const totalFeeDollars = Math.round(totalFeeCalc.fee_cents / 100);
+  const totalNetDollars = Math.round(totalFeeCalc.net_cents / 100);
 
   mount.innerHTML = `
     ${bannerHtml}
@@ -252,28 +261,42 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
               <tr style="border-bottom: 1px solid #E5E7EB; background: #F8FAFC; color: #64748B;">
                 <th style="padding: 8px 10px; width: 40px;">#</th>
                 <th style="padding: 8px 10px;">Phase Name</th>
-                <th style="padding: 8px 10px; width: 60px;">Share</th>
-                <th style="padding: 8px 10px; width: 90px; text-align: right;">Amount</th>
+                <th style="padding: 8px 10px; width: 60px; text-align: right;">Share</th>
+                <th style="padding: 8px 10px; width: 95px; text-align: right;">Gross Amount</th>
+                <th style="padding: 8px 10px; width: 105px; text-align: right; color: #16A34A;">Net Payout</th>
               </tr>
             </thead>
             <tbody>
-              ${(sec4.milestones || []).map((m: any) => `
+              ${(sec4.milestones || []).map((m: any) => {
+                const mGross = m.amount || 0;
+                const mFee = calculatePlatformFeeFallback(contractPlanKey, Math.round(mGross * 100));
+                const mNet = Math.round(mFee.net_cents / 100);
+                return `
                 <tr style="border-bottom: 1px solid #E5E7EB;">
                   <td style="padding: 8px 10px; color: #64748B;">${m.phase_number}</td>
                   <td style="padding: 8px 10px; font-weight: 500; color: #0F172A;">${escapeHtml(m.name)}</td>
-                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums;">${m.fee_percent}%</td>
-                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 500;">$${m.amount.toLocaleString()}</td>
+                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right;">${m.fee_percent}%</td>
+                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 500;">$${mGross.toLocaleString()}</td>
+                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; color: #16A34A;">$${mNet.toLocaleString()}</td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </tbody>
             <tfoot>
-              <tr style="font-weight: 600; color: #0F172A; background: #F8FAFC;">
+              <tr style="font-weight: 600; color: #0F172A; background: #F8FAFC; border-top: 1px solid #E5E7EB;">
                 <td style="padding: 10px;" colspan="2">Total Contract Value</td>
-                <td style="padding: 10px;">100%</td>
-                <td style="padding: 10px; text-align: right; font-size: 13.5px;">$${(sec4.total_price || 0).toLocaleString()} ${sec4.currency || 'USD'}</td>
+                <td style="padding: 10px; text-align: right;">100%</td>
+                <td style="padding: 10px; text-align: right; font-size: 13.5px;">$${totalGrossPrice.toLocaleString()}</td>
+                <td style="padding: 10px; text-align: right; font-size: 13.5px; color: #16A34A;">$${totalNetDollars.toLocaleString()}</td>
               </tr>
             </tfoot>
           </table>
+
+          <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 14px; margin-top: 10px; font-size: 12px; color: #334155; line-height: 1.5;">
+            <div style="font-weight: 600; color: #0F172A; margin-bottom: 2px;">Platform Service Fee Schedule</div>
+            <div><strong>Tiered Schedule:</strong> ${tieredSchedule}</div>
+            <div style="color: #64748B; margin-top: 4px;">Milestones are funded in escrow at the full gross amount. Platform service fee (-$${totalFeeDollars.toLocaleString()}) is deducted upon client milestone release.</div>
+          </div>
         </section>
 
         <!-- 5. Reimbursables & Additional Services -->

@@ -15,6 +15,7 @@
 
 import { sharedDataset, type SharedActiveProject } from '../../../mocks/dataset';
 import { formatMoney } from '../../../utils/formatters';
+import { calculatePlatformFeeFallback, getTieredScheduleDescription } from '../../../services/plansService';
 import { renderProposalDetailSkeleton, initProposalDetail } from '../proposals/ProposalDetail';
 import { renderProposalsHeaderUsage } from '../proposals/ProposalsHeaderUsage';
 import { getProposalUsage, withdrawProposal } from '../../../services/proposalsService';
@@ -316,6 +317,16 @@ function renderWorkspaceTabContent(
   project: SharedActiveProject,
   tab: 'overview' | 'milestones' | 'files'
 ): string {
+  const currentPlan = (sharedDataset?.planState?.currentPlanId as 'free' | 'basic' | 'upgraded') || 'free';
+  const scheduleText = getTieredScheduleDescription(currentPlan);
+  const totalBudgetCents = Math.round(project.totalBudget * 100);
+  const totalNetCalc = calculatePlatformFeeFallback(currentPlan, totalBudgetCents);
+  const totalNet = Math.round(totalNetCalc.net_cents / 100);
+
+  const escrowCents = Math.round((project.inEscrowAmount || 0) * 100);
+  const escrowNetCalc = calculatePlatformFeeFallback(currentPlan, escrowCents);
+  const escrowNet = Math.round(escrowNetCalc.net_cents / 100);
+
   if (tab === 'overview') {
     return `
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
@@ -328,8 +339,10 @@ function renderWorkspaceTabContent(
             </p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 13px;">
               <div><span style="color: #6B7280;">Contract Type:</span> <strong>${project.paymentType}</strong></div>
-              <div><span style="color: #6B7280;">Total Commission:</span> <strong>$${formatMoney(project.totalBudget)}</strong></div>
-              <div><span style="color: #6B7280;">Funds in Escrow:</span> <strong style="color: #059669;">$${formatMoney(project.inEscrowAmount)}</strong></div>
+              <div><span style="color: #6B7280;">Total Commission (Gross):</span> <strong>$${formatMoney(project.totalBudget)}</strong></div>
+              <div><span style="color: #6B7280;">Estimated Net Payout:</span> <strong style="color: #16A34A;">$${formatMoney(totalNet)}</strong></div>
+              <div><span style="color: #6B7280;">Funds in Escrow (Gross):</span> <strong style="color: #059669;">$${formatMoney(project.inEscrowAmount)}</strong></div>
+              <div><span style="color: #6B7280;">Escrow Net Value:</span> <strong style="color: #16A34A;">$${formatMoney(escrowNet)}</strong></div>
               <div><span style="color: #6B7280;">Current Deadline:</span> <strong>${project.relativeDeadline || 'In 14 days'}</strong></div>
             </div>
           </div>
@@ -408,11 +421,22 @@ function renderWorkspaceTabContent(
     const phases = project.milestones || [];
     return `
       <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px;">
-        <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 16px 0;">Phased Milestone Disbursement</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0;">Phased Milestone Disbursement</h3>
+          <span style="font-size: 12px; color: #64748B;">Plan: <strong style="color: #0F172A; text-transform: uppercase;">${currentPlan}</strong></span>
+        </div>
+        <div style="font-size: 12px; color: #475569; background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; line-height: 1.5;">
+          <strong>Platform Fee Schedule (${currentPlan.toUpperCase()} Plan):</strong> ${scheduleText}
+          <div style="color: #6B7280; font-size: 11.5px; margin-top: 2px;">Milestone amounts show both client escrow gross and designer net payout upon release.</div>
+        </div>
         <div style="display: flex; flex-direction: column; gap: 14px;">
           ${phases
             .map(
-              (m, idx) => `
+              (m, idx) => {
+                const mCents = Math.round(m.amount * 100);
+                const mFeeCalc = calculatePlatformFeeFallback(currentPlan, mCents);
+                const mNet = Math.round(mFeeCalc.net_cents / 100);
+                return `
             <div style="padding: 16px; border: 1px solid #E5E7EB; border-radius: 6px; background: ${m.status === 'approved_released' ? '#F9FAFB' : '#FFFFFF'};">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                 <div>
@@ -422,14 +446,16 @@ function renderWorkspaceTabContent(
                   <div style="font-size: 12px; color: #6B7280;">Due: <strong>${m.dueDate}</strong></div>
                 </div>
                 <div style="text-align: right;">
-                  <div style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 4px;">$${formatMoney(m.amount)}</div>
+                  <div style="font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 2px;">$${formatMoney(m.amount)} <span style="font-size: 11px; font-weight: 400; color: #6B7280;">gross</span></div>
+                  <div style="font-size: 13px; font-weight: 600; color: #16A34A; margin-bottom: 4px;">Net: $${formatMoney(mNet)}</div>
                   <span class="dez-status-pill ${m.status === 'approved_released' ? 'pill-green' : m.status === 'in_review' ? 'pill-amber' : 'pill-blue'}">
                     ${m.status.replace('_', ' ')}
                   </span>
                 </div>
               </div>
             </div>
-          `
+          `;
+              }
             )
             .join('')}
         </div>

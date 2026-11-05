@@ -1,7 +1,7 @@
 /**
  * Phase 1 Seed Script (Dev Only)
  * Creates 3 primary test accounts (New Designer, Complete Designer, Client)
- * Plus 12 discoverable designers using Nigerian locations and architectural names.
+ * Plus 12 discoverable designers using US locations and architectural names.
  *
  * Usage:
  *   npx tsx scripts/seed-phase1.ts
@@ -103,22 +103,22 @@ async function seedPhase1() {
   const newDesigner = await createOrGetUser(
     'designer.new@dezignet.test',
     'Password123!',
-    'Amara Okafor',
+    'Amara Brooks',
     'designer'
   );
   await adminClient.from('profiles').upsert({
     id: newDesigner.id,
     role: 'designer',
-    full_name: 'Amara Okafor',
-    location: 'Enugu, Nigeria',
-    phone: '+234 802 111 2233'
+    full_name: 'Amara Brooks',
+    location: 'Austin, TX',
+    phone: '+1 512 555 0101'
   });
   await adminClient.from('designer_profiles').upsert({
     user_id: newDesigner.id,
     title: 'Graduate Architectural Designer',
     bio: '',
     specializations: [],
-    languages: ['English', 'Igbo'],
+    languages: ['English', 'Spanish'],
     years_experience: 1,
     show_hourly_rate: true,
     is_available: true,
@@ -130,60 +130,60 @@ async function seedPhase1() {
   const completeDesigner = await createOrGetUser(
     'designer.complete@dezignet.test',
     'Password123!',
-    'Babajide Adeleke',
+    'Marcus Vance',
     'designer'
   );
   await adminClient.from('profiles').upsert({
     id: completeDesigner.id,
     role: 'designer',
-    full_name: 'Babajide Adeleke',
+    full_name: 'Marcus Vance',
     avatar_path: ARCH_PHOTOS[0],
-    location: 'Victoria Island, Lagos, Nigeria',
-    phone: '+234 803 456 7890'
+    location: 'Austin, TX',
+    phone: '+1 512 555 0102'
   });
   await adminClient.from('designer_profiles').upsert({
     user_id: completeDesigner.id,
     professional_type: 'architect',
     title: 'Principal Architect & Urbanist',
-    studio_name: 'Adeleke Atelier Architecture',
-    bio: 'Specializing in climate-responsive tropical brutalism, post-tensioned cantilevers, and timber integration. Over 15 years leading prestigious residential and commercial masterplans across West Africa.',
-    specializations: ['Residential', 'Sustainable', 'Commercial', 'Masterplanning'],
-    languages: ['English', 'Yoruba', 'French'],
+    studio_name: 'Vance Architecture Studio',
+    bio: 'Specializing in climate-responsive sustainable architecture, post-tensioned cantilevers, and mass timber integration. Over 15 years leading prestigious residential and commercial masterplans across North America.',
+    specializations: ['Residential', 'Commercial', 'Institutional'],
+    languages: ['English', 'Spanish', 'French'],
     years_experience: 16,
     hourly_rate: 175.00,
     show_hourly_rate: true,
     is_available: true,
-    availability_note: 'Accepting select residential and civic commissions for Q1 2027.',
+    availability_note: 'Accepting select residential and commercial commissions for Q1 2027.',
     show_in_search: true
   });
 
   // Add 3 Portfolio Projects for Complete Designer
   const projects = [
     {
-      title: 'Eko Atlantic Waterfront Penthouse',
+      title: 'Lake Travis Waterfront Villa',
       year: 2024,
       category: 'Residential',
-      location: 'Victoria Island, Lagos',
-      description: 'Ultra-luxury duplex residence with oceanfront cantilevers and passive solar cedar screening.',
+      location: 'Austin, TX',
+      description: 'Ultra-luxury duplex residence with lakefront cantilevers and passive solar cedar screening.',
       role: 'Lead Architect',
       sort_order: 1,
       cover_image_path: PORTFOLIO_COVERS[0]
     },
     {
-      title: 'Ikoyi Technology Innovation Hub',
+      title: 'Downtown Austin Innovation Hub',
       year: 2023,
       category: 'Commercial',
-      location: 'Ikoyi, Lagos',
+      location: 'Austin, TX',
       description: 'Biophilic open-plan workplace with acoustic timber baffles and 4-storey central solar atrium.',
       role: 'Architectural Director',
       sort_order: 2,
       cover_image_path: PORTFOLIO_COVERS[1]
     },
     {
-      title: 'Maitama Contemporary Hillside Villa',
+      title: 'West Lake Contemporary Hillside Villa',
       year: 2022,
       category: 'Residential',
-      location: 'Abuja, FCT',
+      location: 'West Lake Hills, TX',
       description: 'Rammed earth and off-shutter concrete estate configured for natural cross-ventilation.',
       role: 'Design Principal',
       sort_order: 3,
@@ -212,11 +212,11 @@ async function seedPhase1() {
   // Add Verified Credential for Complete Designer
   await adminClient.from('credentials').insert({
     designer_id: completeDesigner.id,
-    body: 'ARCON',
-    number: 'F-8821',
-    state_region: 'Lagos',
+    body: 'AIA / NCARB',
+    number: 'AIA-88210',
+    state_region: 'TX',
     year: 2010,
-    certificate_path: 'https://dezignet.studio/certs/arcon-f8821.pdf',
+    certificate_path: 'https://dezignet.studio/certs/aia-88210.pdf',
     status: 'verified',
     reviewed_at: new Date().toISOString()
   });
@@ -226,176 +226,176 @@ async function seedPhase1() {
   const clientUser = await createOrGetUser(
     'client@dezignet.test',
     'Password123!',
-    'Dr. Femi Johnson',
+    'Dr. David Johnson',
     'client'
   );
   await adminClient.from('profiles').upsert({
     id: clientUser.id,
     role: 'client',
-    full_name: 'Dr. Femi Johnson',
-    location: 'Ikoyi, Lagos, Nigeria',
-    phone: '+234 809 999 8877'
+    full_name: 'Dr. David Johnson',
+    location: 'Austin, TX',
+    phone: '+1 512 555 0103'
   });
-  console.log('✓ Seeded: Client Account (Dr. Femi Johnson)');
+  console.log('✓ Seeded: Client Account (Dr. David Johnson)');
 
   // ==========================================================================
-  // 2. Extra 12 Designers for Search (Nigerian Locations & Specialized Ateliers)
+  // 2. Extra 12 Designers for Search (US Locations & Specialized Ateliers)
   // ==========================================================================
   console.log('\nSeeding 12 discoverable designers for talent search...');
 
   const extraDesigners = [
     {
-      name: 'Zainab Aliyu',
-      email: 'zainab.aliyu@dezignet.test',
-      city: 'Abuja',
-      state: 'FCT',
+      name: 'Sarah Jenkins',
+      email: 'sarah.jenkins@dezignet.test',
+      city: 'Denver',
+      state: 'CO',
       title: 'Civic & Cultural Heritage Architect',
-      studio: 'Aliyu Vernacular Works',
-      bio: 'Blending northern Nigerian earth architecture with contemporary glass curtain wall technology.',
-      specs: ['Civic', 'Sustainable', 'Cultural'],
+      studio: 'Jenkins Vernacular Works',
+      bio: 'Blending Southwestern rammed earth architecture with contemporary glass curtain wall technology.',
+      specs: ['Institutional', 'Commercial'],
       years: 12,
       rate: 150,
       verified: true
     },
     {
-      name: 'Nnamdi Eze',
-      email: 'nnamdi.eze@dezignet.test',
-      city: 'Enugu',
-      state: 'Enugu State',
+      name: 'Julian Thorne',
+      email: 'julian.thorne@dezignet.test',
+      city: 'Boulder',
+      state: 'CO',
       title: 'Topographic & Hillside Architect',
-      studio: 'Eze & Partners',
-      bio: 'Terraced hillside residential villas harmonized with undulating coal-city rock formations.',
-      specs: ['Residential', 'Landscape', 'Structural'],
+      studio: 'Thorne & Partners',
+      bio: 'Terraced hillside residential villas harmonized with Rocky Mountain rock formations.',
+      specs: ['Residential', 'Commercial'],
       years: 14,
       rate: 160,
       verified: true
     },
     {
-      name: 'Folake Coker',
-      email: 'folake.coker@dezignet.test',
-      city: 'Ikeja',
-      state: 'Lagos State',
+      name: 'Claire Laurent',
+      email: 'claire.laurent@dezignet.test',
+      city: 'Austin',
+      state: 'TX',
       title: 'Sustainable Interior Architect & BIM Lead',
-      studio: 'Coker Spatial Atelier',
-      bio: 'Acoustic treatment, corporate workplace agile planning, and bespoke African teak joinery.',
-      specs: ['Interior Architecture', 'Commercial', 'BIM'],
+      studio: 'Laurent Spatial Atelier',
+      bio: 'Acoustic treatment, corporate workplace agile planning, and bespoke American white oak joinery.',
+      specs: ['Commercial', 'Residential'],
       years: 9,
       rate: 130,
       verified: true
     },
     {
-      name: 'Chukwuma Obi',
-      email: 'chukwuma.obi@dezignet.test',
-      city: 'Port Harcourt',
-      state: 'Rivers State',
+      name: 'Alexander Wright',
+      email: 'alexander.wright@dezignet.test',
+      city: 'Seattle',
+      state: 'WA',
       title: 'Marine & Waterfront Structural Architect',
-      studio: 'Delta Shoreline Architects',
+      studio: 'Pacific Shoreline Architects',
       bio: 'Designing elevated pile residences, private yacht clubs, and flood-resilient coastal infrastructure.',
-      specs: ['Marine', 'Residential', 'Resilience'],
+      specs: ['Commercial', 'Residential'],
       years: 17,
       rate: 190,
       verified: true
     },
     {
-      name: 'Halima Bello',
-      email: 'halima.bello@dezignet.test',
-      city: 'Kaduna',
-      state: 'Kaduna State',
+      name: 'Elena Rostova',
+      email: 'elena.rostova@dezignet.test',
+      city: 'Phoenix',
+      state: 'AZ',
       title: 'Passive Solar & Rammed Earth Architect',
-      studio: 'Bello Earth & Sun Studio',
+      studio: 'Rostova Earth & Sun Studio',
       bio: 'Thermally isolated adobe residential developments with integrated solar harvesting arrays.',
-      specs: ['Sustainable', 'Residential', 'Passive Solar'],
+      specs: ['Residential', 'Commercial'],
       years: 8,
       rate: 125,
       verified: false
     },
     {
-      name: 'Damilola Balogun',
-      email: 'damilola.balogun@dezignet.test',
-      city: 'Lekki',
-      state: 'Lagos State',
+      name: 'Marcus Hayes',
+      email: 'marcus.hayes@dezignet.test',
+      city: 'Dallas',
+      state: 'TX',
       title: 'Modern Luxury Villa Specialist',
-      studio: 'Studio Balogun Lagos',
+      studio: 'Studio Hayes Dallas',
       bio: 'Curating minimalist glass pavilions, cantilevered infinity pools, and zero-energy private residences.',
-      specs: ['Residential', 'Luxury', 'Interior Architecture'],
+      specs: ['Residential', 'Hospitality'],
       years: 11,
       rate: 165,
       verified: true
     },
     {
-      name: 'Yetunde Adelegan',
-      email: 'yetunde.adelegan@dezignet.test',
-      city: 'Ibadan',
-      state: 'Oyo State',
-      title: 'Tropical Landscape & Urban Ecology Architect',
-      studio: 'Adelegan Botanic Environments',
+      name: 'Charlotte Dubois',
+      email: 'charlotte.dubois@dezignet.test',
+      city: 'Chicago',
+      state: 'IL',
+      title: 'Midwest Landscape & Urban Ecology Architect',
+      studio: 'Dubois Botanic Environments',
       bio: 'Restorative urban pocket parks, rain gardens, and native wetland conservation masterplans.',
-      specs: ['Landscape Architect', 'Urban Design', 'Sustainable'],
+      specs: ['Institutional', 'Commercial'],
       years: 13,
       rate: 140,
       verified: true
     },
     {
-      name: 'Ibrahim Danjuma',
-      email: 'ibrahim.danjuma@dezignet.test',
-      city: 'Kano',
-      state: 'Kano State',
+      name: 'David Sterling',
+      email: 'david.sterling@dezignet.test',
+      city: 'Houston',
+      state: 'TX',
       title: 'Commercial Logistics & Industrial Architect',
-      studio: 'Danjuma Infrastructure Group',
-      bio: 'High-bay dry port logistics hubs, cold storage distribution facilities, and long-span warehouses.',
-      specs: ['Industrial', 'Commercial', 'Logistics'],
+      studio: 'Sterling Infrastructure Group',
+      bio: 'High-bay logistics hubs, cold storage distribution facilities, and long-span warehouses.',
+      specs: ['Industrial', 'Commercial'],
       years: 15,
       rate: 155,
       verified: true
     },
     {
-      name: 'Kemi Oshodi',
-      email: 'kemi.oshodi@dezignet.test',
-      city: 'Victoria Island',
-      state: 'Lagos State',
+      name: 'Rachel Adams',
+      email: 'rachel.adams@dezignet.test',
+      city: 'San Francisco',
+      state: 'CA',
       title: 'High-Density Residential Architect',
-      studio: 'Oshodi Urban Density',
+      studio: 'Adams Urban Architecture',
       bio: 'Compact urban high-rises with sky gardens, automated underground parking, and smart metering.',
-      specs: ['Residential', 'Urban Design', 'BIM'],
+      specs: ['Residential', 'Commercial'],
       years: 10,
       rate: 145,
       verified: true
     },
     {
-      name: 'Emeka Nwosu',
-      email: 'emeka.nwosu@dezignet.test',
-      city: 'Asaba',
-      state: 'Delta State',
+      name: 'Lucas Meyer',
+      email: 'lucas.meyer@dezignet.test',
+      city: 'Miami',
+      state: 'FL',
       title: 'Hospitality & Luxury Resort Architect',
-      studio: 'Nwosu Leisure Atelier',
-      bio: 'Boutique riverfront lodges, conference retreats, and wellness spas built with locally quarried stone.',
-      specs: ['Hospitality', 'Commercial', 'Landscape'],
+      studio: 'Meyer Leisure Atelier',
+      bio: 'Boutique oceanfront lodges, conference retreats, and wellness spas built with coral stone.',
+      specs: ['Hospitality', 'Commercial'],
       years: 14,
       rate: 150,
       verified: false
     },
     {
-      name: 'Aisha Mohammed',
-      email: 'aisha.mohammed@dezignet.test',
-      city: 'Jos',
-      state: 'Plateau State',
+      name: 'Sophia Vance',
+      email: 'sophia.vance@dezignet.test',
+      city: 'Denver',
+      state: 'CO',
       title: 'Alpine & Highland Biophilic Architect',
-      studio: 'Plateau High Living',
-      bio: 'Taking advantage of Jos temperate altitude with natural stone masonry, glass conservatories, and timber trusses.',
-      specs: ['Residential', 'Sustainable', 'Timber'],
+      studio: 'Highland Living Studio',
+      bio: 'Taking advantage of Rocky Mountain temperate altitude with natural stone masonry, glass conservatories, and timber trusses.',
+      specs: ['Residential', 'Hospitality'],
       years: 9,
       rate: 135,
       verified: true
     },
     {
-      name: 'Tunde Bakare',
-      email: 'tunde.bakare@dezignet.test',
-      city: 'Abeokuta',
-      state: 'Ogun State',
-      title: 'Granite Outcrop & Quarry Architectural Lead',
-      studio: 'Bakare Rock Atelier',
+      name: 'Benjamin Clark',
+      email: 'benjamin.clark@dezignet.test',
+      city: 'Salt Lake City',
+      state: 'UT',
+      title: 'Granite Outcrop & Mountain Architectural Lead',
+      studio: 'Clark Rock Atelier',
       bio: 'Integrating monumental granite boulders into foundations and exterior living amphitheaters.',
-      specs: ['Residential', 'Landscape', 'Structural'],
+      specs: ['Residential', 'Commercial'],
       years: 16,
       rate: 170,
       verified: true
@@ -411,8 +411,8 @@ async function seedPhase1() {
       role: 'designer',
       full_name: d.name,
       avatar_path: ARCH_PHOTOS[i % ARCH_PHOTOS.length],
-      location: `${d.city}, ${d.state}, Nigeria`,
-      phone: `+234 80${i} 000 1122`
+      location: `${d.city}, ${d.state}`,
+      phone: `+1 512 555 01${i < 10 ? '0' + i : i}`
     });
 
     await adminClient.from('designer_profiles').upsert({
@@ -435,7 +435,7 @@ async function seedPhase1() {
       title: `${d.city} Signature Commission`,
       year: 2023,
       category: d.specs[0] || 'Residential',
-      location: `${d.city}, Nigeria`,
+      location: `${d.city}, ${d.state}`,
       description: d.bio,
       role: 'Lead Architect',
       sort_order: 1,
@@ -445,8 +445,8 @@ async function seedPhase1() {
     if (d.verified) {
       await adminClient.from('credentials').insert({
         designer_id: user.id,
-        body: 'NIA / ARCON',
-        number: `REG-${2000 + i}`,
+        body: 'AIA / NCARB',
+        number: `AIA-${20000 + i}`,
         state_region: d.state,
         year: 2012 + (i % 8),
         status: 'verified',
@@ -468,4 +468,3 @@ seedPhase1().catch((err) => {
   console.error('Seed script error:', err);
   process.exit(1);
 });
-

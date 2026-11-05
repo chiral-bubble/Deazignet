@@ -213,7 +213,7 @@ function renderProjectView(
             Overview
           </button>
           ${!isHired ? `
-            <button class="nav-tab-btn" data-tab="proposals" style="${getTabStyle(activeTab === 'proposals')}">
+            <button class="nav-tab-btn" data-tab="proposals" style="${getTabStyle(activeTab === 'proposals' || activeTab === 'invitations')}">
               Proposals
             </button>
           ` : ''}
@@ -246,7 +246,7 @@ function renderProjectView(
   function renderTabBody(): string {
     if (activeTab === 'overview') {
       return renderOverviewTab();
-    } else if (activeTab === 'proposals') {
+    } else if (activeTab === 'proposals' || activeTab === 'invitations') {
       return renderProjectProposalsTab(project.id, Number(project.design_budget || 0));
     } else if (activeTab === 'milestones') {
       return renderMilestonesTab();
@@ -628,7 +628,7 @@ function renderProjectView(
     });
 
     // Mount sub-tabs logic
-    if (activeTab === 'proposals') {
+    if (activeTab === 'proposals' || activeTab === 'invitations') {
       initProjectProposalsTab(
         project.id,
         Number(project.design_budget || 0),

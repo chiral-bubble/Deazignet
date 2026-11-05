@@ -1630,7 +1630,19 @@ BEGIN
         jsonb_build_object('expired_count', v_count)
     );
 
-    RETURN jsonb_build_object('success', true, 'expired_count', v_count);
+    RETURN jsonb_build_object('success', true, 'exp
+
+-- Alias for scheduled background job
+CREATE OR REPLACE FUNCTION public.expire_project_invitations()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS 
+BEGIN
+    RETURN public.expire_invitations();
+END;
+;ired_count', v_count);
 END;
 $$;
 

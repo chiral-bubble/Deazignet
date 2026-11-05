@@ -17,6 +17,7 @@
 import { getClientDashboard, type ClientDashboardData } from '../../services/projectsService';
 import { supabase } from '../../lib/supabase';
 import { renderClientShell, initClientShell } from './ClientLayout';
+import { suggestDesigners, inviteDesigner } from '../../services/invitationsService';
 
 export async function renderClientDashboardPage(container: HTMLElement): Promise<void> {
   const actionButton = `
@@ -104,6 +105,12 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
       });
     }
   });
+
+  // Find most recent open project with few proposals
+  const openProjects = (data.recent_projects || []).filter(p => p.status === 'open');
+  const targetProject = openProjects.length > 0
+    ? [...openProjects].sort((a, b) => a.proposals_count - b.proposals_count)[0]
+    : null;
 
   mainArea.innerHTML = `
     <div style="max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; padding-bottom: 60px;">
@@ -298,33 +305,24 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
             `}
           </div>
 
-          <!-- Suggested Designers for Recent Open Project -->
-          <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-top: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <!-- Suggested Designers for Recent Open Project (3 to 4 cards with Invite buttons) -->
+          <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
               <div>
                 <h2 style="font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 2px;">Suggested Designers</h2>
-                <p style="font-size: 12px; color: #6B7280; margin: 0;">Matched professionals for your open projects</p>
+                <p style="font-size: 12px; color: #6B7280; margin: 0;">
+                  ${targetProject ? `Matched professionals for "${escapeHtml(targetProject.title)}" (${targetProject.proposals_count} ${targetProject.proposals_count === 1 ? 'proposal' : 'proposals'} received)` : 'Matched professionals for your open projects'}
+                </p>
               </div>
-              <a href="#find-designers" style="text-decoration: none; font-size: 13px; font-weight: 600; color: #2F7BE5;">
-                See more →
+              <a href="${targetProject ? `#find-designers?project=${encodeURIComponent(targetProject.id)}` : '#find-designers'}" style="text-decoration: none; font-size: 13px; font-weight: 600; color: #2F7BE5;">
+                See more &rarr;
               </a>
             </div>
-            <div id="dashboard-suggested-designers" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
-                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Elena Rostova</div>
-                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Architect • Denver, CO</div>
-                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
-              </div>
-              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
-                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Marcus Vance</div>
-                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Engineer • Austin, TX</div>
-                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
-              </div>
-              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
-                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Claire Dupond</div>
-                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Interior Designer • Chicago, IL</div>
-                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
-              </div>
+
+            <div id="dashboard-suggested-designers-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px;">
+              ${Array(4).fill(0).map(() => `
+                <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; height: 160px;"></div>
+              `).join('')}
             </div>
           </div>
         </div>
@@ -392,40 +390,52 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
               <p style="font-size: 12.5px; color: #6B7280; margin: 0;">No unread notifications.</p>
             `}
           </div>
+        </div>
+      </div>
 
-          <!-- Suggested Designers for Recent Open Project -->
-          <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px; margin-top: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-              <div>
-                <h2 style="font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 2px;">Suggested Designers</h2>
-                <p style="font-size: 12px; color: #6B7280; margin: 0;">Matched professionals for your open projects</p>
-              </div>
-              <a href="#find-designers" style="text-decoration: none; font-size: 13px; font-weight: 600; color: #2F7BE5;">
-                See more →
-              </a>
-            </div>
-            <div id="dashboard-suggested-designers" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
-                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Elena Rostova</div>
-                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Architect • Denver, CO</div>
-                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
-              </div>
-              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
-                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Marcus Vance</div>
-                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Engineer • Austin, TX</div>
-                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
-              </div>
-              <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px;">
-                <div style="font-weight: 600; font-size: 13.5px; color: #111827; margin-bottom: 2px;">Claire Dupond</div>
-                <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">Interior Designer • Chicago, IL</div>
-                <a href="#find-designers" style="display: block; text-align: center; background: #2F7BE5; color: #FFFFFF; padding: 6px 10px; border-radius: 4px; font-size: 11.5px; font-weight: 600; text-decoration: none;">Invite</a>
-              </div>
-            </div>
+      <!-- Dashboard Invite Modal Host -->
+      <div id="modal-dash-invite" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 220; align-items: center; justify-content: center;">
+        <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; width: 100%; max-width: 480px; padding: 24px; margin: 16px; box-sizing: border-box;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0;">Invite to Project</h3>
+            <button type="button" id="btn-close-dash-modal" style="background: none; border: none; font-size: 20px; color: #6B7280; cursor: pointer; line-height: 1;">&times;</button>
           </div>
+          
+          <p style="font-size: 13px; color: #4B5563; margin: 0 0 16px 0;">
+            Invite <strong id="modal-dash-designer-name"></strong> to submit an architectural proposal.
+          </p>
+
+          <form id="form-dash-invite">
+            <input type="hidden" id="modal-dash-designer-id" value="" />
+            
+            <div style="margin-bottom: 14px;">
+              <label for="dash-invite-project-select" style="display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px;">Select Project *</label>
+              <select id="dash-invite-project-select" required style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF; color: #111827;">
+                ${openProjects.map(p => `
+                  <option value="${p.id}" ${targetProject?.id === p.id ? 'selected' : ''}>${escapeHtml(p.title)}</option>
+                `).join('')}
+              </select>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="font-size: 12.5px; font-weight: 600; color: #374151;">Message (Optional)</label>
+                <span id="dash-invite-char-count" style="font-size: 11.5px; color: #9CA3AF;">0 / 500</span>
+              </div>
+              <textarea id="modal-dash-invite-note" maxlength="500" rows="3" placeholder="Add a personal note to the designer..." style="width: 100%; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; font-size: 13px; font-family: inherit; box-sizing: border-box;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+              <button type="button" id="btn-cancel-dash-modal" style="height: 36px; padding: 0 16px; border: 1px solid #E5E7EB; border-radius: 6px; background: #FFFFFF; font-size: 13px; color: #4B5563; cursor: pointer;">Cancel</button>
+              <button type="submit" id="btn-submit-dash-invite" style="height: 36px; padding: 0 18px; border: none; border-radius: 6px; background: #2F7BE5; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer;">Send Invitation</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   `;
+
+  initDashboardSuggestedDesigners(container, targetProject?.id || (openProjects[0]?.id || ''));
 
   document.getElementById('btn-clear-notifications')?.addEventListener('click', async () => {
     try {
@@ -442,6 +452,143 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
       console.error('Failed to mark notifications read:', e);
     }
   });
+}
+
+async function initDashboardSuggestedDesigners(container: HTMLElement, defaultProjectId: string) {
+  const grid = container.querySelector('#dashboard-suggested-designers-grid') as HTMLElement;
+  const modal = container.querySelector('#modal-dash-invite') as HTMLElement;
+  const modalNameEl = container.querySelector('#modal-dash-designer-name');
+  const modalIdInput = container.querySelector('#modal-dash-designer-id') as HTMLInputElement;
+  const modalProjSelect = container.querySelector('#dash-invite-project-select') as HTMLSelectElement;
+  const modalNoteArea = container.querySelector('#modal-dash-invite-note') as HTMLTextAreaElement;
+  const charCountEl = container.querySelector('#dash-invite-char-count');
+  const closeBtn = container.querySelector('#btn-close-dash-modal');
+  const cancelBtn = container.querySelector('#btn-cancel-dash-modal');
+  const form = container.querySelector('#form-dash-invite') as HTMLFormElement;
+
+  const closeModal = () => {
+    if (modal) modal.style.display = 'none';
+    if (modalNoteArea) modalNoteArea.value = '';
+    if (charCountEl) charCountEl.textContent = '0 / 500';
+  };
+
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  modalNoteArea?.addEventListener('input', () => {
+    if (charCountEl) charCountEl.textContent = `${modalNoteArea.value.length} / 500`;
+  });
+
+  try {
+    const suggestions = await suggestDesigners(defaultProjectId, 4);
+    if (!grid) return;
+
+    if (suggestions.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #6B7280; font-size: 13px;">
+          No suggested designers found.
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = suggestions.slice(0, 4).map(s => {
+      const initials = (s.full_name || 'D').slice(0, 2).toUpperCase();
+      const reasonText = s.reasons && s.reasons.length > 0 ? s.reasons[0].text : 'Matched project typology';
+
+      return `
+        <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
+          <div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+              <div style="width: 32px; height: 32px; border-radius: 6px; background: #F3F4F6; color: #374151; font-weight: 600; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                ${initials}
+              </div>
+              <div style="overflow: hidden;">
+                <div style="font-weight: 600; font-size: 13.5px; color: #111827; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  <span>${escapeHtml(s.full_name)}</span>
+                  ${s.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified">✓</span>` : ''}
+                </div>
+                <div style="font-size: 11.5px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${escapeHtml(s.discipline || 'Architect')} &bull; ${escapeHtml([s.city, s.state].filter(Boolean).join(', '))}
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">
+              ${s.years_experience} yrs exp &bull; ${s.rating_average > 0 ? `★ ${s.rating_average.toFixed(1)}` : 'New talent'}
+            </div>
+
+            <div style="font-size: 11.5px; color: #4B5563; background: #F7F7F8; padding: 6px 8px; border-radius: 4px; margin-bottom: 12px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              ${escapeHtml(reasonText)}
+            </div>
+          </div>
+
+          <button type="button" class="btn-dash-invite" data-id="${s.designer_id}" data-name="${escapeHtml(s.full_name)}" style="width: 100%; height: 32px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+            Invite
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    // Bind invite button clicks
+    grid.querySelectorAll<HTMLButtonElement>('.btn-dash-invite').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dId = btn.getAttribute('data-id') || '';
+        const dName = btn.getAttribute('data-name') || '';
+        if (modalNameEl) modalNameEl.textContent = dName;
+        if (modalIdInput) modalIdInput.value = dId;
+        if (modalProjSelect && defaultProjectId) modalProjSelect.value = defaultProjectId;
+        if (modal) modal.style.display = 'flex';
+      });
+    });
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const dId = modalIdInput.value;
+      const pId = modalProjSelect ? modalProjSelect.value : defaultProjectId;
+      const note = modalNoteArea.value.trim();
+      const submitBtn = container.querySelector('#btn-submit-dash-invite') as HTMLButtonElement;
+
+      if (!pId) {
+        alert('Please select a project to invite this designer to.');
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+      }
+
+      try {
+        await inviteDesigner(pId, dId, note);
+        closeModal();
+
+        const cardBtn = grid.querySelector(`.btn-dash-invite[data-id="${dId}"]`) as HTMLButtonElement;
+        if (cardBtn) {
+          cardBtn.disabled = true;
+          cardBtn.style.background = '#F3F4F6';
+          cardBtn.style.color = '#047857';
+          cardBtn.style.border = '1px solid #E5E7EB';
+          cardBtn.style.cursor = 'default';
+          cardBtn.textContent = '✓ Invited';
+        }
+      } catch (err: any) {
+        alert('Failed to send invitation: ' + (err?.message || 'Server error'));
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send Invitation';
+        }
+      }
+    });
+  } catch {
+    if (grid) {
+      grid.innerHTML = `<div style="grid-column: 1 / -1; padding: 18px; text-align: center; color: #6B7280; font-size: 12.5px;">Could not load suggested designers.</div>`;
+    }
+  }
 }
 
 function escapeHtml(str: string): string {

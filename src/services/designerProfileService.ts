@@ -2218,6 +2218,23 @@ export function getActiveLoggedUserId(): string {
   return activeLoggedUserId;
 }
 
+export function getCurrentDesignerPlan(designerId?: string): 'free' | 'basic' | 'upgraded' {
+  const targetId = designerId || activeLoggedUserId;
+  const designer = designersStore.find(d => d.id === targetId);
+  return (designer?.currentPlanId as any) || 'free';
+}
+
+export function setDesignerPlan(designerId: string, planId: 'free' | 'basic' | 'upgraded'): void {
+  const designer = designersStore.find(d => d.id === designerId);
+  if (designer) {
+    designer.currentPlanId = planId;
+  }
+}
+
+export function getAllMockDesigners(): DesignerProfile[] {
+  return designersStore;
+}
+
 // Helper utility
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

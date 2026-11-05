@@ -15,8 +15,10 @@ import {
   hasClientReceivedProposal,
   setClientReceivedProposal,
   type MockProfileStateKey,
-  getActiveLoggedUserId
+  getActiveLoggedUserId,
+  getCurrentDesignerPlan
 } from '../../../services/designerProfileService';
+import { devSwitchDesignerPlan } from '../../../services/plansService';
 import { simulateNotification } from '../../../services/notificationsService';
 
 export function renderDevProfileToolbar(): string {
@@ -28,6 +30,7 @@ export function renderDevProfileToolbar(): string {
   const profileState = getMockProfileState();
   const viewerRole = getViewerRole();
   const activeId = getActiveLoggedUserId();
+  const currentPlan = getCurrentDesignerPlan(activeId);
   const hasProposal = hasClientReceivedProposal(activeId);
 
   return `
@@ -54,6 +57,22 @@ export function renderDevProfileToolbar(): string {
             </button>
             <button type="button" class="dez-dev-seg-btn ${profileState === 'empty' ? 'is-active' : ''}" data-set-user="empty" title="Sarah Jenkins (0% complete, no portfolio)">
               New Designer (Sarah)
+            </button>
+          </div>
+        </div>
+
+        <!-- Control Group: Dev Plan Switcher Hook -->
+        <div class="dez-dev-group">
+          <span class="dez-dev-group-label">Plan:</span>
+          <div class="dez-dev-seg-group">
+            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'free' ? 'is-active' : ''}" data-set-plan="free" title="Free Plan (5 proposals/mo, 10% fee)">
+              Free
+            </button>
+            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'basic' ? 'is-active' : ''}" data-set-plan="basic" title="Basic Plan (10 proposals/mo, 5% fee)">
+              Basic
+            </button>
+            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'upgraded' ? 'is-active' : ''}" data-set-plan="upgraded" title="Upgraded Plan (Unlimited, 4% fee)">
+              Upgraded
             </button>
           </div>
         </div>
@@ -135,6 +154,18 @@ export function initDevProfileToolbar(
       const state = btn.getAttribute('data-set-user') as MockProfileStateKey;
       if (state) {
         setMockProfileState(state);
+        onStateChanged();
+      }
+    });
+  });
+
+  // Set designer plan buttons
+  root.querySelectorAll<HTMLButtonElement>('[data-set-plan]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const planKey = btn.getAttribute('data-set-plan') as 'free' | 'basic' | 'upgraded';
+      if (planKey) {
+        const activeId = getActiveLoggedUserId();
+        await devSwitchDesignerPlan(activeId, planKey);
         onStateChanged();
       }
     });

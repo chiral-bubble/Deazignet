@@ -1,6 +1,6 @@
 /**
  * Phase 2 Seed Script (Dev Only)
- * Seeds 4 clients, 12 realistic Nigerian architectural projects, milestone plans, and proposals.
+ * Seeds 4 clients, 12 realistic US architectural projects, milestone plans, and proposals.
  *
  * Usage:
  *   npx tsx scripts/seed-phase2.ts
@@ -102,16 +102,16 @@ async function createOrGetUser(email: string, pass: string, fullName: string, ro
 }
 
 async function seedPhase2() {
-  console.log('🚀 Seeding Phase 2 Clients, Nigerian Projects, Milestones & Proposals...\n');
+  console.log('🚀 Seeding Phase 2 Clients, US Projects, Milestones & Proposals...\n');
 
   // ==========================================================================
   // 1. Seed 4 Client Accounts
   // ==========================================================================
   const clientsData = [
-    { email: 'client1@dezignet.test', name: 'Chief Adeleke Johnson', location: 'Victoria Island, Lagos', verified: true },
-    { email: 'client2@dezignet.test', name: 'Dr. Ngozi Okonjo', location: 'Maitama, Abuja', verified: true },
-    { email: 'client3@dezignet.test', name: 'Alhaji Sanusi Bello', location: 'Kano / Abuja', verified: false },
-    { email: 'client4@dezignet.test', name: 'Engr. Tara Davies', location: 'Old GRA, Port Harcourt', verified: true }
+    { email: 'client1@dezignet.test', name: 'Marcus Johnson', location: 'Austin, TX', verified: true },
+    { email: 'client2@dezignet.test', name: 'Dr. Sarah Vance', location: 'Denver, CO', verified: true },
+    { email: 'client3@dezignet.test', name: 'David Sterling', location: 'Chicago, IL', verified: false },
+    { email: 'client4@dezignet.test', name: 'Tara Davies, PE', location: 'San Francisco, CA', verified: true }
   ];
 
   const clients: any[] = [];
@@ -135,118 +135,118 @@ async function seedPhase2() {
   const { data: usersList } = await adminClient.auth.admin.listUsers();
   const completeDesigner = usersList?.users?.find(u => u.email === 'designer.complete@dezignet.test');
   const newDesigner = usersList?.users?.find(u => u.email === 'designer.new@dezignet.test');
-  const otherDesigner = usersList?.users?.find(u => u.email === 'zainab.aliyu@dezignet.test');
+  const otherDesigner = usersList?.users?.find(u => u.email === 'sarah.jenkins@dezignet.test');
 
   if (!completeDesigner) {
     console.warn('Warning: designer.complete@dezignet.test not found. Run seed-phase1.ts first.');
   }
 
   // ==========================================================================
-  // 2. Seed 12 Nigerian Architectural Projects
+  // 2. Seed 12 US Architectural Projects
   // ==========================================================================
   const projectsSpec = [
     {
       clientIndex: 0,
-      title: 'Modern Cantilevered Waterfront Residence, Banana Island Lagos',
+      title: 'Modern Cantilevered Waterfront Residence, Lake Travis Austin',
       category: 'Residential',
-      subcategory: 'Luxury Villa',
-      description: 'Executive architectural commission for a 5-bedroom cliff-edge lagoon residence. Scope includes post-tensioned cantilevered terraces, motorized louvers, infinity pool, and private jetty.',
+      subcategory: 'Custom home',
+      description: 'Executive architectural commission for a 5-bedroom cliff-edge lakefront residence. Scope includes post-tensioned cantilevered terraces, motorized louvers, infinity pool, and private boat dock.',
       budget: 125000,
       payment_type: 'milestone',
       timeline_days: 140,
       deadline: '2026-11-28',
       area_sqft: 6800,
-      location_text: 'Banana Island, Ikoyi, Lagos',
-      city: 'Lagos',
-      state_region: 'Lagos State',
+      location_text: 'Lake Travis Waterfront, Austin, TX',
+      city: 'Austin',
+      state_region: 'TX',
       status: 'open'
     },
     {
       clientIndex: 1,
-      title: 'Mixed-Use Commercial & Tech Innovation Hub, Central Business District Abuja',
+      title: 'Mixed-Use Commercial & Tech Innovation Hub, Downtown Denver',
       category: 'Commercial',
-      subcategory: 'Corporate Workspace',
+      subcategory: 'Office',
       description: 'Comprehensive design and spatial master plan for an 8-story commercial tech atrium. Scope includes glulam timber pavilions, central daylight lightwell, and LEED certified envelope.',
       budget: 185000,
       payment_type: 'milestone',
       timeline_days: 200,
       deadline: '2026-12-15',
       area_sqft: 18000,
-      location_text: 'Central Business District, Abuja',
-      city: 'Abuja',
-      state_region: 'FCT',
+      location_text: '17th Street, Downtown Denver, CO',
+      city: 'Denver',
+      state_region: 'CO',
       status: 'open'
     },
     {
       clientIndex: 3,
-      title: 'Boutique Hydrothermal Wellness Spa & Eco-Resort, Port Harcourt Waterfront',
+      title: 'Boutique Hydrothermal Wellness Spa & Eco-Resort, Pacific Coast',
       category: 'Hospitality',
-      subcategory: 'Boutique Hotel & Spa',
-      description: 'Tactile architectural master plan for a 36-key eco-conscious riverfront resort with subterranean salt-water pools and sustainable timber framing.',
+      subcategory: 'Hotel',
+      description: 'Tactile architectural master plan for a 36-key eco-conscious coastal resort with subterranean mineral pools and sustainable timber framing.',
       budget: 95000,
       payment_type: 'hourly',
       hourly_rate_max: 95.0,
       timeline_days: 120,
       deadline: '2026-11-20',
       area_sqft: 8500,
-      location_text: 'Bonny River Waterfront, Port Harcourt',
-      city: 'Port Harcourt',
-      state_region: 'Rivers State',
+      location_text: 'Highway 1, Big Sur, CA',
+      city: 'Big Sur',
+      state_region: 'CA',
       status: 'open'
     },
     {
       clientIndex: 2,
-      title: 'Traditional Terracotta Civic Cultural Center & Amphitheater, Kano',
-      category: 'Civic',
-      subcategory: 'Cultural Center',
-      description: '600-seat civic performance theater utilizing locally sourced compressed earth blocks, passive solar chimneys, and acoustic courtyard geometries.',
+      title: 'Civic Cultural Center & Performance Amphitheater, Chicago Loop',
+      category: 'Institutional',
+      subcategory: 'Cultural',
+      description: '600-seat civic performance theater utilizing acoustic masonry, passive solar chimneys, and sheltered public courtyard geometries.',
       budget: 140000,
       payment_type: 'milestone',
       timeline_days: 180,
       deadline: '2026-12-05',
       area_sqft: 14200,
-      location_text: 'Nasarawa GRA, Kano',
-      city: 'Kano',
-      state_region: 'Kano State',
+      location_text: 'Michigan Avenue, Chicago, IL',
+      city: 'Chicago',
+      state_region: 'IL',
       status: 'open'
     },
     {
       clientIndex: 0,
-      title: 'Private Sky Penthouse Solarium & Urban Rooftop Garden, Victoria Island',
-      category: 'Landscape',
-      subcategory: 'Penthouse Garden',
-      description: 'Multi-tiered rooftop garden atop a 14-story residential tower. Verification of dead-load capacity, automated drip irrigation, and sea-breeze wind deflectors.',
+      title: 'Private Sky Penthouse Solarium & Urban Rooftop Garden, San Francisco',
+      category: 'Residential',
+      subcategory: 'Multifamily',
+      description: 'Multi-tiered rooftop garden atop a 14-story residential tower. Verification of dead-load capacity, automated drip irrigation, and wind deflectors.',
       budget: 48000,
       payment_type: 'milestone',
       timeline_days: 84,
       deadline: '2026-11-15',
       area_sqft: 3400,
-      location_text: 'Ahmadu Bello Way, Victoria Island, Lagos',
-      city: 'Lagos',
-      state_region: 'Lagos State',
+      location_text: 'Mission Bay, San Francisco, CA',
+      city: 'San Francisco',
+      state_region: 'CA',
       status: 'open'
     },
     {
       clientIndex: 1,
-      title: 'Luxury Hilltop Contemporary Chalet & Retreat, Asokoro Abuja',
+      title: 'Luxury Hilltop Contemporary Chalet & Retreat, Aspen Colorado',
       category: 'Residential',
-      subcategory: 'Private Estate',
+      subcategory: 'Custom home',
       description: 'Panoramic mountain view 6-bedroom estate with cantilevered basalt stone living volume, solar battery microgrid, and subterranean wine cellar.',
       budget: 210000,
       payment_type: 'milestone',
       timeline_days: 210,
       deadline: '2026-12-20',
       area_sqft: 11500,
-      location_text: 'Asokoro Extension, Abuja',
-      city: 'Abuja',
-      state_region: 'FCT',
+      location_text: 'Red Mountain Road, Aspen, CO',
+      city: 'Aspen',
+      state_region: 'CO',
       status: 'open'
     },
     {
       clientIndex: 3,
-      title: 'Pediatric Medical Specialist Clinic & Diagnostic Pavilion, GRA Port Harcourt',
-      category: 'Commercial',
-      subcategory: 'Healthcare Architecture',
+      title: 'Pediatric Medical Specialist Clinic & Diagnostic Pavilion, San Jose',
+      category: 'Healthcare',
+      subcategory: 'Clinic',
       description: 'Specialized healthcare pavilion with sensory pediatric waiting courtyards, sterile cleanrooms, and daylight-integrated radiology suite.',
       budget: 115000,
       payment_type: 'hourly',
@@ -254,80 +254,80 @@ async function seedPhase2() {
       timeline_days: 150,
       deadline: '2026-11-30',
       area_sqft: 7200,
-      location_text: 'Phase 2 GRA, Port Harcourt',
-      city: 'Port Harcourt',
-      state_region: 'Rivers State',
+      location_text: 'Santana Row, San Jose, CA',
+      city: 'San Jose',
+      state_region: 'CA',
       status: 'open'
     },
     {
       clientIndex: 2,
-      title: 'Heritage Courtyard Boutique Hotel & Textile Gallery, Zaria Road',
+      title: 'Heritage Courtyard Boutique Hotel & Art Gallery, Austin Historic District',
       category: 'Hospitality',
-      subcategory: 'Heritage Hotel',
+      subcategory: 'Hotel',
       description: 'Adaptive reuse of mid-century architectural compound into a 24-key boutique heritage hotel with central shaded fountain courts.',
       budget: 82000,
       payment_type: 'milestone',
       timeline_days: 110,
       deadline: '2026-11-22',
       area_sqft: 6100,
-      location_text: 'Zaria Road, Kano',
-      city: 'Kano',
-      state_region: 'Kano State',
+      location_text: 'South Congress Avenue, Austin, TX',
+      city: 'Austin',
+      state_region: 'TX',
       status: 'open'
     },
     {
       clientIndex: 0,
-      title: 'Atlantic View Modular Container Co-Working Space, Lekki Phase 1',
+      title: 'Modular Tech Co-Working Creative Campus, Boulder',
       category: 'Commercial',
-      subcategory: 'Creative Studio',
+      subcategory: 'Office',
       description: 'Low-carbon modular upcycled steel container creative campus with open-air amphitheater and sustainable rainwater catchment.',
       budget: 65000,
       payment_type: 'milestone',
       timeline_days: 90,
       deadline: '2026-10-31',
       area_sqft: 4500,
-      location_text: 'Admiralty Way, Lekki Phase 1, Lagos',
-      city: 'Lagos',
-      state_region: 'Lagos State',
+      location_text: 'Pearl Street, Boulder, CO',
+      city: 'Boulder',
+      state_region: 'CO',
       status: 'awarded' // Awarded project requirement
     },
     {
       clientIndex: 1,
-      title: 'Eco-Sustainable Residential Farmstead Villa, Keffi Corridor',
+      title: 'Eco-Sustainable Residential Homestead Villa, Texas Hill Country',
       category: 'Residential',
-      subcategory: 'Farmhouse Villa',
+      subcategory: 'Single-family home',
       description: 'Permaculture integrated off-grid family homestead featuring rammed earth thermal walls, natural pool, and solar pergola.',
       budget: 90000,
       payment_type: 'milestone',
       timeline_days: 130,
       deadline: '2026-10-15',
       area_sqft: 5200,
-      location_text: 'Keffi Road, Abuja Outskirts',
-      city: 'Abuja',
-      state_region: 'Nasarawa / FCT',
+      location_text: 'Dripping Springs, TX',
+      city: 'Dripping Springs',
+      state_region: 'TX',
       status: 'closed' // Closed project requirement
     },
     {
       clientIndex: 2,
-      title: 'Suburban Villa Expansion & Structural Renovation Concept, Bompai',
+      title: 'Suburban Villa Expansion & Structural Renovation Concept, Naperville',
       category: 'Residential',
-      subcategory: 'Villa Renovation',
+      subcategory: 'Home addition or remodel',
       description: 'Draft design package for structural underpinning and modern steel pavilion extension to a historic suburban residence.',
       budget: 45000,
       payment_type: 'milestone',
       timeline_days: 60,
       deadline: '2026-12-01',
       area_sqft: 2800,
-      location_text: 'Bompai GRA, Kano',
-      city: 'Kano',
-      state_region: 'Kano State',
+      location_text: 'Naperville Historic District, IL',
+      city: 'Naperville',
+      state_region: 'IL',
       status: 'draft' // Draft project 1
     },
     {
       clientIndex: 3,
-      title: 'Industrial Marina Operations Headquarters & Yacht Club Concept',
-      category: 'Commercial',
-      subcategory: 'Maritime Commercial',
+      title: 'Industrial Logistics Operations Headquarters & Marine Facility Concept, Seattle',
+      category: 'Industrial',
+      subcategory: 'Logistics',
       description: 'Draft feasibility package for a dual-purpose maritime logistics office and private yacht basin lounge.',
       budget: 130000,
       payment_type: 'hourly',
@@ -335,9 +335,9 @@ async function seedPhase2() {
       timeline_days: 160,
       deadline: '2026-12-10',
       area_sqft: 9800,
-      location_text: 'Trans-Amadi Industrial Layout, Port Harcourt',
-      city: 'Port Harcourt',
-      state_region: 'Rivers State',
+      location_text: 'Port of Seattle Industrial Area, WA',
+      city: 'Seattle',
+      state_region: 'WA',
       status: 'draft' // Draft project 2
     }
   ];
@@ -444,7 +444,7 @@ async function seedPhase2() {
         project_id: openProjects[0].id,
         designer_id: completeDesigner.id,
         status: 'pending',
-        cover_letter: 'Chief Johnson, our studio specializes in cantilevered waterfront residences. Having reviewed your site brief, our post-tensioned floor plate methodology will maximize ocean views while remaining within setback restrictions.',
+        cover_letter: 'Marcus, our studio specializes in cantilevered waterfront residences. Having reviewed your site brief, our post-tensioned floor plate methodology will maximize lake views while remaining within setback restrictions.',
         total_price: 120000,
         currency: 'USD',
         delivery_days: 140,
@@ -460,7 +460,7 @@ async function seedPhase2() {
         project_id: openProjects[1].id,
         designer_id: completeDesigner.id,
         status: 'viewed',
-        cover_letter: 'Dr. Okonjo, we propose a climate-responsive central atrium design with solar chimneys for natural thermal stack ventilation. Attached are 3 mass timber projects from our portfolio.',
+        cover_letter: 'Dr. Vance, we propose a climate-responsive central atrium design with solar chimneys for natural thermal stack ventilation. Attached are 3 mass timber projects from our portfolio.',
         total_price: 180000,
         currency: 'USD',
         delivery_days: 190,
@@ -497,7 +497,7 @@ async function seedPhase2() {
         project_id: openProjects[0].id,
         designer_id: otherDesigner.id,
         status: 'declined',
-        cover_letter: 'Chief Johnson, we propose a modular prefabricated concrete villa system for your Banana Island estate.',
+        cover_letter: 'Marcus, we propose a modular prefabricated concrete villa system for your Lake Travis estate.',
         total_price: 135000,
         currency: 'USD',
         delivery_days: 150,
@@ -516,7 +516,7 @@ async function seedPhase2() {
         project_id: openProjects[3].id,
         designer_id: completeDesigner.id,
         status: 'withdrawn',
-        cover_letter: 'Alhaji Sanusi, we have developed civic amphitheater spaces with earthen brick vaults across Northern Nigeria.',
+        cover_letter: 'David, we have developed civic amphitheater spaces with acoustic masonry vaults across major US metropolitan centers.',
         total_price: 138000,
         currency: 'USD',
         delivery_days: 175,
@@ -538,4 +538,3 @@ seedPhase2().catch(err => {
   console.error('Seed script error:', err);
   process.exit(1);
 });
-
