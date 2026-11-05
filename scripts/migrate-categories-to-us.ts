@@ -234,7 +234,7 @@ export async function migrateCategoriesToUs(options: { dryRun?: boolean } = {}) 
   try {
     const { data: designers, error: dErr } = await adminClient
       .from('designer_profiles')
-      .select('id, user_id, specializations');
+      .select('user_id, specializations');
 
     if (dErr) {
       console.error('Error fetching designer profiles:', dErr.message);
@@ -256,7 +256,7 @@ export async function migrateCategoriesToUs(options: { dryRun?: boolean } = {}) 
                 specializations: newSpecs,
                 updated_at: new Date().toISOString()
               })
-              .eq('id', d.id);
+              .eq('user_id', d.user_id);
           }
           designersUpdated++;
         }
