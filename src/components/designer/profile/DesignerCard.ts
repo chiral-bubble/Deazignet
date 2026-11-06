@@ -6,6 +6,7 @@
  */
 
 import type { DesignerProfile } from '../../../services/designerProfileService';
+import { formatMoney } from '../../../utils/formatters';
 
 export function renderDesignerCard(designer: DesignerProfile, isSaved: boolean = false): string {
   const isVerified = (designer.credentials || []).some((c) => c.status === 'verified');
@@ -93,7 +94,7 @@ export function renderDesignerCard(designer: DesignerProfile, isSaved: boolean =
         <div class="dez-dcard-rate">
           ${
             showRate
-              ? `<span class="dez-rate-prefix">From</span> <strong>$${designer.hourlyRate}</strong><span class="dez-rate-suffix">/hr</span>`
+              ? `<span class="dez-rate-prefix">From</span> <strong>${formatMoney(designer.hourlyRate || 0)}</strong><span class="dez-rate-suffix">/hr</span>`
               : `<span class="dez-rate-prefix" style="color: #6B7280; font-size: 12px;">Available for commissions</span>`
           }
         </div>

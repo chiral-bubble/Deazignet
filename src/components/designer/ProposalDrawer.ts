@@ -283,7 +283,7 @@ export function initProposalDrawer(
             style="width:180px"
           />
           <span style="font-size:13px; color:var(--dez-text-muted); margin-top:4px;">
-            Calculated total estimated cost: <strong id="dez-hourly-calc-total">$${hourlyTotal.toLocaleString()}</strong>
+            Calculated total estimated cost: <strong id="dez-hourly-calc-total">${formatUSD(hourlyTotal)}</strong>
           </span>
         </div>
       `;
@@ -395,7 +395,7 @@ export function initProposalDrawer(
       formData.estimatedHours = parseInt(hoursInput?.value || '0', 10);
       formData.proposedTotal = formData.hourlyRate * formData.estimatedHours;
       const calcTotal = body.querySelector('#dez-hourly-calc-total');
-      if (calcTotal) calcTotal.textContent = `$${formData.proposedTotal.toLocaleString()}`;
+      if (calcTotal) calcTotal.textContent = formatUSD(formData.proposedTotal);
       autosave();
     };
     hourlyRateInput?.addEventListener('input', updateHourly);
@@ -506,7 +506,7 @@ export function initProposalDrawer(
           <span class="dez-edit-step-link" id="dez-edit-step-1">Edit</span>
         </div>
         <div style="font-size:13px; color:var(--dez-text-secondary); display:flex; flex-direction:column; gap:4px;">
-          <div>Proposed Total Price: <strong style="color:var(--dez-text-primary);">$${formData.proposedTotal.toLocaleString()}</strong></div>
+          <div>Proposed Total Price: <strong style="color:var(--dez-text-primary);">${formatUSD(formData.proposedTotal)}</strong></div>
           <div>Engagement Mode: <strong>${project.paymentType}</strong></div>
           <div>Estimated Delivery: <strong>${formData.deliveryTime}</strong></div>
         </div>
@@ -562,7 +562,7 @@ export function initProposalDrawer(
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size: 13px;">
           <span style="color: #475569;">Client Total Escrow Deposit:</span>
-          <strong style="color: #0F172A;">$${formData.proposedTotal.toLocaleString()}</strong>
+          <strong style="color: #0F172A;">${formatUSD(formData.proposedTotal)}</strong>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size: 13px; color: #64748B;">
           <span>Platform service fee (${feeCalc.rate_percent}%):</span>

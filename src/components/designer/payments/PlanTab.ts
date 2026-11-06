@@ -102,7 +102,7 @@ export async function initPlanTab(
                 
                 <div style="margin-bottom: 20px;">
                   <span class="dez-tabular-num" style="font-size: 28px; font-weight: 700; color: #111827;">
-                    ${tier.id === 'free' ? '$0' : `$${price.toFixed(2)}`}
+                    ${tier.id === 'free' ? '$0' : formatUSD(price)}
                   </span>
                   <span style="font-size: 13px; color: #6B7280; margin-left: 4px;">${billingSuffix}</span>
                 </div>

@@ -196,7 +196,7 @@ export function initWithdrawModal(
 
     if (isNaN(amt) || amt < min) {
       if (errAmount) {
-        errAmount.textContent = `Minimum withdrawal amount is $${min.toFixed(2)}.`;
+        errAmount.textContent = `Minimum withdrawal amount is ${formatMoney(min)}.`;
         errAmount.style.display = 'block';
       }
       valid = false;

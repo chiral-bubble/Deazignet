@@ -58,6 +58,8 @@ import {
   renderTableSkeleton
 } from './Skeletons';
 
+import { formatMoney } from '../../../utils/formatters';
+
 export interface DesignerDashboardCallbacks {
   onNavigateTab: (tab: string, meta?: any) => void;
   onShowToast: (title: string, message: string, type?: 'success' | 'info' | 'error') => void;
@@ -628,7 +630,7 @@ export async function initDesignerDashboard(
   function openWithdrawModal(available: number) {
     if (!withdrawBackdrop) return;
     currentWithdrawMax = available;
-    withdrawAvailElem.textContent = `$${available.toLocaleString()}`;
+    withdrawAvailElem.textContent = formatMoney(available);
     withdrawAmountInput.value = available > 0 ? available.toString() : '0';
     withdrawAmountInput.max = available.toString();
     if (withdrawErrorElem) withdrawErrorElem.style.display = 'none';
@@ -673,7 +675,7 @@ export async function initDesignerDashboard(
 
     if (amount > currentWithdrawMax) {
       if (withdrawErrorElem) {
-        withdrawErrorElem.textContent = `Amount cannot exceed your available balance of $${currentWithdrawMax.toLocaleString()}.`;
+        withdrawErrorElem.textContent = `Amount cannot exceed your available balance of ${formatMoney(currentWithdrawMax)}.`;
         withdrawErrorElem.style.display = 'block';
       }
       withdrawAmountInput.focus();

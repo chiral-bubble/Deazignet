@@ -101,18 +101,31 @@ export async function fetchUserRole(userId: string): Promise<{
  */
 export async function initAuth(): Promise<AuthState> {
   if (USE_MOCKS.auth) {
-    // Mock user fallback
-    currentAuthState = {
-      user: {
-        id: 'des-alexandre',
-        email: 'alexandre.sterling@dezignet.studio',
-        fullName: 'Alexandre Sterling',
-        role: 'designer',
+    const forcedRole = (typeof localStorage !== 'undefined' ? localStorage.getItem('dezignet_mock_role') : null) as UserRole | 'anonymous' | null;
+    if (forcedRole === 'anonymous') {
+      currentAuthState = {
+        user: null,
+        session: null,
+        isLoading: false,
+        role: null,
         onboardingCompleted: true
-      },
-      session: { mock: true },
+      };
+      notifyListeners();
+      return currentAuthState;
+    }
+    const role: UserRole = (forcedRole === 'client' || forcedRole === 'admin' || forcedRole === 'designer') ? forcedRole : 'designer';
+    const mockUser: AuthUser = {
+      id: role === 'designer' ? 'des-alexandre' : role === 'admin' ? 'admin-1' : 'client-1',
+      email: role === 'designer' ? 'alexandre.sterling@dezignet.studio' : role === 'admin' ? 'admin@dezignet.com' : 'partner.client@dezignet.com',
+      fullName: role === 'designer' ? 'Alexandre Sterling' : role === 'admin' ? 'System Administrator' : 'Dr. Eleanor Vance',
+      role,
+      onboardingCompleted: true
+    };
+    currentAuthState = {
+      user: mockUser,
+      session: { mock: true, user: mockUser },
       isLoading: false,
-      role: 'designer',
+      role,
       onboardingCompleted: true
     };
     notifyListeners();

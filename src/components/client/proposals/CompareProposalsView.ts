@@ -12,6 +12,7 @@ import {
   type DetailedProposal
 } from '../../../services/clientProposalsService';
 import { renderClientShell, initClientShell } from '../ClientLayout';
+import { formatMoney } from '../../../utils/formatters';
 
 export async function renderCompareProposalsView(container: HTMLElement, projectId: string, proposalIds: string[]): Promise<void> {
   container.innerHTML = renderClientShell(
@@ -122,7 +123,7 @@ function renderMatrix(mount: HTMLElement, projectId: string, proposals: Detailed
             </td>
             ${proposals.map((p) => `
               <td style="padding: 14px 16px; font-variant-numeric: tabular-nums;">
-                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">$${p.total_price.toLocaleString()}</div>
+                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${formatMoney(p.total_price)}</div>
                 <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">
                   ${p.price_diff_percent < 0 ? `${Math.abs(p.price_diff_percent)}% below budget` : p.price_diff_percent > 0 ? `${p.price_diff_percent}% above budget` : 'Matches budget'}
                 </div>

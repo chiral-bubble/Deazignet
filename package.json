@@ -10,6 +10,7 @@
     "staging:reset": "npx tsx scripts/seed-staging.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/pg": "^8.23.1",
     "tsx": "^4.23.15",
     "typescript": "~7.0.2",

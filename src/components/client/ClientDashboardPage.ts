@@ -18,6 +18,7 @@ import { getClientDashboard, type ClientDashboardData } from '../../services/pro
 import { supabase } from '../../lib/supabase';
 import { renderClientShell, initClientShell } from './ClientLayout';
 import { suggestDesigners, inviteDesigner } from '../../services/invitationsService';
+import { formatMoney } from '../../utils/formatters';
 
 export async function renderClientDashboardPage(container: HTMLElement): Promise<void> {
   const actionButton = `
@@ -164,7 +165,7 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
         <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px;">
           <div style="font-size: 13px; font-weight: 500; color: #6B7280;">Funds in Escrow</div>
           <div style="font-size: 28px; font-weight: 700; color: #2F7BE5; margin: 4px 0 2px; font-variant-numeric: tabular-nums;">
-            $${Number(data.summary.funds_in_escrow || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${formatMoney(data.summary.funds_in_escrow || 0)}
           </div>
           <div style="font-size: 12px; color: #6B7280;">Secured for current milestones</div>
         </div>
@@ -233,7 +234,7 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
                         <div style="text-align: right;">
                           <span style="font-size: 12px; color: #6B7280;">In Escrow</span>
                           <div style="font-weight: 700; color: #2F7BE5; font-size: 14px; font-variant-numeric: tabular-nums;">
-                            $${Number(ap.escrow_amount || 0).toLocaleString()}
+                            ${formatMoney(ap.escrow_amount || 0)}
                           </div>
                         </div>
                       </div>

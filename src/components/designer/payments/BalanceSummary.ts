@@ -67,7 +67,7 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
               !hasPayoutAccount
                 ? `<span class="dez-balance-warn-text">No payout account linked yet. <button type="button" class="dez-inline-link-btn" id="btn-jump-add-payout">Add payout bank account</button> to enable transfers.</span>`
                 : balances.availableToWithdraw < minWithdrawal
-                ? `<span class="dez-balance-muted-text">Minimum withdrawal amount is $${minWithdrawal.toFixed(2)}.</span>`
+                ? `<span class="dez-balance-muted-text">Minimum withdrawal amount is ${formatMoney(minWithdrawal)}.</span>`
                 : `<span class="dez-balance-success-text">Funds are ready for settlement &bull; Direct deposits & ACH transfer in 1–2 business days</span>`
             }
           </div>

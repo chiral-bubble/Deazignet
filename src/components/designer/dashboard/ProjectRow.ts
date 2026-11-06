@@ -5,6 +5,7 @@
  */
 
 import type { ActiveProject } from '../../../services/designerDashboardService';
+import { formatMoney } from '../../../utils/formatters';
 
 export function renderProjectRow(project: ActiveProject): string {
   const isMilestone = project.paymentType === 'Milestone';
@@ -13,7 +14,7 @@ export function renderProjectRow(project: ActiveProject): string {
   const completedCount = project.completedMilestonesCount || 0;
   const totalCount = project.totalMilestonesCount || 1;
   const progressPercent = Math.round((completedCount / totalCount) * 100);
-  const escrowFormatted = project.escrowCurrentMilestone ? `$${project.escrowCurrentMilestone.toLocaleString()}` : '$0';
+  const escrowFormatted = project.escrowCurrentMilestone ? formatMoney(project.escrowCurrentMilestone) : '$0.00';
 
   // Status text AA contrast color class
   let statusTextClass = 'dez-status-awaiting';
@@ -118,11 +119,11 @@ export function renderProjectRow(project: ActiveProject): string {
                 </div>
                 <div class="dez-mfact-item">
                   <span class="dez-mfact-label">Hourly rate</span>
-                  <strong class="dez-mfact-val dez-num-tabular">$${project.hourlyRate} / hr</strong>
+                  <strong class="dez-mfact-val dez-num-tabular">${formatMoney(project.hourlyRate || 0)} / hr</strong>
                 </div>
                 <div class="dez-mfact-item">
                   <span class="dez-mfact-label">Amount to invoice</span>
-                  <strong class="dez-mfact-val dez-num-tabular">$${(project.unbilledAmount || 0).toLocaleString()}</strong>
+                  <strong class="dez-mfact-val dez-num-tabular">${formatMoney(project.unbilledAmount || 0)}</strong>
                 </div>
                 <div class="dez-mfact-item">
                   <span class="dez-mfact-label">All-time logged</span>

@@ -20,6 +20,7 @@ import { renderProjectLightboxModal, initProjectLightboxModal } from './ProjectL
 import { supabase } from '../../../lib/supabase';
 import { getAuthState } from '../../../services/authService';
 import { inviteDesigner } from '../../../services/invitationsService';
+import { formatMoney } from '../../../utils/formatters';
 
 export function renderPublicProfile(
   designer: DesignerProfile,
@@ -288,7 +289,7 @@ export function renderPublicProfile(
                   ? `
                 <div class="dez-pub-detail-row">
                   <span class="dez-detail-label">Hourly rate</span>
-                  <span class="dez-detail-value"><strong>$${designer.hourlyRate}/hr</strong></span>
+                  <span class="dez-detail-value"><strong>${formatMoney(designer.hourlyRate)}/hr</strong></span>
                 </div>
               `
                   : ''

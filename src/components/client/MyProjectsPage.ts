@@ -13,6 +13,7 @@ import {
   deleteProject
 } from '../../services/projectsService';
 import { renderClientShell, initClientShell } from './ClientLayout';
+import { formatMoney } from '../../utils/formatters';
 
 export async function renderMyProjectsPage(container: HTMLElement): Promise<void> {
   const actionButton = `
@@ -168,7 +169,7 @@ function renderProjectsList(container: HTMLElement, projects: any[], categories:
           <tbody>
             ${filteredList.map((p) => {
               const statusBadge = getStatusBadge(p.status);
-              const budgetFormatted = p.design_budget ? `$${Number(p.design_budget).toLocaleString()}` : (p.hourly_rate_max ? `$${p.hourly_rate_max}/hr` : '—');
+              const budgetFormatted = p.design_budget ? formatMoney(Number(p.design_budget)) : (p.hourly_rate_max ? `${formatMoney(p.hourly_rate_max)}/hr` : '—');
               const proposalCount = p.proposal_count || 0;
               const dateFormatted = new Date(p.updated_at || p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
               

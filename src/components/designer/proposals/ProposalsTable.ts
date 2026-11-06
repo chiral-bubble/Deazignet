@@ -72,7 +72,7 @@ function renderTableRow(p: SharedProposal): string {
         ${p.sentDate}
       </td>
       <td class="dez-tabular-num" style="padding: 14px 16px; text-align: right; font-weight: 600; color: #111827;">
-        ${isHourly ? `$${p.proposedPrice}/hr` : `${formatMoney(p.proposedPrice)}`}
+        ${formatMoney(p.proposedPrice)}${isHourly ? '/hr' : ''}
       </td>
       <td class="dez-tabular-num" style="padding: 14px 16px; text-align: right; color: #6B7280;">
         ${formatMoney(p.clientBudget)}
@@ -112,7 +112,7 @@ function renderMobileCard(p: SharedProposal): string {
       <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 10px; font-size: 13px;">
         <div>
           <span style="color: #6B7280;">Offer:</span>
-          <strong class="dez-tabular-num" style="color: #111827;">${isHourly ? `$${p.proposedPrice}/hr` : `${formatMoney(p.proposedPrice)}`}</strong>
+          <strong class="dez-tabular-num" style="color: #111827;">${formatMoney(p.proposedPrice)}${isHourly ? '/hr' : ''}</strong>
         </div>
         <a href="#proposals/${p.id}" class="dez-btn-secondary" style="height: 30px; font-size: 12px; padding: 0 12px; text-decoration: none; display: inline-flex; align-items: center;">
           View details

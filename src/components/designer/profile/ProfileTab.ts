@@ -149,13 +149,19 @@ export function renderProfileTab(profile: DesignerProfile): string {
         <div class="dez-form-group" style="margin-top: 20px;">
           <label class="dez-label">Specializations <span class="dez-opt">(Select all that apply)</span></label>
           <div class="dez-spec-chips-wrap" id="specializations-container">
-            ${AVAILABLE_SPECIALIZATIONS.map(
-              (spec) => `
-              <button type="button" class="dez-chip-select ${selectedSpecs.has(spec) ? 'is-selected' : ''}" data-spec="${spec}">
+            ${AVAILABLE_SPECIALIZATIONS.map((spec) => {
+              const isSel = selectedSpecs.has(spec);
+              return `
+              <button 
+                type="button" 
+                class="dez-chip-select ${isSel ? 'is-selected' : ''}" 
+                data-spec="${spec}"
+                style="${isSel ? 'background: #2F7BE5 !important; border-color: #2F7BE5 !important; color: #FFFFFF !important; font-weight: 600;' : 'background: #FFFFFF; border: 1px solid #E5E7EB; color: #4B5563; font-weight: 500;'}"
+              >
                 ${spec}
               </button>
-            `
-            ).join('')}
+            `;
+            }).join('')}
           </div>
           <div class="dez-field-error" id="err-prof-specs"></div>
         </div>
@@ -389,9 +395,17 @@ export function initProfileTab(
       if (selectedSpecializations.has(spec)) {
         selectedSpecializations.delete(spec);
         btn.classList.remove('is-selected');
+        btn.style.setProperty('background', '#FFFFFF', 'important');
+        btn.style.setProperty('border', '1px solid #E5E7EB', 'important');
+        btn.style.setProperty('color', '#4B5563', 'important');
+        btn.style.fontWeight = '500';
       } else {
         selectedSpecializations.add(spec);
         btn.classList.add('is-selected');
+        btn.style.setProperty('background', '#2F7BE5', 'important');
+        btn.style.setProperty('border', '1px solid #2F7BE5', 'important');
+        btn.style.setProperty('color', '#FFFFFF', 'important');
+        btn.style.fontWeight = '600';
       }
     });
   });

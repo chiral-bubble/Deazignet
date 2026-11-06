@@ -16,6 +16,7 @@
 import { getMyProject, closeProject, addProjectUpdate, extendDeadline, type ClientProjectDetail } from '../../services/projectsService';
 import { renderProjectProposalsTab, initProjectProposalsTab } from './proposals/ProjectProposalsTab';
 import { renderContractTab, initContractTab } from '../common/contract/ContractView';
+import { formatMoney } from '../../utils/formatters';
 import {
   getEngagement,
   approveMilestone,
@@ -182,25 +183,25 @@ function renderProjectView(
               <div>
                 <span style="font-size: 12px; color: #6B7280; display: block;">Contract Value</span>
                 <span style="font-size: 18px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums;">
-                  $${contractValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${formatMoney(contractValue)}
                 </span>
               </div>
               <div>
                 <span style="font-size: 12px; color: #6B7280; display: block;">In Escrow</span>
                 <span style="font-size: 18px; font-weight: 700; color: #2F7BE5; font-variant-numeric: tabular-nums;">
-                  $${inEscrow.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${formatMoney(inEscrow)}
                 </span>
               </div>
               <div>
                 <span style="font-size: 12px; color: #6B7280; display: block;">Released to Designer</span>
                 <span style="font-size: 18px; font-weight: 700; color: #059669; font-variant-numeric: tabular-nums;">
-                  $${released.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${formatMoney(released)}
                 </span>
               </div>
               <div>
                 <span style="font-size: 12px; color: #6B7280; display: block;">Remaining Unfunded</span>
                 <span style="font-size: 18px; font-weight: 700; color: #4B5563; font-variant-numeric: tabular-nums;">
-                  $${remaining.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ${formatMoney(remaining)}
                 </span>
               </div>
             </div>
@@ -273,10 +274,10 @@ function renderProjectView(
 
   function renderOverviewTab(): string {
     const budgetFormatted = project.design_budget
-      ? `$${Number(project.design_budget).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : (project.hourly_rate_max ? `$${project.hourly_rate_max}/hr max` : 'Not specified');
+      ? formatMoney(Number(project.design_budget))
+      : (project.hourly_rate_max ? `${formatMoney(project.hourly_rate_max)}/hr max` : 'Not specified');
     const costFormatted = project.construction_cost_estimate
-      ? `$${Number(project.construction_cost_estimate).toLocaleString()}`
+      ? formatMoney(Number(project.construction_cost_estimate))
       : 'Not provided';
     const priv = detail.privateDetails;
 
@@ -305,7 +306,7 @@ function renderProjectView(
                 `).join('')}
               </div>
             ` : `
-              <p style="font-size: 13px; color: #374151;">Hourly billing engagement capped at maximum $${project.hourly_rate_max}/hour.</p>
+              <p style="font-size: 13px; color: #374151;">Hourly billing engagement capped at maximum ${formatMoney(project.hourly_rate_max)}/hour.</p>
             `}
           </div>
 
@@ -507,7 +508,7 @@ function renderProjectView(
                       </div>
                       <div style="font-size: 12px; color: #6B7280;">
                         ${m.deliverables?.length ? `${m.deliverables.length} deliverables • ` : ''}
-                        Fee: <strong>${m.feePercent}%</strong> ($${m.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                        Fee: <strong>${m.feePercent}%</strong> (${formatMoney(m.amount)})
                       </div>
                     </div>
                   </div>
@@ -706,7 +707,7 @@ function renderProjectView(
           return;
         }
 
-        if (confirm(`Fund this milestone with $${Number(amount).toLocaleString()}? Funds will be placed in secure escrow.`)) {
+        if (confirm(`Fund this milestone with ${formatMoney(Number(amount))}? Funds will be placed in secure escrow.`)) {
           try {
             await devFundMilestone(mId);
             renderClientProjectDetailsPage(container, project.id, 'milestones');
@@ -732,7 +733,7 @@ function renderProjectView(
         <div style="background: #FFFFFF; border-radius: 8px; width: 100%; max-width: 480px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
           <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 10px;">Approve Deliverables</h3>
           <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px; margin-bottom: 16px; font-size: 13px; line-height: 1.5; color: #374151;">
-            <strong>${escapeHtml(milestoneName)}</strong> • $${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <strong>${escapeHtml(milestoneName)}</strong> • ${formatMoney(amount)}
           </div>
           <p style="font-size: 13px; color: #6B7280; line-height: 1.5; margin: 0 0 16px;">
             By approving, you confirm these deliverables satisfy the agreed scope. A standard 5-day security hold applies before escrow funds are released to the designer.

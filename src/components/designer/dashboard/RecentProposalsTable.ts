@@ -7,6 +7,7 @@
 
 import type { RecentProposalItem } from '../../../services/designerDashboardService';
 import { renderEmptyState } from './EmptyState';
+import { formatMoney } from '../../../utils/formatters';
 
 function getStatusChipClass(status: RecentProposalItem['status']): string {
   switch (status) {
@@ -67,7 +68,7 @@ export function renderRecentProposalsTable(proposals: RecentProposalItem[]): str
                               <span class="dez-p-date-text">${p.sentDate}</span>
                             </td>
                             <td class="dez-td-price">
-                              <span class="dez-num-tabular dez-p-price-text">$${p.proposedPrice.toLocaleString()}</span>
+                              <span class="dez-num-tabular dez-p-price-text">${formatMoney(p.proposedPrice)}</span>
                             </td>
                             <td class="dez-td-status">
                               <span class="dez-status-chip ${getStatusChipClass(p.status)}">${p.status}</span>

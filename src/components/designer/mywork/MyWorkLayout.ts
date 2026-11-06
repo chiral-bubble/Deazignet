@@ -181,7 +181,7 @@ function renderActiveProjectsList(
               `
                   : `
                 <div style="margin-top: 18px; padding-top: 16px; border-top: 1px solid #F3F4F6; display: flex; gap: 24px; font-size: 13px; color: #4B5563;">
-                  <div>Rate: <strong>$${p.hourlyRate || 0}/hr</strong></div>
+                  <div>Rate: <strong>${formatMoney(p.hourlyRate || 0)}/hr</strong></div>
                   <div>Logged this week: <strong>${p.hoursThisWeek || 0} hrs</strong></div>
                   <div>Unbilled earnings: <strong style="color: #059669;">${formatMoney(p.unbilledAmount || 0)}</strong></div>
                 </div>
@@ -394,7 +394,7 @@ function renderWorkspaceTabContent(
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
             <div>
               <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 4px 0;">Weekly Timesheet</h3>
-              <p style="font-size: 13px; color: #6B7280; margin: 0;">Hourly rate: $${project.hourlyRate || 0}/hr</p>
+              <p style="font-size: 13px; color: #6B7280; margin: 0;">Hourly rate: ${formatMoney(project.hourlyRate || 0)}/hr</p>
             </div>
             <button type="button" class="dez-btn-primary" id="btn-ws-log-time" style="height: 36px; padding: 0 16px; font-size: 13px;">
               + Log Billable Time

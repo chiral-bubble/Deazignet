@@ -6,10 +6,11 @@
  */
 
 import type { DesignerSummary } from '../../../services/designerDashboardService';
+import { formatMoney } from '../../../utils/formatters';
 
 export function renderSummaryRow(summary: DesignerSummary): string {
-  const inEscrowFormatted = `$${summary.inEscrowAmount.toLocaleString()}`;
-  const totalEarnedFormatted = `$${summary.totalEarnedAmount.toLocaleString()}`;
+  const inEscrowFormatted = formatMoney(summary.inEscrowAmount);
+  const totalEarnedFormatted = formatMoney(summary.totalEarnedAmount);
 
   return `
     <section class="dez-summary-row" aria-label="Studio Performance Summary">

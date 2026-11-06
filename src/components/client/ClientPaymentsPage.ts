@@ -10,6 +10,7 @@
 
 import { getClientAwaitingMilestones, devFundMilestone, type ClientAwaitingMilestone } from '../../services/projectsService';
 import { renderClientShell, initClientShell } from './ClientLayout';
+import { formatMoney } from '../../utils/formatters';
 
 export async function renderClientPaymentsPage(container: HTMLElement): Promise<void> {
   container.innerHTML = renderClientShell(
@@ -114,7 +115,7 @@ export async function renderClientPaymentsPage(container: HTMLElement): Promise<
                     <tr style="border-bottom: 1px solid #E5E7EB;">
                       <td style="padding: 12px 14px; font-weight: 500; color: #111827;">${escapeHtml(m.projectTitle)}</td>
                       <td style="padding: 12px 14px; color: #4B5563;">${escapeHtml(m.milestoneTitle)}</td>
-                      <td style="padding: 12px 14px; font-variant-numeric: tabular-nums; font-weight: 600; color: #111827;">$${m.amount.toLocaleString()}</td>
+                      <td style="padding: 12px 14px; font-variant-numeric: tabular-nums; font-weight: 600; color: #111827;">${formatMoney(m.amount)}</td>
                       <td style="padding: 12px 14px;">
                         <span style="font-size: 11.5px; padding: 2px 8px; border-radius: 4px; background: #FEF3C7; color: #92400E; font-weight: 500;">
                           Pending Escrow

@@ -8,6 +8,7 @@
  */
 
 import type { DesignerPaymentsSummary } from '../../../services/designerDashboardService';
+import { formatMoney } from '../../../utils/formatters';
 
 export function renderPaymentsPanel(payments: DesignerPaymentsSummary): string {
   const isWithdrawDisabled = payments.availableToWithdraw <= 0;
@@ -26,7 +27,7 @@ export function renderPaymentsPanel(payments: DesignerPaymentsSummary): string {
             <p class="dez-payment-desc">Ready to transfer to linked bank account</p>
           </div>
           <div class="dez-payment-amount dez-num-tabular">
-            $${payments.availableToWithdraw.toLocaleString()}
+            ${formatMoney(payments.availableToWithdraw)}
           </div>
         </div>
 
@@ -39,7 +40,7 @@ export function renderPaymentsPanel(payments: DesignerPaymentsSummary): string {
             <p class="dez-payment-desc">Waiting on client milestone approval</p>
           </div>
           <div class="dez-payment-amount dez-num-tabular">
-            $${payments.pendingRelease.toLocaleString()}
+            ${formatMoney(payments.pendingRelease)}
           </div>
         </div>
 
@@ -52,7 +53,7 @@ export function renderPaymentsPanel(payments: DesignerPaymentsSummary): string {
             <p class="dez-payment-desc">All-time earnings released to date</p>
           </div>
           <div class="dez-payment-amount dez-num-tabular">
-            $${payments.totalEarned.toLocaleString()}
+            ${formatMoney(payments.totalEarned)}
           </div>
         </div>
 

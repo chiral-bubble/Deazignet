@@ -26,6 +26,7 @@ import { FileUploader } from '../common/FileUploader';
 import { renderClientShell, initClientShell } from './ClientLayout';
 import { US_STATES } from '../../services/usMarketService';
 import { suggestDesigners, inviteDesigner } from '../../services/invitationsService';
+import { formatMoney } from '../../utils/formatters';
 
 interface WizardPhaseItem {
   id?: string;
@@ -834,7 +835,7 @@ function initWizardState(
               <div>
                 <h3 style="font-size: 14px; font-weight: 600; color: #111827; margin: 0 0 2px;">Milestone Schedule</h3>
                 <p style="font-size: 12px; color: #6B7280; margin: 0;">
-                  ${hasBudget ? `Design budget: $${state.design_budget.toLocaleString()}` : `<span style="color: #DC2626;">Enter your design budget in step 3 to see amounts</span>`}
+                  ${hasBudget ? `Design budget: ${formatMoney(state.design_budget)}` : `<span style="color: #DC2626;">Enter your design budget in step 3 to see amounts</span>`}
                 </p>
               </div>
 
@@ -996,7 +997,7 @@ function initWizardState(
                       ${totalPercentage.toFixed(2)}%
                     </td>
                     <td style="padding: 12px 14px; color: #111827; font-variant-numeric: tabular-nums; font-size: 14px;">
-                      ${hasBudget ? `$${totalAmount.toLocaleString()}` : '—'}
+                      ${hasBudget ? formatMoney(totalAmount) : '—'}
                     </td>
                     <td></td>
                   </tr>
@@ -1427,7 +1428,7 @@ function initWizardState(
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; padding: 14px; background: #F7F7F8; border-radius: 6px; font-size: 12.5px; margin-bottom: 16px;">
               <div>
                 <span style="color: #6B7280; display: block; font-size: 11px;">Design Budget</span>
-                <span style="font-weight: 700; color: #111827;">$${state.design_budget?.toLocaleString()}</span>
+                <span style="font-weight: 700; color: #111827;">${formatMoney(state.design_budget || 0)}</span>
               </div>
               <div>
                 <span style="color: #6B7280; display: block; font-size: 11px;">Location</span>
@@ -1487,8 +1488,8 @@ function initWizardState(
                 <button type="button" class="btn-jump-step" data-step="3" style="background: none; border: none; color: #2F7BE5; font-size: 12px; font-weight: 500; cursor: pointer;">Edit</button>
               </div>
               <div style="font-size: 12.5px; color: #4B5563; line-height: 1.6;">
-                <div><strong>Design Budget:</strong> $${state.design_budget?.toLocaleString()}</div>
-                ${state.construction_cost_estimate ? `<div><strong>Estimated Construction Cost:</strong> $${state.construction_cost_estimate.toLocaleString()}</div>` : ''}
+                <div><strong>Design Budget:</strong> ${formatMoney(state.design_budget || 0)}</div>
+                ${state.construction_cost_estimate ? `<div><strong>Estimated Construction Cost:</strong> ${formatMoney(state.construction_cost_estimate)}</div>` : ''}
                 <div><strong>Proposal Submission Deadline:</strong> ${state.proposal_deadline}</div>
                 ${state.deadline ? `<div><strong>Target Completion Date:</strong> ${state.deadline}</div>` : ''}
               </div>
@@ -1508,13 +1509,13 @@ function initWizardState(
                   ${checkedPhases.map((p, idx) => `
                     <div style="display: flex; justify-content: space-between; font-size: 12px; color: #374151; padding: 4px 8px; background: #F7F7F8; border-radius: 4px;">
                       <span>${idx + 1}. ${escapeHtml(p.name)}</span>
-                      <span style="font-variant-numeric: tabular-nums;">${p.fee_percent}% ($${p.amount.toLocaleString()})</span>
+                      <span style="font-variant-numeric: tabular-nums;">${p.fee_percent}% (${formatMoney(p.amount)})</span>
                     </div>
                   `).join('')}
                 </div>
               ` : `
                 <div style="font-size: 12.5px; color: #4B5563;">
-                  <strong>Hourly Rate Cap:</strong> $${state.hourly_rate_max}/hr
+                  <strong>Hourly Rate Cap:</strong> ${formatMoney(state.hourly_rate_max || 0)}/hr
                 </div>
               `}
             </div>

@@ -7,6 +7,7 @@
 
 import { PLAN_TIERS, PLAN_FEATURES_COMPARISON } from '../../../config/plansConfig';
 import type { PayoutAccount, InvoiceItem } from '../../../services/designerProfileService';
+import { formatMoney } from '../../../utils/formatters';
 
 export function renderBillingTab(
   currentPlanId: 'free' | 'basic' | 'upgraded',
@@ -173,7 +174,7 @@ export function renderBillingTab(
                 <tr>
                   <td>${inv.date}</td>
                   <td>${inv.description}</td>
-                  <td class="dez-tabular-num">$${inv.amount.toFixed(2)}</td>
+                  <td class="dez-tabular-num">${formatMoney(inv.amount)}</td>
                   <td><span class="dez-status-plain is-verified">${inv.status}</span></td>
                   <td style="text-align: right;">
                     <button type="button" class="dez-link-action" data-action="download-inv" data-inv-id="${inv.id}">
