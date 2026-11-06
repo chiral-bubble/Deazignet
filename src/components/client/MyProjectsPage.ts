@@ -76,48 +76,51 @@ function renderProjectsList(container: HTMLElement, projects: any[], categories:
   const draftCount = projects.filter(p => p.status === 'draft').length;
 
   const summaryHtml = `
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
-      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px;">
-        <div style="font-size: 13px; font-weight: 500; color: #4B5563;">Open Projects</div>
-        <div style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${openCount}</div>
+    <div class="client-dashboard-summary-grid" style="margin-bottom: 24px;">
+      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px 16px;">
+        <div style="font-size: 13px; font-weight: 500; color: #4B5563; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Open Projects</div>
+        <div class="dez-summary-val" style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${openCount}</div>
       </div>
-      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px;">
-        <div style="font-size: 13px; font-weight: 500; color: #4B5563;">Active in Progress</div>
-        <div style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${inProgressCount}</div>
+      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px 16px;">
+        <div style="font-size: 13px; font-weight: 500; color: #4B5563; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Active in Progress</div>
+        <div class="dez-summary-val" style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${inProgressCount}</div>
       </div>
-      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px;">
-        <div style="font-size: 13px; font-weight: 500; color: #4B5563;">Drafts</div>
-        <div style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${draftCount}</div>
+      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px 16px;">
+        <div style="font-size: 13px; font-weight: 500; color: #4B5563; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Drafts</div>
+        <div class="dez-summary-val" style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${draftCount}</div>
       </div>
-      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px;">
-        <div style="font-size: 13px; font-weight: 500; color: #4B5563;">Completed</div>
-        <div style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${completedCount}</div>
+      <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px 16px;">
+        <div style="font-size: 13px; font-weight: 500; color: #4B5563; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Completed</div>
+        <div class="dez-summary-val" style="font-size: 28px; font-weight: 700; color: #111827; margin-top: 4px; font-variant-numeric: tabular-nums;">${completedCount}</div>
       </div>
     </div>
   `;
 
   const filtersHtml = `
-    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-      <div style="display: flex; gap: 12px; flex: 1; max-width: 600px;">
+    <div class="client-filter-bar" style="margin-bottom: 20px;">
+      <div class="client-filter-controls">
         <input
           type="text"
           id="project-search-input"
+          class="client-search-input"
           placeholder="Search projects by title..."
-          style="flex: 1; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; outline: none;"
+          style="flex: 1; min-width: 180px; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; outline: none;"
         />
-        <select id="status-filter" style="height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; background: #FFFFFF; color: #374151;">
-          <option value="all">All Statuses</option>
-          <option value="open">Open</option>
-          <option value="in_progress">In Progress</option>
-          <option value="draft">Draft</option>
-          <option value="completed">Completed</option>
-          <option value="closed">Closed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <select id="category-filter" style="height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; background: #FFFFFF; color: #374151;">
-          <option value="all">All Categories</option>
-          ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-        </select>
+        <div class="client-filter-selects">
+          <select id="status-filter" class="client-filter-select" style="height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF; color: #374151;">
+            <option value="all">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="draft">Draft</option>
+            <option value="completed">Completed</option>
+            <option value="closed">Closed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <select id="category-filter" class="client-filter-select" style="height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF; color: #374151;">
+            <option value="all">All Categories</option>
+            ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+        </div>
       </div>
       <select id="sort-select" style="height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; background: #FFFFFF; color: #374151;">
         <option value="newest">Newest first</option>
@@ -154,7 +157,8 @@ function renderProjectsList(container: HTMLElement, projects: any[], categories:
     }
 
     tableContainer.innerHTML = `
-      <div style="border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; background: #FFFFFF;">
+      <!-- Desktop Table (screens > 768px) with horizontal scroll wrapper -->
+      <div class="client-projects-desktop-table client-table-scroll-wrap">
         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
           <thead>
             <tr style="background: #F7F7F8; border-bottom: 1px solid #E5E7EB; color: #4B5563; font-weight: 600;">
@@ -226,14 +230,87 @@ function renderProjectsList(container: HTMLElement, projects: any[], categories:
           </tbody>
         </table>
       </div>
+
+      <!-- Mobile Stacked Cards (screens <= 768px down to 360px) -->
+      <div class="client-projects-mobile-cards">
+        ${filteredList.map((p) => {
+          const statusBadge = getStatusBadge(p.status);
+          const budgetFormatted = p.design_budget ? formatMoney(Number(p.design_budget)) : (p.hourly_rate_max ? `${formatMoney(p.hourly_rate_max)}/hr` : '—');
+          const proposalCount = p.proposal_count || 0;
+          const dateFormatted = new Date(p.updated_at || p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          
+          const catName = p.category || p.category_name || 'Residential';
+          const subcatName = p.subcategory || '';
+          const disciplinesText = Array.isArray(p.disciplines) && p.disciplines.length > 0
+            ? p.disciplines.map((d: string) => d.replace(/_/g, ' ')).join(', ')
+            : 'Architect';
+
+          return `
+            <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; width: 100%; min-width: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <div style="min-width: 0; flex: 1;">
+                  <a href="#project-details?id=${p.id}" style="text-decoration: none; font-weight: 600; font-size: 15px; color: #111827; display: block; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35; margin-bottom: 6px;">
+                    ${escapeHtml(p.title || 'Untitled Draft')}
+                  </a>
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                    <span style="font-size: 11px; font-weight: 500; background: #EFF6FF; color: #1D4ED8; padding: 2px 6px; border-radius: 4px;">${escapeHtml(catName)}</span>
+                    ${subcatName ? `<span style="font-size: 11px; background: #F3F4F6; color: #4B5563; padding: 2px 6px; border-radius: 4px;">${escapeHtml(subcatName)}</span>` : ''}
+                    <span style="font-size: 11px; color: #6B7280; text-transform: capitalize;">${escapeHtml(disciplinesText)}</span>
+                  </div>
+                </div>
+                <div style="flex-shrink: 0;">${statusBadge}</div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px; background: #F7F7F8; border-radius: 6px; font-size: 12px;">
+                <div>
+                  <div style="color: #6B7280; font-size: 11px;">Design Budget</div>
+                  <div style="font-weight: 600; color: #111827; font-size: 13.5px; font-variant-numeric: tabular-nums; margin-top: 2px;">${budgetFormatted}</div>
+                </div>
+                <div>
+                  <div style="color: #6B7280; font-size: 11px;">Proposals</div>
+                  <div style="font-weight: 600; color: ${proposalCount > 0 ? '#2F7BE5' : '#111827'}; font-size: 13.5px; margin-top: 2px;">${proposalCount} received</div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 10px;">
+                <div style="font-size: 12px; color: #6B7280;">Updated ${dateFormatted}</div>
+                <div style="display: flex; gap: 8px; align-items: center; position: relative;">
+                  <a href="#project-details?id=${p.id}" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 44px; min-height: 44px; padding: 0 16px; background: #2F7BE5; color: #FFFFFF; font-size: 13px; font-weight: 600; border-radius: 6px; transition: background 150ms;">
+                    View Details
+                  </a>
+                  <button class="kebab-btn" data-project-id="${p.id}" data-menu-target="m-menu-${p.id}" aria-label="Project actions" style="min-width: 44px; min-height: 44px; height: 44px; width: 44px; display: inline-flex; align-items: center; justify-content: center; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; cursor: pointer; color: #4B5563; font-size: 18px;">⋮</button>
+                  <div class="kebab-menu" id="m-menu-${p.id}" style="display: none; position: absolute; right: 0; bottom: calc(100% + 4px); background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; z-index: 25; min-width: 160px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 4px 0;">
+                    <a href="#project-details?id=${p.id}" style="display: block; padding: 8px 14px; font-size: 12px; color: #374151; text-decoration: none;">View details</a>
+                    ${(p.status === 'draft' || (p.status === 'open' && proposalCount === 0)) ? `
+                      <a href="#post-project?id=${p.id}" style="display: block; padding: 8px 14px; font-size: 12px; color: #374151; text-decoration: none;">Edit project</a>
+                    ` : ''}
+                    <button class="menu-action" data-action="duplicate" data-id="${p.id}" style="width: 100%; border: none; background: transparent; padding: 8px 14px; font-size: 12px; text-align: left; color: #374151; cursor: pointer;">Duplicate</button>
+                    ${p.status === 'open' ? `
+                      <button class="menu-action" data-action="close" data-id="${p.id}" style="width: 100%; border: none; background: transparent; padding: 8px 14px; font-size: 12px; text-align: left; color: #374151; cursor: pointer;">Close to proposals</button>
+                    ` : ''}
+                    ${['draft', 'open'].includes(p.status) ? `
+                      <button class="menu-action" data-action="cancel" data-id="${p.id}" style="width: 100%; border: none; background: transparent; padding: 8px 14px; font-size: 12px; text-align: left; color: #EF4444; cursor: pointer;">Cancel project</button>
+                    ` : ''}
+                    ${p.status === 'draft' ? `
+                      <button class="menu-action" data-action="delete" data-id="${p.id}" style="width: 100%; border: none; background: transparent; padding: 8px 14px; font-size: 12px; text-align: left; color: #EF4444; cursor: pointer;">Delete draft</button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     `;
 
-    // Attach kebab handlers
+    // Attach kebab handlers for both desktop and mobile
     tableContainer.querySelectorAll('.kebab-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const pId = (btn as HTMLElement).dataset.projectId;
-        const menu = tableContainer.querySelector(`#menu-${pId}`) as HTMLElement;
+        const targetId = (btn as HTMLElement).dataset.menuTarget || `menu-${pId}`;
+        const menu = tableContainer.querySelector(`#${targetId}`) as HTMLElement;
+        if (!menu) return;
         const isShown = menu.style.display === 'block';
 
         // Hide all open menus

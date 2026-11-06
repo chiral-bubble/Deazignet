@@ -100,7 +100,8 @@ export async function fetchUserRole(userId: string): Promise<{
  * Initialize Supabase Auth Session and subscribe to state changes
  */
 export async function initAuth(): Promise<AuthState> {
-  if (USE_MOCKS.auth) {
+  const isMockActive = USE_MOCKS.auth || (typeof localStorage !== 'undefined' && (localStorage.getItem('dezignet_mock_auth') === 'true' || Boolean(localStorage.getItem('dezignet_mock_role'))));
+  if (isMockActive) {
     const forcedRole = (typeof localStorage !== 'undefined' ? localStorage.getItem('dezignet_mock_role') : null) as UserRole | 'anonymous' | null;
     if (forcedRole === 'anonymous') {
       currentAuthState = {

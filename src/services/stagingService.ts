@@ -36,7 +36,7 @@ export async function getEnvironment(): Promise<AppEnvironment> {
     return metaEnv;
   }
 
-  if (USE_MOCKS.projects) {
+  if (USE_MOCKS.projects || (typeof localStorage !== 'undefined' && (localStorage.getItem('dezignet_mock_auth') === 'true' || Boolean(localStorage.getItem('dezignet_mock_role'))))) {
     return 'staging';
   }
 

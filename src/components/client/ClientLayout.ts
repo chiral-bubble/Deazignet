@@ -79,15 +79,15 @@ export function renderClientShell(options: ClientLayoutOptions, contentHtml: str
       <div class="client-main-area">
         <!-- Header -->
         <header class="client-header">
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
             <a href="#client-dashboard" style="text-decoration: none; display: none; align-items: center; gap: 6px;" class="mobile-logo-brand">
               <img src="/logo.png" alt="Dezignet" style="width: 24px; height: 24px; border-radius: 4px; object-fit: contain;" />
               <span style="font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #111827;">Dezignet</span>
             </a>
-            <h1 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #111827; margin: 0;">${options.pageTitle}</h1>
+            <h1 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #111827; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${options.pageTitle}</h1>
           </div>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <a href="#notifications" style="text-decoration: none; color: #4B5563; padding: 8px; border-radius: 6px; border: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: center;" title="Notifications">
+          <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+            <a href="#notifications" style="text-decoration: none; color: #4B5563; min-width: 44px; min-height: 44px; height: 44px; width: 44px; border-radius: 6px; border: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: center; box-sizing: border-box;" title="Notifications" aria-label="Notifications">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>

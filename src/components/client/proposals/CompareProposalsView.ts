@@ -84,7 +84,7 @@ function renderMatrix(mount: HTMLElement, projectId: string, proposals: Detailed
   const addRateDiffers = new Set(proposals.map((p) => p.additional_services_rate)).size > 1;
 
   mount.innerHTML = `
-    <div style="border: 1px solid #E5E7EB; border-radius: 8px; background: #FFFFFF; overflow-x: auto;">
+    <div class="compare-matrix-table-wrap client-table-scroll-wrap" style="border: 1px solid #E5E7EB; border-radius: 8px; background: #FFFFFF; overflow-x: auto; width: 100%;">
       <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 760px;">
         <!-- Header: Designer Columns -->
         <thead>

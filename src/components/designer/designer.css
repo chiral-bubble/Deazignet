@@ -3222,13 +3222,16 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 60px;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     background: #FFFFFF;
     border-top: 1px solid #E5E7EB;
     z-index: 100;
     justify-content: space-around;
     align-items: center;
-    padding: 0 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    box-sizing: border-box;
   }
 
   .dez-m-nav-item {
@@ -3244,9 +3247,12 @@
     border: none;
     flex: 1;
     height: 100%;
+    min-height: 44px;
+    min-width: 44px;
     cursor: pointer;
     transition: color 150ms;
     padding: 6px 0;
+    box-sizing: border-box;
   }
 
   .dez-m-nav-item.is-active {
@@ -3262,10 +3268,22 @@
   }
   .dez-content-area {
     padding: 16px;
-    padding-bottom: 90px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   }
   .dez-topbar {
     padding: 0 16px;
+    height: 56px !important;
+    min-height: 56px !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+  }
+  .dez-topbar-breadcrumb {
+    display: none !important;
+  }
+  #btn-topbar-preview-public {
+    display: none !important;
+  }
+  .dez-topbar-search-wrap {
+    max-width: 180px;
   }
   .dez-projects-grid {
     grid-template-columns: 1fr;
@@ -3300,13 +3318,27 @@
 
 @media (max-width: 480px) {
   .dez-summary-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
   }
-  .dez-summary-block {
+  .dez-summary-value {
+    font-size: 28px !important;
+  }
+  .dez-summary-support {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .dez-summary-block:nth-child(odd) {
+    border-right: 1px solid var(--dez-border);
+  }
+  .dez-summary-block:nth-child(even) {
     border-right: none;
+  }
+  .dez-summary-block:nth-child(1),
+  .dez-summary-block:nth-child(2) {
     border-bottom: 1px solid var(--dez-border);
   }
-  .dez-summary-block:last-child {
+  .dez-summary-block:nth-child(3),
+  .dez-summary-block:nth-child(4) {
     border-bottom: none;
   }
 

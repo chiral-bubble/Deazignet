@@ -94,6 +94,7 @@ async function main() {
   // 2. View Containers
   const landingContainer = document.createElement('div');
   landingContainer.id = 'landing-view';
+  landingContainer.style.display = 'none';
   app.appendChild(landingContainer);
 
   const authContainer = document.createElement('div');

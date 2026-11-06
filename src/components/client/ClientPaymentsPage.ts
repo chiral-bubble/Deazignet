@@ -99,8 +99,8 @@ export async function renderClientPaymentsPage(container: HTMLElement): Promise<
           </div>
 
           ${milestones.length > 0 ? `
-            <div style="border: 1px solid #E5E7EB; border-radius: 6px; overflow: hidden;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+            <div class="client-table-scroll-wrap">
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; min-width: 580px;">
                 <thead style="background: #F7F7F8; border-bottom: 1px solid #E5E7EB;">
                   <tr>
                     <th style="padding: 10px 14px; font-weight: 600; color: #4B5563;">Project</th>
