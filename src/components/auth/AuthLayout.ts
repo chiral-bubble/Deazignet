@@ -6,7 +6,7 @@
 
 export function renderAuthLayout(contentHtml: string, sideTitle?: string, sideSubtitle?: string): string {
   const displayTitle = sideTitle || 'The premier architecture & design studio network.';
-  const displaySubtitle = sideSubtitle || 'Connecting visionary clients with licensed architects, interior designers, landscape architects, and engineers.';
+  const displaySubtitle = sideSubtitle || 'Connecting visionary clients with experienced architects, interior designers, landscape architects, and engineers.';
 
   return `
     <div class="auth-layout" style="min-height: 100vh; display: flex; background: #FFFFFF; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">

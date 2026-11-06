@@ -170,7 +170,7 @@ export function renderAuthPage(): string {
             <div class="toggle-panel toggle-left">
               <div class="toggle-brand-tag">DEZIGNET EXCLUSIVE</div>
               <h1 class="toggle-heading">Hello, Welcome!</h1>
-              <p class="toggle-desc">Don't have an account? Post your design brief or join our curated network of licensed architects.</p>
+              <p class="toggle-desc">Don't have an account? Post your design brief or join our curated network of architecture and design professionals.</p>
               <button type="button" class="btn-toggle register-btn" id="register-toggle-btn">
                 <span>Register</span>
               </button>

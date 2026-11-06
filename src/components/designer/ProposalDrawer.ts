@@ -497,7 +497,6 @@ export function initProposalDrawer(
     const amountCents = Math.round(formData.proposedTotal * 100);
     const feeCalc = calculatePlatformFeeFallback(currentPlan, amountCents);
     const scheduleDescription = getTieredScheduleDescription(currentPlan);
-    const projectState = (project as any).state || (project as any).state_region || 'this project location';
 
     body.innerHTML = `
       <div class="dez-review-box">
@@ -535,20 +534,6 @@ export function initProposalDrawer(
             ? `<div style="font-size:12.5px; color:var(--dez-text-muted); margin-top:8px;"><strong>Question for client:</strong> ${formData.clientQuestion}</div>`
             : ''
         }
-      </div>
-
-      <!-- State Licensure Warning & Required Acknowledgement -->
-      <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 14px 16px; margin-bottom: 16px;">
-        <div style="font-size: 13px; font-weight: 600; color: #92400E; margin-bottom: 4px;">
-          State Licensure Notice — ${projectState}
-        </div>
-        <p style="font-size: 12.5px; color: #78350F; margin: 0 0 10px 0; line-height: 1.45;">
-          Work in ${projectState} may require a professional architectural or engineering license in that state.
-        </p>
-        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #92400E; cursor: pointer; line-height: 1.4;">
-          <input type="checkbox" id="dez-license-acknowledgement" required style="margin-top: 2px;" />
-          <span>I understand that work in ${projectState} may require a license in that state and I am responsible for meeting local requirements.</span>
-        </label>
       </div>
 
       <!-- Financial Net Calculation & Exact Tiered Schedule Preview -->
@@ -628,12 +613,6 @@ export function initProposalDrawer(
     } else if (currentStep === 2) {
       if (formData.portfolioItems.length === 0) {
         showError('Please attach at least 1 relevant portfolio design to your proposal.');
-        return false;
-      }
-    } else if (currentStep === 3) {
-      const ackCheckbox = body?.querySelector('#dez-license-acknowledgement') as HTMLInputElement | null;
-      if (ackCheckbox && !ackCheckbox.checked) {
-        showError('Please check the box to acknowledge state licensure requirements before submitting.');
         return false;
       }
     }

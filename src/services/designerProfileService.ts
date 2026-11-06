@@ -16,17 +16,24 @@ export type ProfessionalType =
   | 'Landscape Architect'
   | 'Engineer';
 
-export type CredentialStatus = 'verified' | 'pending' | 'rejected';
+export type CredentialStatus = 'verified' | 'pending' | 'rejected' | 'expired';
 
 export interface DesignerCredential {
   id: string;
-  registrationBody: string; // e.g. AIA, PE, RIBA, NCARB, TOPREC
-  registrationNumber: string; // e.g. A-14285
-  stateOrRegion: string;
-  year: number | string;
+  credentialType?: 'license' | 'certification' | 'registration' | 'other';
+  title?: string;
+  issuingBody?: string;
+  issuingState?: string;
+  licenseNumber?: string;
+  year?: number | string;
+  expirationDate?: string | null;
   certificateUrl?: string;
   status: CredentialStatus;
   rejectionReason?: string;
+  // legacy aliases for backwards compatibility
+  registrationBody?: string;
+  registrationNumber?: string;
+  stateOrRegion?: string;
 }
 
 export interface PortfolioImage {
@@ -1426,42 +1433,45 @@ let mockProposalHistory: Record<string, boolean> = {
 // PROFILE COMPLETENESS CALCULATION
 // ============================================================================
 export function calculateProfileCompleteness(profile: DesignerProfile): ProfileCompletenessResult {
+  const isPaid = profile.currentPlanId && profile.currentPlanId !== 'free';
   const checklist: CompletenessCheckItem[] = [
     {
-      id: 'photo',
-      label: 'Profile photo',
+      id: 'professional_type',
+      label: 'Professional discipline',
       tab: 'profile',
-      completed: Boolean(profile.avatarUrl && profile.avatarUrl.trim().length > 0)
-    },
-    {
-      id: 'bio',
-      label: 'About & bio (min 50 characters)',
-      tab: 'profile',
-      completed: Boolean(profile.about && profile.about.trim().length >= 50)
+      completed: Boolean(profile.professionalType || profile.professionalTitle)
     },
     {
       id: 'specialization',
       label: 'Specialization & title',
       tab: 'profile',
       completed: Boolean(
-        profile.professionalTitle &&
         profile.specializations &&
         profile.specializations.length > 0
       )
     },
     {
-      id: 'portfolio',
-      label: 'Portfolio (min 3 projects)',
-      tab: 'portfolio',
-      completed: Boolean(profile.portfolio && profile.portfolio.length >= 3)
+      id: 'location',
+      label: 'Location (State & City)',
+      tab: 'profile',
+      completed: Boolean(profile.location && (profile.location.state || profile.location.city || profile.location.country))
     },
     {
-      id: 'credentials',
-      label: 'Professional registration / credentials',
-      tab: 'credentials',
-      completed: Boolean(profile.credentials && profile.credentials.length >= 1)
+      id: 'bio',
+      label: 'About & bio',
+      tab: 'profile',
+      completed: Boolean(profile.about && profile.about.trim().length > 0)
     }
   ];
+
+  if (isPaid) {
+    checklist.push({
+      id: 'portfolio',
+      label: 'Portfolio (min 2 projects)',
+      tab: 'portfolio',
+      completed: Boolean(profile.portfolio && profile.portfolio.length >= 2)
+    });
+  }
 
   const completedCount = checklist.filter((item) => item.completed).length;
   const score = Math.round((completedCount / checklist.length) * 100);
@@ -1500,11 +1510,17 @@ function mapDbToDesignerProfile(
 
   const mappedCredentials: DesignerCredential[] = credentials.map((c) => ({
     id: c.id,
-    registrationBody: c.body,
-    registrationNumber: c.number || c.masked_number || '••••',
-    stateOrRegion: c.state_region,
-    year: c.year,
-    certificateUrl: c.certificate_path || undefined,
+    credentialType: c.credential_type || 'license',
+    title: c.title || (c.credential_type === 'license' ? `${c.issuing_state || ''} Professional License`.trim() : 'Professional Credential'),
+    issuingBody: c.issuing_body || c.body || '',
+    issuingState: c.issuing_state || c.state_region || '',
+    licenseNumber: c.license_number || c.number || c.masked_number || '',
+    registrationBody: c.issuing_body || c.body || '',
+    registrationNumber: c.license_number || c.number || c.masked_number || '••••',
+    stateOrRegion: c.issuing_state || c.state_region || '',
+    year: c.issue_year || c.year,
+    expirationDate: c.expiration_date || null,
+    certificateUrl: c.certificate_file || c.certificate_path || undefined,
     status: c.status as CredentialStatus,
     rejectionReason: c.rejection_reason || undefined
   }));
@@ -2015,13 +2031,13 @@ export async function addCredential(
       .from('credentials')
       .insert({
         designer_id: userId,
-        body: cred.registrationBody,
-        number: cred.registrationNumber,
-        state_region: cred.stateOrRegion,
+        body: cred.registrationBody || cred.issuingBody || cred.title || 'Other',
+        number: cred.registrationNumber || cred.licenseNumber || '',
+        state_region: cred.stateOrRegion || cred.issuingState || '',
         year: Number(cred.year) || 2024,
         certificate_path: cred.certificateUrl || null,
         status: 'pending'
-      })
+      } as any)
       .select()
       .single();
 

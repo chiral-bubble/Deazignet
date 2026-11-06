@@ -35,7 +35,7 @@ export const chapters: ChapterConfig[] = [
     end: 0.35,
     headline: 'Every great structure starts with the right mind.',
     subtext:
-      'Find licensed architects, interior designers, landscape architects and engineers ready for your next project.',
+      'Find verified architects, interior designers, landscape architects and engineers ready for your next project.',
   },
   {
     id: 'post',

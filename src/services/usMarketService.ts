@@ -62,6 +62,15 @@ export const US_STATES: UsState[] = [
   { code: 'DC', name: 'District of Columbia' }
 ];
 
+export const CREDENTIAL_TYPES = [
+  { value: 'license', label: 'License' },
+  { value: 'certification', label: 'Certification' },
+  { value: 'registration', label: 'Registration' },
+  { value: 'other', label: 'Other' }
+] as const;
+
+export type CredentialType = typeof CREDENTIAL_TYPES[number]['value'];
+
 export const US_LICENSE_TYPES = [
   { value: 'architect', label: 'Architect' },
   { value: 'professional_engineer', label: 'Professional Engineer' },

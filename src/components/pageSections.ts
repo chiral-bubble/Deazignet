@@ -263,7 +263,7 @@ function faq(): string {
     },
     {
       q: 'Can I become a designer on Dezignet?',
-      a: 'Absolutely! If you are a licensed architect, interior designer, landscape architect, or engineer, you can create a free profile, showcase your portfolio, and start receiving project invitations from clients worldwide.',
+      a: 'Absolutely! If you are an architect, interior designer, landscape architect, or engineer, you can create a free profile, showcase your portfolio, and start receiving project invitations from clients worldwide.',
     },
   ];
 
@@ -313,7 +313,7 @@ function footer(): string {
               <img src="/logo.png" alt="Dezignet" style="width: 28px; height: 28px; border-radius: 6px; object-fit: contain;" />
               Dezignet
             </div>
-            <p class="footer__tagline">The premier marketplace connecting clients with licensed architects, interior designers, landscape architects, and engineers worldwide.</p>
+            <p class="footer__tagline">The premier marketplace connecting clients with skilled architects, interior designers, landscape architects, and engineers worldwide.</p>
           </div>
           <div>
             <h4 class="footer__col-title">Platform</h4>

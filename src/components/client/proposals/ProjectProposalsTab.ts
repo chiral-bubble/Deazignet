@@ -458,9 +458,9 @@ export function initProjectProposalsTab(
       suggestedGrid.innerHTML = suggestions.map((s) => {
         const initials = (s.full_name || 'D').slice(0, 2).toUpperCase();
         const isInvited = invitedDesignerIds.has(s.designer_id);
-        const licensedInfo = (s.licensed_states && s.licensed_states.length > 0)
-          ? `Licensed in ${s.licensed_states.join(', ')}`
-          : (s.is_verified ? 'Verified state license' : 'Accredited professional');
+        const credInfo = s.is_verified
+          ? 'Verified credentials on file'
+          : (s.credentials && s.credentials.length > 0 ? (s.credentials[0].title || 'Credentials on file') : 'Experienced professional');
 
         return `
           <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
@@ -486,10 +486,10 @@ export function initProjectProposalsTab(
                 </span>
               </div>
 
-              <!-- Licensing & Rating -->
-              <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: #047857; margin-bottom: 6px; font-weight: 500;">
+              <!-- Credentials & Rating -->
+              <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: ${s.is_verified ? '#047857' : '#4B5563'}; margin-bottom: 6px; font-weight: 500;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>${escapeHtml(licensedInfo)}</span>
+                <span>${escapeHtml(credInfo)}</span>
               </div>
 
               <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 10px;">

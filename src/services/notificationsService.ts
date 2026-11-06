@@ -468,7 +468,7 @@ export function simulateNotification(typeKey: NotificationTypeKey): Notification
     },
     credential_expired: {
       title: 'Professional license expired',
-      detail: 'Your license has expired. Your public profile will no longer show as licensed until renewed.',
+      detail: 'Your credential has expired. Your profile credentials status has been updated to expired until renewed.',
       payload: {}
     },
     invitation_received: {

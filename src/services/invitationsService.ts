@@ -56,7 +56,7 @@ export interface SuggestedDesigner {
   plan_key: string;
   match_score: number;
   reasons: Array<{ type: string; text: string }>;
-  licensed_states: string[];
+  credentials?: Array<{ title: string; issuing_body?: string; state?: string; status_label?: string }>;
 }
 
 export interface SearchDesignersParams {
@@ -65,7 +65,6 @@ export interface SearchDesignersParams {
   specialization?: string;
   state?: string;
   city?: string;
-  licensed_in_state?: string;
   min_years?: number;
   min_rating?: number;
   verified_only?: boolean;
@@ -86,7 +85,6 @@ export async function searchDesignersForClient(params: SearchDesignersParams) {
     p_specialization: params.specialization || null,
     p_state: params.state || null,
     p_city: params.city || null,
-    p_licensed_in_state: params.licensed_in_state || null,
     p_min_years: params.min_years || null,
     p_min_rating: params.min_rating || null,
     p_verified_only: params.verified_only || false,
@@ -128,9 +126,11 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     match_score: 96,
     reasons: [
       { type: 'category', text: 'Specialist in custom residential interior architecture' },
-      { type: 'license', text: 'Licensed interior architect in Colorado' }
+      { type: 'credential', text: 'Verified interior architecture credential' }
     ],
-    licensed_states: ['CO', 'CA', 'NY']
+    credentials: [
+      { title: 'Licensed Interior Designer', issuing_body: 'ASID', state: 'CO', status_label: 'Verified' }
+    ]
   },
   {
     designer_id: 'des-1',
@@ -150,9 +150,12 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     match_score: 94,
     reasons: [
       { type: 'category', text: 'Extensive portfolio in luxury modern typologies' },
-      { type: 'license', text: 'NCARB certified & licensed architect in New York' }
+      { type: 'credential', text: 'NCARB Certificate & registered architect' }
     ],
-    licensed_states: ['NY', 'NJ', 'CT']
+    credentials: [
+      { title: 'NCARB Certificate', issuing_body: 'NCARB', status_label: 'Verified' },
+      { title: 'Registered Architect', issuing_body: 'NYS Board', state: 'NY', status_label: 'Verified' }
+    ]
   },
   {
     designer_id: 'des-3',
@@ -172,9 +175,11 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     match_score: 91,
     reasons: [
       { type: 'category', text: 'Specialist in structural coordination & permit packages' },
-      { type: 'license', text: 'Verified PE license in Texas' }
+      { type: 'credential', text: 'Verified Professional Engineer credential' }
     ],
-    licensed_states: ['TX', 'FL', 'CA']
+    credentials: [
+      { title: 'Professional Engineer (PE)', issuing_body: 'TBPE', state: 'TX', status_label: 'Verified' }
+    ]
   },
   {
     designer_id: 'des-4',
@@ -194,9 +199,11 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     match_score: 89,
     reasons: [
       { type: 'category', text: 'Typology match in exterior residential & sustainable site design' },
-      { type: 'license', text: 'Licensed landscape architect in Illinois' }
+      { type: 'credential', text: 'Verified landscape architecture registration' }
     ],
-    licensed_states: ['IL', 'WI', 'MI']
+    credentials: [
+      { title: 'Registered Landscape Architect', issuing_body: 'CLARB', state: 'IL', status_label: 'Verified' }
+    ]
   },
   {
     designer_id: 'des-5',
@@ -216,9 +223,12 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     match_score: 88,
     reasons: [
       { type: 'category', text: 'Specialist in passive house & sustainable modern homes' },
-      { type: 'license', text: 'Licensed architect in California' }
+      { type: 'credential', text: 'LEED AP & verified architectural credential' }
     ],
-    licensed_states: ['CA', 'WA', 'OR']
+    credentials: [
+      { title: 'LEED AP BD+C', issuing_body: 'USGBC', status_label: 'Verified' },
+      { title: 'Architect License', issuing_body: 'CAB', state: 'CA', status_label: 'Verified' }
+    ]
   },
   {
     designer_id: 'des-7',
@@ -233,14 +243,16 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     rating_average: 4.8,
     rating_count: 14,
     completed_projects_count: 12,
-    is_verified: true,
+    is_verified: false,
     plan_key: 'free',
     match_score: 85,
     reasons: [
       { type: 'category', text: 'Extensive experience in brownstone & townhome renovations' },
-      { type: 'license', text: 'Licensed architect in Massachusetts' }
+      { type: 'credential', text: 'Self-reported architectural credential' }
     ],
-    licensed_states: ['MA', 'RI']
+    credentials: [
+      { title: 'Registered Architect', issuing_body: 'MA Board', state: 'MA', status_label: 'Self-reported' }
+    ]
   }
 ];
 

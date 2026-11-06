@@ -261,7 +261,6 @@ export interface AdminMatchingSettings {
   matching_weights: {
     specialization_match: number;
     subcategory_portfolio: number;
-    state_license: number;
     same_city: number;
     same_state: number;
     verified: number;
@@ -274,7 +273,7 @@ export interface AdminMatchingSettings {
     upgraded: number;
   };
   matching_new_designer_boost: number;
-  matching_require_state_license: boolean;
+  insurance_section_enabled: boolean;
   priority_label_mode: 'label' | 'hidden';
   fee_tier_mode: 'whole_amount' | 'marginal';
   fee_basis: 'per_milestone' | 'cumulative';
@@ -320,9 +319,8 @@ const mockAuditLogs: AdminAuditLogItem[] = [
 // In-memory matching and fee calculation settings
 let mockMatchingSettings: AdminMatchingSettings = {
   matching_weights: {
-    specialization_match: 30,
-    subcategory_portfolio: 10,
-    state_license: 25,
+    specialization_match: 35,
+    subcategory_portfolio: 15,
     same_city: 15,
     same_state: 10,
     verified: 10,
@@ -335,7 +333,7 @@ let mockMatchingSettings: AdminMatchingSettings = {
     upgraded: 15
   },
   matching_new_designer_boost: 5,
-  matching_require_state_license: false,
+  insurance_section_enabled: false,
   priority_label_mode: 'label',
   fee_tier_mode: 'whole_amount',
   fee_basis: 'per_milestone'
@@ -544,7 +542,7 @@ export async function adminGetMatchingSettings(): Promise<AdminMatchingSettings>
           'matching_weights',
           'matching_plan_boost',
           'matching_new_designer_boost',
-          'matching_require_state_license',
+          'insurance_section_enabled',
           'priority_label_mode',
           'fee_tier_mode',
           'fee_basis'
@@ -559,8 +557,8 @@ export async function adminGetMatchingSettings(): Promise<AdminMatchingSettings>
               mockMatchingSettings.matching_plan_boost = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
             } else if (item.key === 'matching_new_designer_boost') {
               mockMatchingSettings.matching_new_designer_boost = parseInt(String(item.value), 10) || 5;
-            } else if (item.key === 'matching_require_state_license') {
-              mockMatchingSettings.matching_require_state_license = item.value === 'true' || item.value === true;
+            } else if (item.key === 'insurance_section_enabled') {
+              mockMatchingSettings.insurance_section_enabled = item.value === 'true' || item.value === true;
             } else if (item.key === 'priority_label_mode') {
               mockMatchingSettings.priority_label_mode = item.value as any;
             } else if (item.key === 'fee_tier_mode') {
@@ -600,8 +598,8 @@ export async function adminUpdateMatchingSettings(
       if (settings.matching_new_designer_boost !== undefined) {
         await adminUpdateAppSetting('matching_new_designer_boost', String(settings.matching_new_designer_boost));
       }
-      if (settings.matching_require_state_license !== undefined) {
-        await adminUpdateAppSetting('matching_require_state_license', String(settings.matching_require_state_license));
+      if (settings.insurance_section_enabled !== undefined) {
+        await adminUpdateAppSetting('insurance_section_enabled', String(settings.insurance_section_enabled));
       }
       if (settings.priority_label_mode) {
         await adminUpdateAppSetting('priority_label_mode', settings.priority_label_mode);
@@ -691,15 +689,6 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
   const allDesigners = getAllMockDesigners();
 
   const scoredList: AdminSuggestedDesigner[] = allDesigners
-    .filter(d => {
-      if (settings.matching_require_state_license) {
-        const hasStateLicense =
-          d.location.state?.toLowerCase() === projectState.toLowerCase() ||
-          d.credentials?.some(c => c.stateOrRegion?.toLowerCase() === projectState.toLowerCase());
-        if (!hasStateLicense) return false;
-      }
-      return true;
-    })
     .map(d => {
       const planKey = (d.currentPlanId || 'free') as 'free' | 'basic' | 'upgraded';
       const planBoost = planBoosts[planKey] || 0;
@@ -713,12 +702,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
       const subcatProjects = d.portfolio.filter(p =>
         p.category?.toLowerCase() === projectCategory.toLowerCase()
       ).length;
-      const subcatScore = Math.min(subcatProjects * weights.subcategory_portfolio, 20);
-
-      const hasStateLicense =
-        d.location.state?.toLowerCase() === projectState.toLowerCase() ||
-        d.credentials?.some(c => c.stateOrRegion?.toLowerCase() === projectState.toLowerCase());
-      const licenseScore = hasStateLicense ? weights.state_license : 0;
+      const subcatScore = Math.min(subcatProjects * weights.subcategory_portfolio, 25);
 
       const sameCity = Boolean(projectCity && d.location.city.toLowerCase() === projectCity.toLowerCase());
       const cityScore = sameCity ? weights.same_city : 0;
@@ -726,7 +710,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
       const sameState = Boolean(projectState && d.location.state?.toLowerCase() === projectState.toLowerCase());
       const stateScore = sameState && !sameCity ? weights.same_state : 0;
 
-      const isVerified = Boolean(d.credentials && d.credentials.length > 0);
+      const isVerified = (planKey === 'basic' || planKey === 'upgraded') && Boolean(d.credentials && d.credentials.some(c => c.status === 'verified'));
       const verifiedScore = isVerified ? weights.verified : 0;
 
       const ratingScore = d.stats.reviewCount >= 3
@@ -741,7 +725,6 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
       const totalScore =
         specScore +
         subcatScore +
-        licenseScore +
         cityScore +
         stateScore +
         verifiedScore +
@@ -755,10 +738,15 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
         reasons.push({ type: 'category', text: `Specializes in ${projectCategory} (+${specScore})` });
       }
       if (subcatScore > 0) {
-        reasons.push({ type: 'portfolio', text: `${subcatProjects} ${projectCategory} portfolio build(s) (+${subcatScore})` });
+        reasons.push({ type: 'portfolio', text: `${subcatProjects} ${projectCategory} portfolio project(s) (+${subcatScore})` });
       }
-      if (hasStateLicense) {
-        reasons.push({ type: 'license', text: `Verified license in ${projectState} (+${licenseScore})` });
+      if (isVerified) {
+        reasons.push({ type: 'verified', text: `Verified credentials (+${verifiedScore})` });
+      }
+      if (sameCity) {
+        reasons.push({ type: 'location', text: `Located in same city (${d.location.city}) (+${cityScore})` });
+      } else if (sameState) {
+        reasons.push({ type: 'location', text: `Located in same state (${d.location.state}) (+${stateScore})` });
       }
       if (sameCity) {
         reasons.push({ type: 'location', text: `Studio located in ${d.location.city} (+${cityScore})` });
@@ -800,7 +788,6 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
         score_breakdown: {
           specialization: specScore,
           portfolio: subcatScore,
-          license: licenseScore,
           location: cityScore + stateScore,
           verified: verifiedScore,
           rating: ratingScore,

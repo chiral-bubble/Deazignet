@@ -208,8 +208,8 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
             <li style="display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: #334155;">
               <span style="width: 20px; height: 20px; border-radius: 50%; background: #E0F2FE; color: #0284C7; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;">3</span>
               <div>
-                <strong>Professional license or degree certificate</strong>
-                <p style="margin: 2px 0 0; font-size: 12px; color: #64748B;">Verified credentials grant your profile the Verified badge.</p>
+                <strong>Credentials and accreditation (optional)</strong>
+                <p style="margin: 2px 0 0; font-size: 12px; color: #64748B;">Add licenses, certifications or registrations you hold. Optional. Verified credentials can earn the Verified badge on paid plans.</p>
               </div>
             </li>
           </ul>
@@ -390,7 +390,7 @@ export async function initOnboarding(role: 'client' | 'designer', onComplete: (n
             <div>
               <h3 style="font-size: 16px; font-weight: 600; color: #0F172A; margin: 0 0 4px;">Find designers</h3>
               <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.4;">
-                Browse portfolios of licensed architects, interior designers, and engineers.
+                Browse portfolios of experienced architects, interior designers, and engineers.
               </p>
             </div>
           </button>

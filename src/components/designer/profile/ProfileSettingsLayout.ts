@@ -253,7 +253,7 @@ export async function initProfileSettings(
           activeProfile = await getProfile();
           loadTabContent('credentials');
         }
-      });
+      }, (activeProfile.credentials as any) || []);
     } else if (tab === 'account') {
       tabPane.innerHTML = renderAccountTab(activeProfile);
       initAccountTab(tabPane, activeProfile, {

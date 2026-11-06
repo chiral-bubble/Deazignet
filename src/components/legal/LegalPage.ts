@@ -86,12 +86,12 @@ function renderTermsContent(): string {
       </div>
 
       <div>
-        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">3. Professional Licensure & Regulatory Disclaimers</h2>
+        <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">3. Compliance with professional regulations</h2>
         <p style="margin: 0 0 10px; color: #334155;">
-          Professional architectural, engineering, and structural practice is governed by state licensing boards in each respective US state or territory. Design professionals are solely responsible for ensuring they possess all requisite statutory licenses, registrations, and permits for the jurisdiction in which a project is located.
+          <strong>[Placeholder text marked for legal review]:</strong> Design professionals offering architectural, engineering, landscape, or interior design services through Dezignet are solely and independently responsible for complying with all applicable licensing, credentialing, registration, and statutory regulatory requirements that apply to their services in the jurisdictions where their work is performed or delivered.
         </p>
         <p style="margin: 0; color: #334155;">
-          Dezignet displays state license information as self-reported or administratively verified, but makes no legal warranty of professional qualifications for specific municipal permitting. Clients must independently confirm local building department and permitting jurisdiction requirements.
+          Dezignet provides credentials and accreditation displays as voluntary trust signals. Dezignet makes no representation, guarantee, or legal warranty regarding professional licensure for specific local permitting, municipal filing, or life-safety requirements. Clients are advised to independently confirm any statutory jurisdiction or sealed drawing requirements needed for their specific building project.
         </p>
       </div>
 

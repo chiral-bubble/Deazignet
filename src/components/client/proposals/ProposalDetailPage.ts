@@ -173,12 +173,6 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
                   Basic account: portfolio not available
                 </div>
               ` : ''}
-
-              <!-- State Licensure Status Indicator on Client Proposal Detail -->
-              <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 8px 12px; margin-top: 10px; font-size: 12.5px; color: #92400E; display: flex; align-items: center; gap: 8px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span>Not listed as licensed in ${escapeHtml((p as any).project_state || (p.designer as any).state || 'project state')}</span>
-              </div>
             </div>
           </div>
         </div>

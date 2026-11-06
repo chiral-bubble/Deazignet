@@ -15,7 +15,7 @@ import {
   inviteDesigner,
   type SearchDesignersParams
 } from '../../services/invitationsService';
-import { US_STATES, formatLicensedStatesLabel, formatUSD } from '../../services/usMarketService';
+import { US_STATES, formatUSD } from '../../services/usMarketService';
 
 export async function renderFindDesignersPage(container: HTMLElement): Promise<void> {
   container.innerHTML = renderClientShell(
@@ -138,15 +138,6 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
                   </select>
                 </div>
 
-                <!-- Licensed In State -->
-                <div>
-                  <label style="display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px;">Licensed in State</label>
-                  <select id="filter-licensed-state" style="width: 100%; height: 36px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF;">
-                    <option value="">Any license status</option>
-                    ${US_STATES.map(s => `<option value="${s.code}">${s.name} (${s.code})</option>`).join('')}
-                  </select>
-                </div>
-
                 <!-- Min Years Experience -->
                 <div>
                   <label style="display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px;">Minimum Years Experience</label>
@@ -162,7 +153,7 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
                 <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
                   <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; cursor: pointer;">
                     <input type="checkbox" id="filter-verified-only" style="accent-color: #2F7BE5;" />
-                    <span>Verified license only</span>
+                    <span>Verified credentials only</span>
                   </label>
                   <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; cursor: pointer;">
                     <input type="checkbox" id="filter-available-only" style="accent-color: #2F7BE5;" />
@@ -259,7 +250,7 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
             </p>
             <ul style="font-size: 13px; color: #4B5563; line-height: 1.6; padding-left: 20px; margin: 0 0 14px 0;">
               <li>Specialization matching the project's category (+30)</li>
-              <li>Verified professional license in the project's state (+25)</li>
+              <li>Verified credentials on file (+10)</li>
               <li>Portfolio projects in the same subcategory (+10 to +20)</li>
               <li>Designer located in the same city (+15) or state (+10)</li>
               <li>Client review rating and completed projects (+5 to +10)</li>
@@ -311,7 +302,6 @@ async function initFindDesignersEvents(container: HTMLElement) {
     const query = (root.querySelector('#inp-designer-search') as HTMLInputElement)?.value.trim() || '';
     const discipline = (root.querySelector('#filter-discipline') as HTMLSelectElement)?.value || '';
     const state = (root.querySelector('#filter-state') as HTMLSelectElement)?.value || '';
-    const licensedState = (root.querySelector('#filter-licensed-state') as HTMLSelectElement)?.value || '';
     const minYears = parseInt((root.querySelector('#filter-min-years') as HTMLSelectElement)?.value || '0', 10);
     const verifiedOnly = (root.querySelector('#filter-verified-only') as HTMLInputElement)?.checked || false;
     const availableOnly = (root.querySelector('#filter-available-only') as HTMLInputElement)?.checked || false;
@@ -321,7 +311,6 @@ async function initFindDesignersEvents(container: HTMLElement) {
       query,
       discipline: discipline || undefined,
       state: state || undefined,
-      licensed_in_state: licensedState || undefined,
       min_years: minYears > 0 ? minYears : undefined,
       verified_only: verifiedOnly,
       available_only: availableOnly,
@@ -484,7 +473,6 @@ async function initFindDesignersEvents(container: HTMLElement) {
   root.querySelector('#btn-reset-filters')?.addEventListener('click', () => {
     (root.querySelector('#filter-discipline') as HTMLSelectElement).value = '';
     (root.querySelector('#filter-state') as HTMLSelectElement).value = '';
-    (root.querySelector('#filter-licensed-state') as HTMLSelectElement).value = '';
     (root.querySelector('#filter-min-years') as HTMLSelectElement).value = '0';
     (root.querySelector('#filter-verified-only') as HTMLInputElement).checked = false;
     (root.querySelector('#filter-available-only') as HTMLInputElement).checked = false;
@@ -563,8 +551,6 @@ async function initFindDesignersEvents(container: HTMLElement) {
 }
 
 function renderDesignerCard(d: any, _selectedProjectId: string): string {
-  const licensedLabel = formatLicensedStatesLabel(d.licensed_states);
-
   return `
     <div class="dez-designer-card" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
       <div>
@@ -577,7 +563,7 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
               <span style="font-weight: 600; font-size: 15px; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 ${escapeHtml(d.full_name)}
               </span>
-              ${d.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified State License">✓</span>` : ''}
+              ${d.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified Credentials">✓</span>` : ''}
               ${d.is_promoted ? `<span style="font-size: 10px; background: #EFF6FF; color: #1D4ED8; padding: 1px 5px; border-radius: 4px; font-weight: 600;">Promoted</span>` : ''}
             </div>
             <div style="font-size: 12.5px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -600,9 +586,30 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
           </div>
         ` : ''}
 
-        <!-- Licensure & Experience metrics -->
+        <!-- Credentials short list -->
+        ${(d.credentials && d.credentials.length > 0) ? `
+          <div style="font-size: 11.5px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
+            ${d.credentials.slice(0, 2).map((c: any) => {
+              const label = c.status_label || (c.status === 'verified' ? 'Verified' : c.status === 'expired' ? 'Expired' : 'Self-reported');
+              const parts = [c.title || c.credential_type || 'Credential'];
+              if (c.issuing_body) parts.push(c.issuing_body);
+              if (c.state || c.issuing_state) parts.push(c.state || c.issuing_state);
+              return `
+                <div style="display: flex; align-items: center; gap: 6px; color: #4B5563;">
+                  <span style="font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: 500; ${
+                    label === 'Verified' ? 'background: #ECFDF5; color: #047857;' :
+                    label === 'Expired' ? 'background: #FEF3C7; color: #92400E;' :
+                    'background: #F3F4F6; color: #4B5563;'
+                  }">${escapeHtml(label)}</span>
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(parts.join(' • '))}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : ''}
+
+        <!-- Experience & Rating metrics -->
         <div style="font-size: 12px; color: #4B5563; line-height: 1.5; margin-bottom: 12px;">
-          ${licensedLabel ? `<div style="color: #1E40AF; font-weight: 500;">${licensedLabel}</div>` : ''}
           <div>${d.years_experience} years experience • ${d.rating_count > 0 ? `★ ${d.rating_average} (${d.rating_count} reviews)` : 'Member'}</div>
           ${d.hourly_rate ? `<div>${formatUSD(d.hourly_rate * 100)}/hr</div>` : ''}
         </div>

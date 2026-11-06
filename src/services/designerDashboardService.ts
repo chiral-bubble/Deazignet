@@ -523,7 +523,6 @@ export async function getProfileCompleteness(): Promise<ProfileCompleteness> {
     isComplete: false,
     percentage: 30,
     missingItems: [
-      'Registration license number (AIA, RIBA, or SIA)',
       'Primary studio specialization',
       'Curated portfolio attachments',
       'Professional biography'

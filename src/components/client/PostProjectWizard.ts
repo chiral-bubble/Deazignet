@@ -1773,9 +1773,9 @@ function initWizardState(
 
       grid.innerHTML = suggestions.map((s) => {
         const initials = (s.full_name || 'D').slice(0, 2).toUpperCase();
-        const licensedInfo = (s.licensed_states && s.licensed_states.length > 0)
-          ? `Licensed in ${s.licensed_states.join(', ')}`
-          : (s.is_verified ? 'Verified state license' : 'Accredited professional');
+        const credInfo = s.is_verified
+          ? 'Verified credentials on file'
+          : (s.credentials && s.credentials.length > 0 ? (s.credentials[0].title || 'Credentials on file') : 'Experienced professional');
 
         return `
           <div class="wizard-designer-card" data-id="${s.designer_id}" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
@@ -1802,10 +1802,10 @@ function initWizardState(
                 </span>
               </div>
 
-              <!-- State License Status -->
-              <div style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #047857; margin-bottom: 8px; font-weight: 500;">
+              <!-- Credentials Status -->
+              <div style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: ${s.is_verified ? '#047857' : '#4B5563'}; margin-bottom: 8px; font-weight: 500;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>${escapeHtml(licensedInfo)}</span>
+                <span>${escapeHtml(credInfo)}</span>
               </div>
 
               <!-- Rating & Experience -->

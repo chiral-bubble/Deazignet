@@ -21,6 +21,7 @@ import { supabase } from '../../../lib/supabase';
 import { getAuthState } from '../../../services/authService';
 import { inviteDesigner } from '../../../services/invitationsService';
 import { formatMoney } from '../../../utils/formatters';
+import { maskLicenseNumber } from '../../../services/usMarketService';
 
 export function renderPublicProfile(
   designer: DesignerProfile,
@@ -28,7 +29,10 @@ export function renderPublicProfile(
   hasReceivedProposal: boolean,
   isSelf: boolean
 ): string {
-  const isVerified = (designer.credentials || []).some((c) => c.status === 'verified');
+  const isPaid = Boolean(designer.currentPlanId && designer.currentPlanId !== 'free');
+  const isVerified = isPaid && (designer.credentials || []).some(
+    (c) => c.status === 'verified' && (!c.expirationDate || new Date(c.expirationDate) >= new Date())
+  );
   const initial = (designer.name || 'D').slice(0, 2).toUpperCase();
   const sortedPortfolio = [...(designer.portfolio || [])].sort((a, b) => a.order - b.order);
   const reviews = designer.reviews || [];
@@ -298,27 +302,38 @@ export function renderPublicProfile(
 
             <!-- Credentials Section (Partially Masked Reg Numbers) -->
             <div class="dez-pub-side-divider"></div>
-            <h4 class="dez-pub-side-subtitle">Council Accreditation</h4>
+            <h4 class="dez-pub-side-subtitle">Credentials and accreditation (optional)</h4>
 
             <div class="dez-pub-creds-side-list">
               ${
                 (designer.credentials || []).length === 0
-                  ? `<div class="dez-empty-subtext" style="font-size:12.5px;">Accreditation pending council verification.</div>`
+                  ? `<div class="dez-empty-subtext" style="font-size:12.5px;">No credentials listed.</div>`
                   : (designer.credentials || [])
                       .map((c) => {
-                        const mask = c.registrationNumber.slice(0, 2) + '••••' + c.registrationNumber.slice(-2);
+                        const isPastExp = Boolean(c.expirationDate && new Date(c.expirationDate) < new Date());
+                        const statusLabel = isPastExp || c.status === 'expired'
+                          ? 'Expired'
+                          : (c.status === 'verified' && isPaid)
+                          ? 'Verified'
+                          : 'Self-reported';
+
+                        const title = c.title || c.registrationBody || 'Credential';
+                        const locationOrBody = [c.issuingBody, c.issuingState || c.stateOrRegion].filter(Boolean).join(' • ');
+                        const rawNum = c.licenseNumber || c.registrationNumber;
+                        const masked = rawNum && rawNum !== '••••' ? maskLicenseNumber(rawNum) : null;
+
                         return `
                     <div class="dez-pub-cred-item">
                       <div class="dez-pub-cred-header">
-                        <strong class="dez-pub-cred-body">${c.registrationBody}</strong>
-                        ${
-                          c.status === 'verified'
-                            ? `<span class="dez-status-plain is-verified" style="font-size:12px;">Verified</span>`
-                            : `<span class="dez-status-plain is-pending" style="font-size:12px;">Pending</span>`
-                        }
+                        <strong class="dez-pub-cred-body">${title}</strong>
+                        <span class="dez-status-plain ${statusLabel === 'Verified' ? 'is-verified' : ''}" style="font-size:11px; padding: 2px 6px; border-radius: 4px; ${
+                          statusLabel === 'Verified' ? 'background: #ECFDF5; color: #047857;' :
+                          statusLabel === 'Expired' ? 'background: #FEF3C7; color: #92400E;' :
+                          'background: #F3F4F6; color: #4B5563;'
+                        }">${statusLabel}</span>
                       </div>
-                      <div class="dez-pub-cred-num">Reg No: <strong>${mask}</strong></div>
-                      <div class="dez-pub-cred-meta">${c.stateOrRegion} &bull; Est. ${c.year}</div>
+                      ${masked ? `<div class="dez-pub-cred-num">ID: <strong>${masked}</strong></div>` : ''}
+                      <div class="dez-pub-cred-meta">${locationOrBody}${c.year ? ` &bull; Est. ${c.year}` : ''}</div>
                     </div>
                   `;
                       })

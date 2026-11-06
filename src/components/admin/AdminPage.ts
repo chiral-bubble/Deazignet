@@ -2,7 +2,7 @@
  * Admin Area Component (/admin)
  * Clean, flat interface for administrative operations:
  * - Feedback Review (filtering, detail view, notes, CSV export)
- * - Designer Credentials Verification (AIA / NCARB / State Board license review & certificate preview)
+ * - Designer Credentials Verification (AIA / NCARB / Professional credential review & certificate preview)
  * - Reference Data Editor (Categories, Subcategories, Phase Templates with 100% split validation)
  * - Security Audit Log
  */
@@ -402,7 +402,7 @@ async function loadCredentialsTab(container: HTMLElement, modalContainer: HTMLEl
     container.innerHTML = `
       <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 48px; text-align: center;">
         <h3 style="font-size: 16px; font-weight: 600; color: #0F172A; margin: 0 0 6px;">No pending credentials</h3>
-        <p style="font-size: 14px; color: #64748B; margin: 0;">All professional license submissions (AIA / NCARB / State Boards) have been reviewed.</p>
+        <p style="font-size: 14px; color: #64748B; margin: 0;">All submitted credentials and accreditations have been reviewed.</p>
       </div>
     `;
     return;
@@ -1042,7 +1042,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
       <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px 24px;">
         <h2 style="font-size: 17px; font-weight: 600; color: #0F172A; margin: 0 0 6px;">Matching Engine & Suggestion Tester</h2>
         <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.5;">
-          Configure matching algorithm scoring weights, plan priority boosts, state licensure gates, and run live simulation tests against open projects to preview the top 20 candidate rankings.
+          Configure matching algorithm scoring weights, plan priority boosts, credential trust signals, and run live simulation tests against open projects to preview the top 20 candidate rankings.
         </p>
       </div>
 
@@ -1068,10 +1068,6 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label style="color: #334155;">Subcategory portfolio (ea):</label>
                 <input type="number" id="mw-portfolio" value="${settings.matching_weights.subcategory_portfolio}" min="0" max="100" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label style="color: #334155;">State license match:</label>
-                <input type="number" id="mw-license" value="${settings.matching_weights.state_license}" min="0" max="100" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label style="color: #334155;">Same city bonus:</label>
@@ -1120,11 +1116,11 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
                 </div>
               </div>
 
-              <div style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Engine Filters & Display Mode</div>
+              <div style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Engine Settings & Display Mode</div>
               <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                  <input type="checkbox" id="mb-require-state-license" ${settings.matching_require_state_license ? 'checked' : ''} />
-                  <span>Require verified state license (hard exclusion filter)</span>
+                  <input type="checkbox" id="mb-insurance-enabled" ${settings.insurance_section_enabled ? 'checked' : ''} />
+                  <span>Enable Professional Liability Insurance section (insurance_section_enabled)</span>
                 </label>
                 <div>
                   <label style="display: block; font-size: 12px; color: #475569; margin-bottom: 4px;">Priority Label Mode</label>
@@ -1195,7 +1191,6 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
         matching_weights: {
           specialization_match: parseInt((container.querySelector('#mw-specialization') as HTMLInputElement).value, 10) || 0,
           subcategory_portfolio: parseInt((container.querySelector('#mw-portfolio') as HTMLInputElement).value, 10) || 0,
-          state_license: parseInt((container.querySelector('#mw-license') as HTMLInputElement).value, 10) || 0,
           same_city: parseInt((container.querySelector('#mw-city') as HTMLInputElement).value, 10) || 0,
           same_state: parseInt((container.querySelector('#mw-state') as HTMLInputElement).value, 10) || 0,
           verified: parseInt((container.querySelector('#mw-verified') as HTMLInputElement).value, 10) || 0,
@@ -1208,7 +1203,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
           upgraded: parseInt((container.querySelector('#mb-upgraded') as HTMLInputElement).value, 10) || 0
         },
         matching_new_designer_boost: parseInt((container.querySelector('#mb-new-designer') as HTMLInputElement).value, 10) || 0,
-        matching_require_state_license: (container.querySelector('#mb-require-state-license') as HTMLInputElement).checked,
+        insurance_section_enabled: (container.querySelector('#mb-insurance-enabled') as HTMLInputElement).checked,
         priority_label_mode: (container.querySelector('#mb-priority-label-mode') as HTMLSelectElement).value as any
       };
 
@@ -1248,7 +1243,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
         resultsContainer.innerHTML = `
           <div style="background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 6px; padding: 32px; text-align: center;">
             <p style="font-size: 14px; font-weight: 500; color: #0F172A; margin: 0 0 4px;">No matching designers found</p>
-            <p style="font-size: 12.5px; color: #64748B; margin: 0;">Try relaxing the state license requirement if enabled, or adjusting candidate pool filters.</p>
+            <p style="font-size: 12.5px; color: #64748B; margin: 0;">Try adjusting candidate pool filters or project criteria.</p>
           </div>
         `;
         return;

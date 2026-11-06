@@ -146,7 +146,7 @@ function renderProjectsList(container: HTMLElement, projects: any[], categories:
           <div style="font-size: 32px; margin-bottom: 12px;">📁</div>
           <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 6px;">No projects found</h3>
           <p style="font-size: 13px; color: #6B7280; max-width: 400px; margin: 0 auto 20px;">
-            ${projects.length === 0 ? "You haven't posted any projects yet. Create your first project to connect with licensed designers." : "No projects match your current filter criteria."}
+            ${projects.length === 0 ? "You haven't posted any projects yet. Create your first project to connect with top designers." : "No projects match your current filter criteria."}
           </p>
           <a href="#post-project" style="text-decoration: none; display: inline-block; background: #2F7BE5; color: #FFFFFF; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 6px; transition: background 150ms;">
             Post a Project

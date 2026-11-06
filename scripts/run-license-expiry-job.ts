@@ -55,12 +55,13 @@ export async function runLicenseExpiryJob(options: { dryRun?: boolean } = {}) {
   const todayStr = new Date().toISOString().split('T')[0];
   const target30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-  // 1. Process Expired Credentials
-  console.log(`🔍 Checking credentials expired before ${todayStr}...`);
+  // 1. Process Expired Credentials (ONLY for credentials with an expiration_date)
+  console.log(`🔍 Checking credentials with expiration_date expired before ${todayStr}...`);
   const { data: expiredList, error: expErr } = await adminClient
     .from('credentials')
-    .select('id, designer_id, issuing_state, license_type, expiration_date')
+    .select('id, designer_id, issuing_state, credential_type, title, expiration_date')
     .eq('status', 'verified')
+    .not('expiration_date', 'is', null)
     .lt('expiration_date', todayStr);
 
   if (expErr) {
@@ -68,7 +69,7 @@ export async function runLicenseExpiryJob(options: { dryRun?: boolean } = {}) {
   } else if (expiredList && expiredList.length > 0) {
     console.log(`Found ${expiredList.length} expired credential(s).`);
     for (const cred of expiredList) {
-      console.log(`  - Marking expired: Credential ${cred.id} (${cred.license_type || 'License'} in ${cred.issuing_state || 'N/A'}) for Designer ${cred.designer_id}`);
+      console.log(`  - Marking expired: Credential ${cred.id} (${cred.title || cred.credential_type || 'Credential'} in ${cred.issuing_state || 'N/A'}) for Designer ${cred.designer_id}`);
       if (!isDryRun) {
         await adminClient
           .from('credentials')
@@ -80,9 +81,10 @@ export async function runLicenseExpiryJob(options: { dryRun?: boolean } = {}) {
           type: 'credential_expired',
           data: {
             credential_id: cred.id,
-            license_type: cred.license_type,
+            credential_type: cred.credential_type,
+            title: cred.title,
             state: cred.issuing_state,
-            message: `Your ${cred.license_type || 'architectural'} license in ${cred.issuing_state || 'your state'} has expired.`
+            message: `Your ${cred.title || 'credential'} has expired.`
           },
           link: '/designer/profile#credentials'
         });
@@ -93,12 +95,13 @@ export async function runLicenseExpiryJob(options: { dryRun?: boolean } = {}) {
     console.log('  No expired credentials found.');
   }
 
-  // 2. Process Credentials Expiring in 30 Days
+  // 2. Process Credentials Expiring in 30 Days (ONLY for credentials with an expiration_date)
   console.log(`\n🔍 Checking credentials expiring around 30 days from now (${target30Days})...`);
   const { data: expiringList, error: expiringErr } = await adminClient
     .from('credentials')
-    .select('id, designer_id, issuing_state, license_type, expiration_date')
+    .select('id, designer_id, issuing_state, credential_type, title, expiration_date')
     .eq('status', 'verified')
+    .not('expiration_date', 'is', null)
     .eq('expiration_date', target30Days);
 
   if (expiringErr) {
@@ -113,10 +116,11 @@ export async function runLicenseExpiryJob(options: { dryRun?: boolean } = {}) {
           type: 'credential_expiring',
           data: {
             credential_id: cred.id,
-            license_type: cred.license_type,
+            credential_type: cred.credential_type,
+            title: cred.title,
             state: cred.issuing_state,
             expiration_date: cred.expiration_date,
-            message: `Your ${cred.license_type || 'architectural'} license in ${cred.issuing_state || 'your state'} expires in 30 days.`
+            message: `Your ${cred.title || 'credential'} expires in 30 days.`
           },
           link: '/designer/profile#credentials'
         });
