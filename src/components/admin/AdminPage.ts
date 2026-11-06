@@ -30,6 +30,7 @@ import type {
 } from '../../services/adminService';
 import { getCategories, getProjects, type CategoryItem, type Project } from '../../services/projectsService';
 import { getTieredScheduleDescription, type Plan, type PlanFeeTier } from '../../services/plansService';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderAdminPage(container: HTMLElement): void {
   container.innerHTML = `
@@ -1161,7 +1162,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
               <option value="">-- Select an open project to test suggestions --</option>
               ${openProjects.map(proj => `
                 <option value="${proj.id}">
-                  ${escapeHtml(proj.title)} (${escapeHtml(proj.category || 'General')} - ${escapeHtml(proj.location || proj.city || 'US')}) - Budget $${(proj.budget || 0).toLocaleString()}
+                  ${escapeHtml(proj.title)} (${escapeHtml(proj.category || 'General')} - ${escapeHtml(proj.location || proj.city || 'US')}) - Budget ${formatMoney(proj.budget || 0)}
                 </option>
               `).join('')}
             </select>

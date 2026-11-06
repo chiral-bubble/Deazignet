@@ -5,6 +5,7 @@
 
 import { dashIcons } from './dashboardIcons';
 import type { ProjectItem } from './dashboardData';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderProjectCardGrid(project: ProjectItem): string {
   // Status chip mapping
@@ -90,7 +91,7 @@ export function renderProjectCardGrid(project: ProjectItem): string {
         <div class="project-facts-grid">
           <div class="fact-item fact-item--budget">
             <span class="fact-label">BUDGET</span>
-            <span class="fact-val fact-val--money">$${project.budget.toLocaleString()}</span>
+            <span class="fact-val fact-val--money">${formatMoney(project.budget)}</span>
           </div>
           <div class="fact-item">
             <span class="fact-label">TIMELINE</span>
@@ -134,7 +135,7 @@ export function renderProjectCardList(project: ProjectItem): string {
       </div>
       <div class="project-row-budget">
         <span class="fact-label">BUDGET</span>
-        <span class="fact-val--money">$${project.budget.toLocaleString()}</span>
+        <span class="fact-val--money">${formatMoney(project.budget)}</span>
       </div>
       <div class="project-row-timeline">
         <span class="fact-label">DEADLINE</span>
@@ -162,7 +163,7 @@ export function renderProjectCardBoard(project: ProjectItem): string {
     <div class="project-board-card" id="project-board-${project.id}" data-status="${project.status}" draggable="true">
       <div class="board-card-header">
         <span class="project-category-badge">${project.category}</span>
-        <span class="board-card-budget">$${project.budget.toLocaleString()}</span>
+        <span class="board-card-budget">${formatMoney(project.budget)}</span>
       </div>
       <h4 class="board-card-title">${project.title}</h4>
       <p class="board-card-desc">${project.description}</p>

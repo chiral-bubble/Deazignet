@@ -178,7 +178,7 @@ function renderMatrix(mount: HTMLElement, projectId: string, proposals: Detailed
             </td>
             ${proposals.map((p) => `
               <td style="padding: 14px 16px; font-variant-numeric: tabular-nums; color: #1E293B;">
-                ${p.additional_services_rate ? `$${p.additional_services_rate}/hr` : 'Standard rates'}
+                ${p.additional_services_rate ? `${formatMoney(p.additional_services_rate)}/hr` : 'Standard rates'}
               </td>
             `).join('')}
           </tr>
@@ -194,7 +194,7 @@ function renderMatrix(mount: HTMLElement, projectId: string, proposals: Detailed
                   ${p.milestones.map((m) => `
                     <div style="font-size: 12px; display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dashed #E2E8F0; padding-bottom: 4px;">
                       <span style="color: #475569;">${escapeHtml(m.name)} (${m.fee_percent}%)</span>
-                      <span style="font-weight: 500; font-variant-numeric: tabular-nums; color: #0F172A;">$${m.amount.toLocaleString()}</span>
+                      <span style="font-weight: 500; font-variant-numeric: tabular-nums; color: #0F172A;">${formatMoney(m.amount)}</span>
                     </div>
                   `).join('')}
                 </div>
@@ -296,7 +296,7 @@ function formatReimbursable(type: string, cap: number | null): string {
     case 'at_cost':
       return 'Charged at cost with receipts';
     case 'capped':
-      return `Charged at cost (capped at $${(cap || 0).toLocaleString()})`;
+      return `Charged at cost (capped at ${formatMoney(cap || 0)})`;
     default:
       return 'Standard terms';
   }

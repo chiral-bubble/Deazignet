@@ -10,6 +10,7 @@ import {
   renderProjectCardList,
   renderProjectCardBoard
 } from './ProjectCard';
+import { formatMoney } from '../../utils/formatters';
 
 export type FilterStatus = 'all' | 'pending' | 'ongoing' | 'completed';
 export type ViewMode = 'grid' | 'list' | 'board';
@@ -293,7 +294,7 @@ export function initProjectsSection(onPostProjectClick: () => void): void {
       <div class="project-modal-body">
         <h2 class="project-modal-title">${p.title}</h2>
         <div class="project-modal-facts-strip">
-          <div><small>BUDGET</small><strong>$${p.budget.toLocaleString()}</strong></div>
+          <div><small>BUDGET</small><strong>${formatMoney(p.budget)}</strong></div>
           <div><small>LOCATION</small><strong>${p.location}</strong></div>
           <div><small>TIMELINE</small><strong>${p.duration}</strong></div>
           <div><small>DEADLINE</small><strong>${p.deadline}</strong></div>

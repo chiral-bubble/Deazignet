@@ -197,7 +197,7 @@ export function initProposalDrawer(
               style="width:200px"
             />
             <span style="font-size:13px; color:var(--dez-text-muted)">
-              Client budget: <strong>$${project.budget.toLocaleString()}</strong>
+              Client budget: <strong>${formatUSD(project.budget)}</strong>
             </span>
           </div>
         </div>
@@ -240,10 +240,10 @@ export function initProposalDrawer(
                       /> %
                     </td>
                     <td style="text-align:right; font-variant-numeric:tabular-nums; font-weight:500;">
-                      $${amt.toLocaleString()}
+                      ${formatUSD(amt)}
                     </td>
                     <td style="text-align:right; font-variant-numeric:tabular-nums; font-weight:500; color:#16A34A;">
-                      $${netAmt.toLocaleString()}
+                      ${formatUSD(netAmt)}
                     </td>
                   </tr>
                 `;

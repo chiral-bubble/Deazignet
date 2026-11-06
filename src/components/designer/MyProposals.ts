@@ -4,6 +4,7 @@
  */
 
 import { withdrawProposal, type SubmittedProposal } from '../../services/projectsService';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderMyProposals(
   proposals: SubmittedProposal[],
@@ -25,7 +26,7 @@ export function renderMyProposals(
             <div style="font-size:12px; color:var(--dez-text-muted)">${p.projectLocation} • Client: ${p.clientName}</div>
           </td>
           <td>${p.dateSent}</td>
-          <td style="font-weight:600; font-variant-numeric:tabular-nums;">$${p.proposedPrice.toLocaleString()}</td>
+          <td style="font-weight:600; font-variant-numeric:tabular-nums;">${formatMoney(p.proposedPrice)}</td>
           <td>
             <span class="dez-status-pill dez-status-pill--${p.status.toLowerCase()}">
               ${p.status}

@@ -4,6 +4,7 @@
  */
 
 import type { ProjectFiltersState } from '../../services/projectsService';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderProjectFilters(filters: ProjectFiltersState): string {
   // Categories & Subcategories
@@ -25,9 +26,9 @@ export function renderProjectFilters(filters: ProjectFiltersState): string {
   if (filters.location && filters.location !== 'All') activeChips.push({ key: 'location', label: `Location: ${filters.location}` });
   if (filters.paymentType && filters.paymentType !== 'All') activeChips.push({ key: 'paymentType', label: `Payment: ${filters.paymentType}` });
   if (filters.minBudget || filters.maxBudget) {
-    if (filters.minBudget && filters.maxBudget) activeChips.push({ key: 'minBudget', label: `$${filters.minBudget.toLocaleString()} - $${filters.maxBudget.toLocaleString()}` });
-    else if (filters.minBudget) activeChips.push({ key: 'minBudget', label: `Above $${filters.minBudget.toLocaleString()}` });
-    else if (filters.maxBudget) activeChips.push({ key: 'maxBudget', label: `Under $${filters.maxBudget.toLocaleString()}` });
+    if (filters.minBudget && filters.maxBudget) activeChips.push({ key: 'minBudget', label: `${formatMoney(filters.minBudget)} - ${formatMoney(filters.maxBudget)}` });
+    else if (filters.minBudget) activeChips.push({ key: 'minBudget', label: `Above ${formatMoney(filters.minBudget)}` });
+    else if (filters.maxBudget) activeChips.push({ key: 'maxBudget', label: `Under ${formatMoney(filters.maxBudget)}` });
   }
   if (filters.onlySaved) activeChips.push({ key: 'onlySaved', label: 'Saved projects only' });
 

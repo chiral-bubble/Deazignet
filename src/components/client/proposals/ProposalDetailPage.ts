@@ -6,6 +6,7 @@
  * and sticky actions: Accept dialog, Decline dialog, and Message designer modal.
  */
 
+import { formatMoney } from '../../../utils/formatters';
 import {
   getProposal,
   markProposalViewed,
@@ -212,7 +213,7 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
                   </td>
                   <td style="padding: 12px; color: #64748B; font-size: 12px; vertical-align: top;">${escapeHtml(m.billing_trigger || 'Completion sign-off')}</td>
                   <td style="padding: 12px; color: #475569; font-variant-numeric: tabular-nums; vertical-align: top;">${m.fee_percent}%</td>
-                  <td style="padding: 12px; font-weight: 600; color: #0F172A; font-variant-numeric: tabular-nums; text-align: right; vertical-align: top;">$${m.amount.toLocaleString()}</td>
+                  <td style="padding: 12px; font-weight: 600; color: #0F172A; font-variant-numeric: tabular-nums; text-align: right; vertical-align: top;">${formatMoney(m.amount)}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -220,7 +221,7 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
               <tr style="background: #F8FAFC; font-weight: 600; color: #0F172A;">
                 <td style="padding: 12px;" colspan="3">Total Project Fee</td>
                 <td style="padding: 12px;">100%</td>
-                <td style="padding: 12px; text-align: right; font-size: 14px;">$${p.total_price.toLocaleString()}</td>
+                <td style="padding: 12px; text-align: right; font-size: 14px;">${formatMoney(p.total_price)}</td>
               </tr>
             </tfoot>
           </table>
@@ -264,7 +265,7 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
             <div style="padding: 12px; background: #F8FAFC; border-radius: 6px; border: 1px solid #E2E8F0;">
               <div style="font-size: 11.5px; color: #64748B; margin-bottom: 4px;">Additional Services Hourly Rate</div>
               <div style="font-weight: 500; color: #0F172A; font-variant-numeric: tabular-nums;">
-                ${p.additional_services_rate ? `$${p.additional_services_rate}/hour` : 'Standard rates apply'}
+                ${p.additional_services_rate ? `${formatMoney(p.additional_services_rate)}/hour` : 'Standard rates apply'}
               </div>
             </div>
           </div>
@@ -319,7 +320,7 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
           <div style="margin-bottom: 16px;">
             <div style="font-size: 12px; color: #64748B; margin-bottom: 2px;">Total Design Fee</div>
             <div style="font-size: 26px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">
-              $${p.total_price.toLocaleString()}
+              ${formatMoney(p.total_price)}
             </div>
             <div style="font-size: 12px; color: #64748B; margin-top: 4px;">
               ${diffText}
@@ -417,7 +418,7 @@ function attachEventListeners(p: DetailedProposal): void {
     if (!acceptModal || !acceptSummaryBox) return;
     acceptSummaryBox.innerHTML = `
       <div><strong>Designer:</strong> ${escapeHtml(p.designer.full_name)} (${escapeHtml(p.designer.studio_name || '')})</div>
-      <div><strong>Total Fee:</strong> $${p.total_price.toLocaleString()} (${p.milestones.length} milestone phases)</div>
+      <div><strong>Total Fee:</strong> ${formatMoney(p.total_price)} (${p.milestones.length} milestone phases)</div>
       <div><strong>Delivery:</strong> ${p.delivery_days} calendar days</div>
     `;
     acceptModal.style.display = 'flex';
@@ -515,7 +516,7 @@ function formatReimbursable(type: string, cap: number | null): string {
     case 'at_cost':
       return 'Charged at cost with receipts';
     case 'capped':
-      return `Charged at cost (capped at $${(cap || 0).toLocaleString()})`;
+      return `Charged at cost (capped at ${formatMoney(cap || 0)})`;
     default:
       return 'Standard terms';
   }

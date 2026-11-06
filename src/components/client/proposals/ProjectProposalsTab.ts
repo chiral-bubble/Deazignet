@@ -5,6 +5,7 @@
  * Design: Light, flat, 1px #E5E7EB borders, 8px radius, no box shadows, AA contrast.
  */
 
+import { formatMoney } from '../../../utils/formatters';
 import {
   getProjectProposals,
   shortlistProposal,
@@ -708,7 +709,7 @@ export function initProjectProposalsTab(
         </td>
         <td style="padding: 14px 16px; vertical-align: top; font-variant-numeric: tabular-nums;">
           <div style="font-size: 14px; font-weight: 600; color: #0F172A;">
-            $${p.total_price.toLocaleString()}
+            ${formatMoney(p.total_price)}
           </div>
           <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">
             ${diffText}

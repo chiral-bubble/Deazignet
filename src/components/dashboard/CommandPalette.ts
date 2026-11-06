@@ -6,6 +6,7 @@
 import { dashIcons } from './dashboardIcons';
 import { initialProjects } from './dashboardData';
 import type { NavTabId } from './FloatingRail';
+import { formatMoney } from '../../utils/formatters';
 
 export interface CommandItem {
   id: string;
@@ -120,7 +121,7 @@ export function initCommandPalette(
       id: `proj-${p.id}`,
       category: 'Projects',
       title: p.title,
-      subtitle: `${p.category} • Budget $${p.budget.toLocaleString()} • ${p.status.toUpperCase()}`,
+      subtitle: `${p.category} • Budget ${formatMoney(p.budget)} • ${p.status.toUpperCase()}`,
       icon: dashIcons.box,
       action: () => {
         onNavigateTab('projects');

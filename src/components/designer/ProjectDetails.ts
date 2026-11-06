@@ -5,12 +5,13 @@
 
 import { toggleSaveProject, type Project } from '../../services/projectsService';
 import { formatDate } from '../../services/usMarketService';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderProjectDetails(project: Project, profileComplete: boolean = true): string {
   const isMilestone = project.paymentType === 'Milestone';
   const budgetFormatted = isMilestone
-    ? `$${project.budget.toLocaleString()}`
-    : `$${project.hourlyRate || 0}/hr (Est. $${project.budget.toLocaleString()})`;
+    ? formatMoney(project.budget)
+    : `${formatMoney(project.hourlyRate || 0)}/hr (Est. ${formatMoney(project.budget)})`;
 
   // Reference images markup
   const refImagesHtml = project.referenceImages && project.referenceImages.length > 0
@@ -88,7 +89,7 @@ export function renderProjectDetails(project: Project, profileComplete: boolean 
           <p>This project is commissioned on a time-tracked hourly basis. Time is logged against architectural milestones with weekly timesheet approvals.</p>
           <div style="margin-top:10px; display:flex; gap:24px;">
             <div><span style="color:var(--dez-text-muted)">Estimated Hours:</span> <strong>${project.estimatedHours || 0} hrs</strong></div>
-            <div><span style="color:var(--dez-text-muted)">Client Target Rate:</span> <strong>$${project.hourlyRate || 0}/hr</strong></div>
+            <div><span style="color:var(--dez-text-muted)">Client Target Rate:</span> <strong>${formatMoney(project.hourlyRate || 0)}/hr</strong></div>
           </div>
         </div>
       </section>
@@ -314,7 +315,7 @@ export function renderProjectDetails(project: Project, profileComplete: boolean 
             ? `<button type="button" class="dez-btn-primary" disabled>Proposal Sent</button>`
             : project.status === 'Closed'
             ? `<button type="button" class="dez-btn-primary" disabled>Closed</button>`
-            : `<button type="button" class="dez-btn-primary" id="dez-mobile-open-proposal-btn">Send Proposal ($${project.budget.toLocaleString()})</button>`
+            : `<button type="button" class="dez-btn-primary" id="dez-mobile-open-proposal-btn">Send Proposal (${formatMoney(project.budget)})</button>`
         }
       </div>
 

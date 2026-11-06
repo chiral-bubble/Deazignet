@@ -15,6 +15,7 @@ import {
   type ContractDetail
 } from '../../../services/contractsService';
 import { calculatePlatformFeeFallback, getTieredScheduleDescription } from '../../../services/plansService';
+import { formatMoney } from '../../../utils/formatters';
 import { supabase } from '../../../lib/supabase';
 
 export function renderContractTab(_engagementId?: string): string {
@@ -276,8 +277,8 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
                   <td style="padding: 8px 10px; color: #64748B;">${m.phase_number}</td>
                   <td style="padding: 8px 10px; font-weight: 500; color: #0F172A;">${escapeHtml(m.name)}</td>
                   <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right;">${m.fee_percent}%</td>
-                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 500;">$${mGross.toLocaleString()}</td>
-                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; color: #16A34A;">$${mNet.toLocaleString()}</td>
+                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 500;">${formatMoney(mGross)}</td>
+                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; color: #16A34A;">${formatMoney(mNet)}</td>
                 </tr>
               `;
               }).join('')}
@@ -286,8 +287,8 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
               <tr style="font-weight: 600; color: #0F172A; background: #F8FAFC; border-top: 1px solid #E5E7EB;">
                 <td style="padding: 10px;" colspan="2">Total Contract Value</td>
                 <td style="padding: 10px; text-align: right;">100%</td>
-                <td style="padding: 10px; text-align: right; font-size: 13.5px;">$${totalGrossPrice.toLocaleString()}</td>
-                <td style="padding: 10px; text-align: right; font-size: 13.5px; color: #16A34A;">$${totalNetDollars.toLocaleString()}</td>
+                <td style="padding: 10px; text-align: right; font-size: 13.5px;">${formatMoney(totalGrossPrice)}</td>
+                <td style="padding: 10px; text-align: right; font-size: 13.5px; color: #16A34A;">${formatMoney(totalNetDollars)}</td>
               </tr>
             </tfoot>
           </table>
@@ -295,7 +296,7 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
           <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 14px; margin-top: 10px; font-size: 12px; color: #334155; line-height: 1.5;">
             <div style="font-weight: 600; color: #0F172A; margin-bottom: 2px;">Platform Service Fee Schedule</div>
             <div><strong>Tiered Schedule:</strong> ${tieredSchedule}</div>
-            <div style="color: #64748B; margin-top: 4px;">Milestones are funded in escrow at the full gross amount. Platform service fee (-$${totalFeeDollars.toLocaleString()}) is deducted upon client milestone release.</div>
+            <div style="color: #64748B; margin-top: 4px;">Milestones are funded in escrow at the full gross amount. Platform service fee (-${formatMoney(totalFeeDollars)}) is deducted upon client milestone release.</div>
           </div>
         </section>
 
@@ -303,10 +304,10 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
         <section style="margin-bottom: 28px;">
           <h2 style="font-size: 15px; font-weight: 600; color: #0F172A; border-bottom: 1px solid #E5E7EB; padding-bottom: 6px; margin: 0 0 12px;">5. Reimbursable Expenses & Additional Services</h2>
           <p style="font-size: 13px; color: #334155; margin: 0 0 6px;">
-            <strong>Reimbursable expenses:</strong> ${sec5.reimbursable_expenses_type === 'none' ? 'None (all-inclusive)' : sec5.reimbursable_expenses_type === 'capped' ? `Billed at cost up to a cap of $${sec5.reimbursable_cap}` : 'Billed at cost with receipts'}.
+            <strong>Reimbursable expenses:</strong> ${sec5.reimbursable_expenses_type === 'none' ? 'None (all-inclusive)' : sec5.reimbursable_expenses_type === 'capped' ? `Billed at cost up to a cap of ${formatMoney(sec5.reimbursable_cap || 0)}` : 'Billed at cost with receipts'}.
           </p>
           <p style="font-size: 13px; color: #334155; margin: 0;">
-            <strong>Additional services:</strong> Billed at $${sec5.additional_services_rate || 100}/hour upon written client pre-approval.
+            <strong>Additional services:</strong> Billed at ${formatMoney(sec5.additional_services_rate || 100)}/hour upon written client pre-approval.
           </p>
         </section>
 
@@ -350,7 +351,7 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span style="color: #64748B;">Value:</span>
-              <span style="font-weight: 600; color: #0F172A;">$${(sec4.total_price || 0).toLocaleString()}</span>
+              <span style="font-weight: 600; color: #0F172A;">${formatMoney(sec4.total_price || 0)}</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span style="color: #64748B;">Status:</span>

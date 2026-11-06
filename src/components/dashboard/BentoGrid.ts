@@ -4,6 +4,7 @@
 
 import { dashIcons } from './dashboardIcons';
 import { attentionItems, recentActivities } from './dashboardData';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderBentoGrid(): string {
   // Determine time-aware greeting
@@ -218,7 +219,7 @@ export function initBentoGrid(
     const isMoney = el.classList.contains('bento-stat-number--money');
 
     if (prefersReduced) {
-      el.textContent = isMoney ? `$${target.toLocaleString()}` : `${target}`;
+      el.textContent = isMoney ? formatMoney(target) : `${target}`;
       return;
     }
 
@@ -232,12 +233,12 @@ export function initBentoGrid(
       const ease = 1 - Math.pow(1 - progress, 3);
       const current = Math.floor(target * ease);
 
-      el.textContent = isMoney ? `$${current.toLocaleString()}` : `${current}`;
+      el.textContent = isMoney ? formatMoney(current) : `${current}`;
 
       if (progress < 1) {
         requestAnimationFrame(updateCount);
       } else {
-        el.textContent = isMoney ? `$${target.toLocaleString()}` : `${target}`;
+        el.textContent = isMoney ? formatMoney(target) : `${target}`;
       }
     }
 

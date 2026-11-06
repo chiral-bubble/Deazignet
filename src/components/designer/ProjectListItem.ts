@@ -4,6 +4,7 @@
  */
 
 import type { Project } from '../../services/projectsService';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderProjectListItem(project: Project, viewMode: 'list' | 'grid' = 'list'): string {
   const isMilestone = project.paymentType === 'Milestone';
@@ -11,8 +12,8 @@ export function renderProjectListItem(project: Project, viewMode: 'list' | 'grid
   
   // Format budget
   const budgetFormatted = isMilestone
-    ? `$${project.budget.toLocaleString()}`
-    : `$${project.hourlyRate || 0}/hr (Est. $${project.budget.toLocaleString()})`;
+    ? formatMoney(project.budget)
+    : `${formatMoney(project.hourlyRate || 0)}/hr (Est. ${formatMoney(project.budget)})`;
 
   // Status or proposal badge
   let statusChipHtml = '';

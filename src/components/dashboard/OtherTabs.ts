@@ -4,6 +4,7 @@
 
 import { dashIcons } from './dashboardIcons';
 import { contractsData, paymentHistoryData } from './dashboardData';
+import { formatMoney } from '../../utils/formatters';
 
 export function renderConversationsTab(): string {
   return `
@@ -121,7 +122,7 @@ export function renderContractsTab(): string {
         <span>${c.currentMilestone}</span>
       </div>
       <div class="contract-footer">
-        <div class="contract-value"><small>TOTAL VALUE</small> <strong>$${c.totalValue.toLocaleString()}</strong></div>
+        <div class="contract-value"><small>TOTAL VALUE</small> <strong>${formatMoney(c.totalValue)}</strong></div>
         <button type="button" class="btn-dash-ghost btn-dash-sm">Download Agreement PDF</button>
       </div>
     </div>
@@ -154,7 +155,7 @@ export function renderPaymentHistoryTab(): string {
       <td class="ledger-cell-proj">${p.projectTitle}</td>
       <td class="ledger-cell-milestone">${p.milestone}</td>
       <td class="ledger-cell-date">${p.date}</td>
-      <td class="ledger-cell-amount">$${p.amount.toLocaleString()}</td>
+      <td class="ledger-cell-amount">${formatMoney(p.amount)}</td>
       <td class="ledger-cell-status">
         <span class="ledger-status-chip ledger-status-chip--${p.status === 'Released' ? 'released' : 'escrow'}">
           ${p.status}

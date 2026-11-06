@@ -7,6 +7,7 @@
 
 import { devFastForward, devSimulateMessage, devSimulateNotification } from '../../services/stagingService';
 import { devFundMilestone } from '../../services/activeWorkService';
+import { formatMoney } from '../../utils/formatters';
 import { supabase } from '../../lib/supabase';
 import { getAuthState } from '../../services/authService';
 
@@ -121,7 +122,7 @@ export function initTesterControls(root: HTMLElement = document.body): void {
         }
 
         await devFundMilestone(ms.id);
-        alert(`Funded milestone "${ms.name}" with $${ms.amount}. Funds placed in escrow.`);
+        alert(`Funded milestone "${ms.name}" with ${formatMoney(ms.amount)}. Funds placed in escrow.`);
         window.location.reload();
       } catch (err: any) {
         alert(`Error funding milestone: ${err?.message}`);
