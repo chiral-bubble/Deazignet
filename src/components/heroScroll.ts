@@ -15,6 +15,28 @@ gsap.registerPlugin(ScrollTrigger);
 
 const TOTAL_FRAMES = 150;
 
+let activeSeq: FrameSequence | null = null;
+let resetHeroState: (() => void) | null = null;
+
+/**
+ * Re-synchronizes hero canvas size, initial frame, chapters, and ScrollTrigger scroller
+ * whenever the landing view is re-displayed (e.g. after logout or client-side routing).
+ */
+export function refreshHeroScroll(): void {
+  if (activeSeq) {
+    activeSeq.resize();
+    activeSeq.drawFrame(0);
+  }
+  if (resetHeroState) {
+    resetHeroState();
+  }
+  try {
+    ScrollTrigger.refresh();
+  } catch (err) {
+    console.warn('ScrollTrigger refresh error:', err);
+  }
+}
+
 /** Detect if user prefers reduced motion */
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -243,6 +265,7 @@ export function initHeroScroll(container: HTMLElement): void {
       loaderPct.textContent = `${pct}%`;
     },
   });
+  activeSeq = seq;
 
   // ---- Init ----
   seq.resize();
@@ -369,6 +392,36 @@ function initScrollAnimation(
     const scrollTarget = wrapper.offsetTop + wrapperHeight * ((chapter.start + chapter.end) / 2);
     window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
   });
+
+  // Register state reset function for when navigating back to homepage
+  resetHeroState = () => {
+    currentFrame = 0;
+    targetFrame = 0;
+    currentChapterIndex = 0;
+    chapterEls.forEach((el, idx) => {
+      if (idx === 0) {
+        el.classList.add('active');
+        el.setAttribute('aria-hidden', 'false');
+      } else {
+        el.classList.remove('active');
+        el.setAttribute('aria-hidden', 'true');
+      }
+    });
+    if (scrollIndicator) {
+      scrollIndicator.style.opacity = '1';
+    }
+    const dots = progressNav?.querySelectorAll('.hero__progress-dot');
+    dots?.forEach((dot, i) => {
+      dot.classList.toggle('active', i === 0);
+    });
+    const overlayEl = document.querySelector('.hero__overlay') as HTMLElement;
+    if (overlayEl) {
+      overlayEl.style.background = `
+        radial-gradient(ellipse at center, transparent 40%, rgba(11, 20, 38, 0.5) 100%),
+        linear-gradient(to bottom, rgba(11, 20, 38, 0.3) 0%, transparent 30%, transparent 60%, rgba(11, 20, 38, 0.55) 100%)
+      `;
+    }
+  };
 
   // Start with first chapter active
   if (chapterEls[0]) {

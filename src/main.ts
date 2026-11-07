@@ -6,7 +6,7 @@
 
 import './style.css';
 import { initNavbar } from './components/navbar';
-import { initHeroScroll } from './components/heroScroll';
+import { initHeroScroll, refreshHeroScroll } from './components/heroScroll';
 import { initPageSections } from './components/pageSections';
 import { initAuthPage } from './components/auth/AuthPage';
 import { renderDesignerApp, initDesignerApp } from './components/designer/DesignerApp';
@@ -526,6 +526,13 @@ async function main() {
         landingContainer.style.display = 'block';
         if (navbar) navbar.style.display = 'flex';
         window.scrollTo({ top: 0, behavior: 'instant' });
+        
+        requestAnimationFrame(() => {
+          refreshHeroScroll();
+          setTimeout(() => {
+            refreshHeroScroll();
+          }, 80);
+        });
         return;
       }
 

@@ -54,14 +54,16 @@ export function createFrameSequence(opts: FrameSequenceOptions): FrameSequence {
 
   /** Resize canvas to match display size × devicePixelRatio */
   function resize() {
-    const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    if (rect.width === 0 || rect.height === 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // Redraw current frame after resize
-    if (lastDrawnIndex >= 0 && frames[lastDrawnIndex]) {
-      drawFrame(lastDrawnIndex);
+    const drawIdx = lastDrawnIndex >= 0 ? lastDrawnIndex : 0;
+    if (frames[drawIdx]) {
+      drawFrame(drawIdx);
     }
   }
 
@@ -71,13 +73,24 @@ export function createFrameSequence(opts: FrameSequenceOptions): FrameSequence {
     const img = frames[clamped];
     if (!img || !img.complete) return;
 
-    lastDrawnIndex = clamped;
-
     const rect = canvas.getBoundingClientRect();
     const canvasW = rect.width;
     const canvasH = rect.height;
-    const imgW = img.naturalWidth;
-    const imgH = img.naturalHeight;
+    if (canvasW <= 0 || canvasH <= 0) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const expectedW = Math.round(canvasW * dpr);
+    const expectedH = Math.round(canvasH * dpr);
+    if (canvas.width !== expectedW || canvas.height !== expectedH) {
+      canvas.width = expectedW;
+      canvas.height = expectedH;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    lastDrawnIndex = clamped;
+
+    const imgW = img.naturalWidth || canvasW;
+    const imgH = img.naturalHeight || canvasH;
 
     // Object-fit: cover calculation
     const scale = Math.max(canvasW / imgW, canvasH / imgH);

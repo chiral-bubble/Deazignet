@@ -6,6 +6,7 @@
  */
 
 import { getAuthState, subscribeToAuth, logOut } from '../services/authService';
+import { navigateTo } from '../utils/navigation';
 
 export function initNavbar(container: HTMLElement): void {
   const nav = document.createElement('header');
@@ -91,6 +92,7 @@ export function initNavbar(container: HTMLElement): void {
     logoutBtn?.addEventListener('click', async () => {
       await logOut();
       window.location.hash = '';
+      navigateTo('/');
     });
   }
 

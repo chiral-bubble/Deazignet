@@ -23,3 +23,4 @@ for (const file of walk('src')) {
     console.log(`${file}:${line} -> ${match[0]}`);
   }
 }
+

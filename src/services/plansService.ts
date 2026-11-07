@@ -6,7 +6,6 @@
 import { supabase, USE_MOCKS } from '../lib/supabase';
 import { sharedDataset } from '../mocks/dataset';
 import { setDesignerPlan } from './designerProfileService';
-import { formatMoney } from '../utils/formatters';
 
 export interface Plan {
   id: string;
@@ -220,8 +219,8 @@ export function getTieredScheduleDescription(
 
   const parts = [`${tiers[0].rate_percent}% of each milestone`];
   for (let i = 1; i < tiers.length; i++) {
-    const dollars = formatMoney(Math.round(tiers[i].from_amount_cents / 100));
-    parts.push(`or ${tiers[i].rate_percent}% of milestones over ${dollars}`);
+    const dollars = Math.round(tiers[i].from_amount_cents / 100).toLocaleString();
+    parts.push(`or ${tiers[i].rate_percent}% of milestones over $${dollars}`);
   }
   return parts.join(', ');
 }
