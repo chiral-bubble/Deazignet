@@ -16,6 +16,7 @@ import {
   type SearchDesignersParams
 } from '../../services/invitationsService';
 import { US_STATES, formatUSD } from '../../services/usMarketService';
+import { renderMemberBadge } from '../../utils/badges';
 
 export async function renderFindDesignersPage(container: HTMLElement): Promise<void> {
   container.innerHTML = renderClientShell(
@@ -32,7 +33,7 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
               Find designers
             </h1>
             <p style="font-size: 13.5px; color: #6B7280; margin: 0;">
-              Discover verified design professionals, explore past architectural work, and send project invitations.
+              Discover top design professionals, explore past architectural work, and send project invitations.
             </p>
           </div>
 
@@ -56,7 +57,7 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
                 Suggested for this project
               </h2>
               <p style="font-size: 12.5px; color: #6B7280; margin: 0;">
-                Matched based on project category, discipline, location, and verified licensing.
+                Matched based on project category, discipline, location, and credentials.
               </p>
             </div>
             <a href="javascript:void(0)" id="link-order-explanation" style="font-size: 12px; color: #2F7BE5; text-decoration: underline;">
@@ -152,10 +153,6 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
                 <!-- Toggles -->
                 <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
                   <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; cursor: pointer;">
-                    <input type="checkbox" id="filter-verified-only" style="accent-color: #2F7BE5;" />
-                    <span>Verified credentials only</span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; cursor: pointer;">
                     <input type="checkbox" id="filter-available-only" style="accent-color: #2F7BE5;" />
                     <span>Available for projects now</span>
                   </label>
@@ -250,7 +247,6 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
             </p>
             <ul style="font-size: 13px; color: #4B5563; line-height: 1.6; padding-left: 20px; margin: 0 0 14px 0;">
               <li>Specialization matching the project's category (+30)</li>
-              <li>Verified credentials on file (+10)</li>
               <li>Portfolio projects in the same subcategory (+10 to +20)</li>
               <li>Designer located in the same city (+15) or state (+10)</li>
               <li>Client review rating and completed projects (+5 to +10)</li>
@@ -303,7 +299,6 @@ async function initFindDesignersEvents(container: HTMLElement) {
     const discipline = (root.querySelector('#filter-discipline') as HTMLSelectElement)?.value || '';
     const state = (root.querySelector('#filter-state') as HTMLSelectElement)?.value || '';
     const minYears = parseInt((root.querySelector('#filter-min-years') as HTMLSelectElement)?.value || '0', 10);
-    const verifiedOnly = (root.querySelector('#filter-verified-only') as HTMLInputElement)?.checked || false;
     const availableOnly = (root.querySelector('#filter-available-only') as HTMLInputElement)?.checked || false;
     const sort = (root.querySelector('#select-sort') as HTMLSelectElement)?.value as any || 'best_match';
 
@@ -312,7 +307,6 @@ async function initFindDesignersEvents(container: HTMLElement) {
       discipline: discipline || undefined,
       state: state || undefined,
       min_years: minYears > 0 ? minYears : undefined,
-      verified_only: verifiedOnly,
       available_only: availableOnly,
       sort,
       limit: 20,
@@ -383,16 +377,16 @@ async function initFindDesignersEvents(container: HTMLElement) {
       grid.innerHTML = suggestions.map((s) => `
         <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 6px;">
               <div style="font-weight: 600; font-size: 14px; color: #111827;">${escapeHtml(s.full_name)}</div>
-              ${s.is_verified ? '<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;">✓ Verified</span>' : ''}
+              ${(s.has_member_badge || (s as any).plan_key !== 'free') ? renderMemberBadge() : ''}
             </div>
             <div style="font-size: 12px; color: #6B7280; margin-bottom: 8px;">
               ${escapeHtml(s.discipline)} • ${escapeHtml([s.city, s.state].filter(Boolean).join(', '))}
             </div>
             <div style="display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px;">
               ${(s.reasons || []).slice(0, 2).map(r => `
-                <div style="font-size: 11.5px; color: #047857; display: flex; align-items: center; gap: 4px;">
+                <div style="font-size: 11.5px; color: #4B5563; display: flex; align-items: center; gap: 4px;">
                   <span>•</span> <span>${escapeHtml(r.text)}</span>
                 </div>
               `).join('')}
@@ -474,7 +468,6 @@ async function initFindDesignersEvents(container: HTMLElement) {
     (root.querySelector('#filter-discipline') as HTMLSelectElement).value = '';
     (root.querySelector('#filter-state') as HTMLSelectElement).value = '';
     (root.querySelector('#filter-min-years') as HTMLSelectElement).value = '0';
-    (root.querySelector('#filter-verified-only') as HTMLInputElement).checked = false;
     (root.querySelector('#filter-available-only') as HTMLInputElement).checked = false;
     if (filterPanel) filterPanel.style.display = 'none';
     performSearch(true);
@@ -559,11 +552,11 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
             ${d.avatar_path ? `<img src="${d.avatar_path}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />` : d.full_name.slice(0, 2).toUpperCase()}
           </div>
           <div style="flex: 1; min-width: 0;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap;">
               <span style="font-weight: 600; font-size: 15px; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 ${escapeHtml(d.full_name)}
               </span>
-              ${d.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified Credentials">✓</span>` : ''}
+              ${(d.has_member_badge || (d as any).plan_key !== 'free') ? renderMemberBadge() : ''}
               ${d.is_promoted ? `<span style="font-size: 10px; background: #EFF6FF; color: #1D4ED8; padding: 1px 5px; border-radius: 4px; font-weight: 600;">Promoted</span>` : ''}
             </div>
             <div style="font-size: 12.5px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -590,14 +583,13 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
         ${(d.credentials && d.credentials.length > 0) ? `
           <div style="font-size: 11.5px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
             ${d.credentials.slice(0, 2).map((c: any) => {
-              const label = c.status_label || (c.status === 'verified' ? 'Verified' : c.status === 'expired' ? 'Expired' : 'Self-reported');
+              const label = c.status === 'expired' ? 'Expired' : 'Self-reported';
               const parts = [c.title || c.credential_type || 'Credential'];
               if (c.issuing_body) parts.push(c.issuing_body);
               if (c.state || c.issuing_state) parts.push(c.state || c.issuing_state);
               return `
                 <div style="display: flex; align-items: center; gap: 6px; color: #4B5563;">
                   <span style="font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: 500; ${
-                    label === 'Verified' ? 'background: #ECFDF5; color: #047857;' :
                     label === 'Expired' ? 'background: #FEF3C7; color: #92400E;' :
                     'background: #F3F4F6; color: #4B5563;'
                   }">${escapeHtml(label)}</span>

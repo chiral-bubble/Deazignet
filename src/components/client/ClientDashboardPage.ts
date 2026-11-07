@@ -19,6 +19,7 @@ import { supabase } from '../../lib/supabase';
 import { renderClientShell, initClientShell } from './ClientLayout';
 import { suggestDesigners, inviteDesigner } from '../../services/invitationsService';
 import { formatMoney } from '../../utils/formatters';
+import { renderMemberBadge } from '../../utils/badges';
 
 export async function renderClientDashboardPage(container: HTMLElement): Promise<void> {
   const actionButton = `
@@ -510,7 +511,7 @@ async function initDashboardSuggestedDesigners(container: HTMLElement, defaultPr
               <div style="overflow: hidden;">
                 <div style="font-weight: 600; font-size: 13.5px; color: #111827; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                   <span>${escapeHtml(s.full_name)}</span>
-                  ${s.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified">✓</span>` : ''}
+                  ${(s.has_member_badge || (s as any).plan_key !== 'free') ? renderMemberBadge() : ''}
                 </div>
                 <div style="font-size: 11.5px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                   ${escapeHtml(s.discipline || 'Architect')} &bull; ${escapeHtml([s.city, s.state].filter(Boolean).join(', '))}

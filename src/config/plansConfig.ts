@@ -70,8 +70,8 @@ export const PLAN_FEATURES_COMPARISON: PlanFeature[] = [
     upgraded: '2.5%'
   },
   {
-    name: 'Verified accreditation badge',
-    free: true,
+    name: 'Pro member badge',
+    free: false,
     basic: true,
     upgraded: true
   },

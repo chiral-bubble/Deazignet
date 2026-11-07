@@ -7,6 +7,7 @@
  */
 
 import { formatMoney } from '../../../utils/formatters';
+import { renderMemberBadge } from '../../../utils/badges';
 import {
   getProposal,
   markProposalViewed,
@@ -159,7 +160,7 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
                     : `<a href="#designer-profile?id=${p.designer.id}" style="color: inherit; text-decoration: none;">${escapeHtml(p.designer.full_name)}</a>`
                   }
                 </h2>
-                ${p.designer.verified && (p.designer as any).plan_key !== 'free' ? `<span style="font-size: 11.5px; color: #2F7BE5; font-weight: 600;">✓ Verified</span>` : ''}
+                ${(p.designer as any).plan_key !== 'free' ? renderMemberBadge() : ''}
               </div>
               <div style="font-size: 13px; color: #64748B; margin-top: 4px;">
                 ${p.designer.title ? `${escapeHtml(p.designer.title)} • ` : ''}${escapeHtml(p.designer.studio_name || '')}

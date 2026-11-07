@@ -31,7 +31,7 @@ export async function renderMyProjectsPage(container: HTMLElement): Promise<void
     },
     `
       <div id="projects-content-loading" style="display: flex; flex-direction: column; gap: 24px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div class="client-dashboard-summary-grid">
           ${Array(4).fill(0).map(() => `
             <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; height: 90px; animate-pulse;"></div>
           `).join('')}

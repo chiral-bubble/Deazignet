@@ -6,6 +6,7 @@
  */
 
 import { formatMoney } from '../../../utils/formatters';
+import { renderMemberBadge } from '../../../utils/badges';
 import {
   getProjectProposals,
   shortlistProposal,
@@ -58,7 +59,7 @@ export function renderProjectProposalsTab(projectId?: string, _designBudget?: nu
               Suggested Designers
             </h2>
             <p style="font-size: 12.5px; color: #6B7280; margin: 0;">
-              Matched based on project category, discipline, location, and verified professional licensing.
+              Matched based on project category, discipline, location, and qualifications.
             </p>
           </div>
 
@@ -449,7 +450,7 @@ export function initProjectProposalsTab(
       if (suggestions.length === 0) {
         suggestedGrid.innerHTML = `
           <div style="grid-column: 1 / -1; padding: 24px; text-align: center; color: #6B7280; font-size: 13px;">
-            No direct suggestions available. Browse the designer directory to discover more verified professionals.
+            No direct suggestions available. Browse the designer directory to discover more designers.
           </div>
         `;
         return;
@@ -458,9 +459,9 @@ export function initProjectProposalsTab(
       suggestedGrid.innerHTML = suggestions.map((s) => {
         const initials = (s.full_name || 'D').slice(0, 2).toUpperCase();
         const isInvited = invitedDesignerIds.has(s.designer_id);
-        const credInfo = s.is_verified
-          ? 'Verified credentials on file'
-          : (s.credentials && s.credentials.length > 0 ? (s.credentials[0].title || 'Credentials on file') : 'Experienced professional');
+        const credInfo = s.credentials && s.credentials.length > 0
+          ? (s.credentials[0].title || 'Credentials on file')
+          : 'Experienced professional';
 
         return `
           <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
@@ -471,9 +472,9 @@ export function initProjectProposalsTab(
                     ${initials}
                   </div>
                   <div>
-                    <div style="font-weight: 600; font-size: 13.5px; color: #111827; display: flex; align-items: center; gap: 4px;">
+                    <div style="font-weight: 600; font-size: 13.5px; color: #111827; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                       <span>${escapeHtml(s.full_name)}</span>
-                      ${s.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;">✓</span>` : ''}
+                      ${(s.has_member_badge || (s as any).plan_key !== 'free') ? renderMemberBadge() : ''}
                     </div>
                     <div style="font-size: 11.5px; color: #6B7280;">
                       ${escapeHtml(s.discipline || 'Architect')} &bull; ${escapeHtml([s.city, s.state].filter(Boolean).join(', '))}
@@ -487,7 +488,7 @@ export function initProjectProposalsTab(
               </div>
 
               <!-- Credentials & Rating -->
-              <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: ${s.is_verified ? '#047857' : '#4B5563'}; margin-bottom: 6px; font-weight: 500;">
+              <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: #4B5563; margin-bottom: 6px; font-weight: 500;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>${escapeHtml(credInfo)}</span>
               </div>
@@ -692,7 +693,7 @@ export function initProjectProposalsTab(
                   ${escapeHtml(p.designer.full_name)}
                 </a>
                 ${isInvited ? `<span style="font-size: 11px; font-weight: 500; background: #F3F4F6; color: #4B5563; padding: 2px 7px; border: 1px solid #E5E7EB; border-radius: 4px;" title="Invited to this project">Invited</span>` : ''}
-                ${p.designer.verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified Professional">✓ Verified</span>` : ''}
+                ${(p.designer as any).plan_key !== 'free' ? renderMemberBadge() : ''}
                 ${p.is_unviewed ? `<span style="font-size: 11px; background: #EFF6FF; color: #2F7BE5; padding: 1px 6px; border-radius: 4px; font-weight: 600;">New</span>` : ''}
               </div>
               <div style="font-size: 12px; color: #64748B; margin-top: 2px;">

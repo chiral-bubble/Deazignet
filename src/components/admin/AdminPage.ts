@@ -396,6 +396,17 @@ function exportFeedbackCsv(items: AdminFeedbackItem[]): void {
  * 2. Pending Credentials Tab
  */
 async function loadCredentialsTab(container: HTMLElement, modalContainer: HTMLElement): Promise<void> {
+  const matchingSettings = await adminGetMatchingSettings();
+  if (!matchingSettings.credential_verification_enabled) {
+    container.innerHTML = `
+      <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 48px; text-align: center;">
+        <h3 style="font-size: 16px; font-weight: 600; color: #0F172A; margin: 0 0 6px;">Credential verification is disabled</h3>
+        <p style="font-size: 14px; color: #64748B; margin: 0 0 16px;">Credential verification is currently turned off in matching settings. Credentials on Dezignet are self-reported trust signals.</p>
+      </div>
+    `;
+    return;
+  }
+
   const list: AdminPendingCredential[] = await adminGetPendingCredentials();
 
   if (list.length === 0) {
@@ -593,14 +604,14 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
                     <label style="display: block; font-size: 12px; font-weight: 500; color: #475569; margin-bottom: 4px;">Monthly Price (cents)</label>
                     <input type="number" class="input-monthly-cents" value="${p.monthly_price_cents}" min="0" style="width: 100%; box-sizing: border-box; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px; font-size: 13px; background: #FFFFFF;" />
                     <span class="preview-monthly-dollars" style="font-size: 11px; color: #64748B; margin-top: 2px; display: block;">
-                      = $${(p.monthly_price_cents / 100).toFixed(2)}/mo
+                      = ${formatMoney(p.monthly_price_cents / 100)}/mo
                     </span>
                   </div>
                   <div>
                     <label style="display: block; font-size: 12px; font-weight: 500; color: #475569; margin-bottom: 4px;">Yearly Price (cents)</label>
                     <input type="number" class="input-yearly-cents" value="${p.yearly_price_cents}" min="0" style="width: 100%; box-sizing: border-box; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px; font-size: 13px; background: #FFFFFF;" />
                     <span class="preview-yearly-dollars" style="font-size: 11px; color: #64748B; margin-top: 2px; display: block;">
-                      = $${(p.yearly_price_cents / 100).toFixed(2)}/yr
+                      = ${formatMoney(p.yearly_price_cents / 100)}/yr
                     </span>
                   </div>
                 </div>
@@ -645,8 +656,8 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
                       <span>direct_invitations (Direct client invites)</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                      <input type="checkbox" class="cb-verified_badge" ${p.verified_badge ? 'checked' : ''} />
-                      <span>verified_badge (Verified AIA badge)</span>
+                      <input type="checkbox" class="cb-member_badge" ${p.member_badge ? 'checked' : ''} />
+                      <span>member_badge (Pro member badge)</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                       <input type="checkbox" class="cb-studio_insights" ${p.studio_insights ? 'checked' : ''} />
@@ -811,12 +822,12 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
     // Live preview updates
     monthlyInput.addEventListener('input', () => {
       const val = parseInt(monthlyInput.value, 10) || 0;
-      monthlyPreview.textContent = `= $${(val / 100).toFixed(2)}/mo`;
+      monthlyPreview.textContent = `= ${formatMoney(val / 100)}/mo`;
     });
 
     yearlyInput.addEventListener('input', () => {
       const val = parseInt(yearlyInput.value, 10) || 0;
-      yearlyPreview.textContent = `= $${(val / 100).toFixed(2)}/yr`;
+      yearlyPreview.textContent = `= ${formatMoney(val / 100)}/yr`;
     });
 
     limitSelect.addEventListener('change', () => {
@@ -845,7 +856,7 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
         public_profile: card.querySelector<HTMLInputElement>('.cb-public_profile')?.checked ?? false,
         portfolio_enabled: card.querySelector<HTMLInputElement>('.cb-portfolio_enabled')?.checked ?? false,
         direct_invitations: card.querySelector<HTMLInputElement>('.cb-direct_invitations')?.checked ?? false,
-        verified_badge: card.querySelector<HTMLInputElement>('.cb-verified_badge')?.checked ?? false,
+        member_badge: card.querySelector<HTMLInputElement>('.cb-member_badge')?.checked ?? false,
         studio_insights: card.querySelector<HTMLInputElement>('.cb-studio_insights')?.checked ?? false,
         studio_url: card.querySelector<HTMLInputElement>('.cb-studio_url')?.checked ?? false
       };
@@ -1005,7 +1016,7 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
           return;
         }
         if (i > 0 && t.from_amount_cents <= parsedTiers[i - 1].from_amount_cents) {
-          errorBanner.textContent = `Validation error: Thresholds must be strictly ascending (tier #${i + 1} at $${t.from_amount_cents / 100} is not greater than tier #${i} at $${parsedTiers[i - 1].from_amount_cents / 100}).`;
+          errorBanner.textContent = `Validation error: Thresholds must be strictly ascending (tier #${i + 1} at ${formatMoney(t.from_amount_cents / 100)} is not greater than tier #${i} at ${formatMoney(parsedTiers[i - 1].from_amount_cents / 100)}).`;
           errorBanner.style.display = 'block';
           return;
         }
@@ -1078,10 +1089,6 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
                 <input type="number" id="mw-state" value="${settings.matching_weights.same_state}" min="0" max="100" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <label style="color: #334155;">Verified credential badge:</label>
-                <input type="number" id="mw-verified" value="${settings.matching_weights.verified}" min="0" max="100" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label style="color: #334155;">Rating & client reviews:</label>
                 <input type="number" id="mw-rating" value="${settings.matching_weights.rating}" min="0" max="100" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
               </div>
@@ -1118,6 +1125,14 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
 
               <div style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Engine Settings & Display Mode</div>
               <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <label style="color: #334155;">Member badge label:</label>
+                  <input type="text" id="mb-member-badge-label" value="${settings.member_badge_label || 'Pro member'}" style="width: 140px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px;" />
+                </div>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="mb-verification-enabled" ${settings.credential_verification_enabled ? 'checked' : ''} />
+                  <span>Enable Credential Verification (credential_verification_enabled)</span>
+                </label>
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                   <input type="checkbox" id="mb-insurance-enabled" ${settings.insurance_section_enabled ? 'checked' : ''} />
                   <span>Enable Professional Liability Insurance section (insurance_section_enabled)</span>
@@ -1193,7 +1208,6 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
           subcategory_portfolio: parseInt((container.querySelector('#mw-portfolio') as HTMLInputElement).value, 10) || 0,
           same_city: parseInt((container.querySelector('#mw-city') as HTMLInputElement).value, 10) || 0,
           same_state: parseInt((container.querySelector('#mw-state') as HTMLInputElement).value, 10) || 0,
-          verified: parseInt((container.querySelector('#mw-verified') as HTMLInputElement).value, 10) || 0,
           rating: parseInt((container.querySelector('#mw-rating') as HTMLInputElement).value, 10) || 0,
           completed_projects: parseInt((container.querySelector('#mw-completed') as HTMLInputElement).value, 10) || 0
         },
@@ -1203,6 +1217,8 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
           upgraded: parseInt((container.querySelector('#mb-upgraded') as HTMLInputElement).value, 10) || 0
         },
         matching_new_designer_boost: parseInt((container.querySelector('#mb-new-designer') as HTMLInputElement).value, 10) || 0,
+        member_badge_label: (container.querySelector('#mb-member-badge-label') as HTMLInputElement)?.value || 'Pro member',
+        credential_verification_enabled: (container.querySelector('#mb-verification-enabled') as HTMLInputElement)?.checked || false,
         insurance_section_enabled: (container.querySelector('#mb-insurance-enabled') as HTMLInputElement).checked,
         priority_label_mode: (container.querySelector('#mb-priority-label-mode') as HTMLSelectElement).value as any
       };
@@ -1285,7 +1301,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
                         <div>
                           <div style="font-weight: 600; color: #0F172A; font-size: 13px;">
                             ${escapeHtml(cand.full_name)}
-                            ${cand.is_verified ? '<span style="color: #2F7BE5; font-size: 11px; margin-left: 4px; font-weight: 600;">[Verified]</span>' : ''}
+                            ${cand.has_member_badge ? '<span style="color: #475569; font-size: 11px; margin-left: 4px; font-weight: 600;">[Pro member]</span>' : ''}
                           </div>
                           <div style="font-size: 11.5px; color: #64748B;">
                             ${escapeHtml(cand.title || cand.discipline)} ${cand.studio_name ? '• ' + escapeHtml(cand.studio_name) : ''}

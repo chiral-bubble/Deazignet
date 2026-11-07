@@ -52,7 +52,7 @@ export const PLAN_TIERS_CONFIG: PlanTierConfig[] = [
     yearlyPrice: 299.00,
     proposalsPerMonth: 10,
     platformFeeText: '5% (2.5% on milestones over $20,000)',
-    description: '10 proposals per month, client directory listing, verified badge, and 2 portfolio images per project.'
+    description: '10 proposals per month, client directory listing, Pro member badge, and 2 portfolio images per project.'
   },
   {
     id: 'upgraded',
@@ -86,7 +86,7 @@ export const PLAN_FEATURES_TABLE: PlanFeatureRow[] = [
     upgraded: 'Priority Promoted'
   },
   {
-    name: 'Verified badge',
+    name: 'Pro member badge',
     free: false,
     basic: true,
     upgraded: true

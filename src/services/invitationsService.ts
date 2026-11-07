@@ -53,6 +53,7 @@ export interface SuggestedDesigner {
   rating_count: number;
   completed_projects_count: number;
   is_verified: boolean;
+  has_member_badge: boolean;
   plan_key: string;
   match_score: number;
   reasons: Array<{ type: string; text: string }>;
@@ -67,7 +68,6 @@ export interface SearchDesignersParams {
   city?: string;
   min_years?: number;
   min_rating?: number;
-  verified_only?: boolean;
   available_only?: boolean;
   sort?: 'best_match' | 'rating' | 'experience' | 'newest';
   limit?: number;
@@ -87,7 +87,6 @@ export async function searchDesignersForClient(params: SearchDesignersParams) {
     p_city: params.city || null,
     p_min_years: params.min_years || null,
     p_min_rating: params.min_rating || null,
-    p_verified_only: params.verified_only || false,
     p_available_only: params.available_only || false,
     p_sort: params.sort || 'best_match',
     p_limit: params.limit || 20,
@@ -122,14 +121,15 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     rating_count: 28,
     completed_projects_count: 18,
     is_verified: true,
+    has_member_badge: true,
     plan_key: 'studio_pro',
     match_score: 96,
     reasons: [
       { type: 'category', text: 'Specialist in custom residential interior architecture' },
-      { type: 'credential', text: 'Verified interior architecture credential' }
+      { type: 'plan_boost', text: 'Pro member priority placement' }
     ],
     credentials: [
-      { title: 'Licensed Interior Designer', issuing_body: 'ASID', state: 'CO', status_label: 'Verified' }
+      { title: 'Licensed Interior Designer', issuing_body: 'ASID', state: 'CO', status_label: 'Self-reported' }
     ]
   },
   {
@@ -146,15 +146,16 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     rating_count: 42,
     completed_projects_count: 35,
     is_verified: true,
+    has_member_badge: true,
     plan_key: 'studio_pro',
     match_score: 94,
     reasons: [
       { type: 'category', text: 'Extensive portfolio in luxury modern typologies' },
-      { type: 'credential', text: 'NCARB Certificate & registered architect' }
+      { type: 'plan_boost', text: 'Pro member priority placement' }
     ],
     credentials: [
-      { title: 'NCARB Certificate', issuing_body: 'NCARB', status_label: 'Verified' },
-      { title: 'Registered Architect', issuing_body: 'NYS Board', state: 'NY', status_label: 'Verified' }
+      { title: 'NCARB Certificate', issuing_body: 'NCARB', status_label: 'Self-reported' },
+      { title: 'Registered Architect', issuing_body: 'NYS Board', state: 'NY', status_label: 'Self-reported' }
     ]
   },
   {
@@ -171,14 +172,15 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     rating_count: 31,
     completed_projects_count: 29,
     is_verified: true,
+    has_member_badge: true,
     plan_key: 'studio_basic',
     match_score: 91,
     reasons: [
       { type: 'category', text: 'Specialist in structural coordination & permit packages' },
-      { type: 'credential', text: 'Verified Professional Engineer credential' }
+      { type: 'plan_boost', text: 'Pro member priority placement' }
     ],
     credentials: [
-      { title: 'Professional Engineer (PE)', issuing_body: 'TBPE', state: 'TX', status_label: 'Verified' }
+      { title: 'Professional Engineer (PE)', issuing_body: 'TBPE', state: 'TX', status_label: 'Self-reported' }
     ]
   },
   {
@@ -195,14 +197,15 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     rating_count: 19,
     completed_projects_count: 15,
     is_verified: true,
+    has_member_badge: true,
     plan_key: 'studio_pro',
     match_score: 89,
     reasons: [
       { type: 'category', text: 'Typology match in exterior residential & sustainable site design' },
-      { type: 'credential', text: 'Verified landscape architecture registration' }
+      { type: 'plan_boost', text: 'Pro member priority placement' }
     ],
     credentials: [
-      { title: 'Registered Landscape Architect', issuing_body: 'CLARB', state: 'IL', status_label: 'Verified' }
+      { title: 'Registered Landscape Architect', issuing_body: 'CLARB', state: 'IL', status_label: 'Self-reported' }
     ]
   },
   {
@@ -219,15 +222,16 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     rating_count: 36,
     completed_projects_count: 26,
     is_verified: true,
+    has_member_badge: true,
     plan_key: 'studio_pro',
     match_score: 88,
     reasons: [
       { type: 'category', text: 'Specialist in passive house & sustainable modern homes' },
-      { type: 'credential', text: 'LEED AP & verified architectural credential' }
+      { type: 'plan_boost', text: 'Pro member priority placement' }
     ],
     credentials: [
-      { title: 'LEED AP BD+C', issuing_body: 'USGBC', status_label: 'Verified' },
-      { title: 'Architect License', issuing_body: 'CAB', state: 'CA', status_label: 'Verified' }
+      { title: 'LEED AP BD+C', issuing_body: 'USGBC', status_label: 'Self-reported' },
+      { title: 'Architect License', issuing_body: 'CAB', state: 'CA', status_label: 'Self-reported' }
     ]
   },
   {
@@ -244,11 +248,11 @@ const MOCK_SUGGESTIONS: SuggestedDesigner[] = [
     rating_count: 14,
     completed_projects_count: 12,
     is_verified: false,
+    has_member_badge: false,
     plan_key: 'free',
     match_score: 85,
     reasons: [
-      { type: 'category', text: 'Extensive experience in brownstone & townhome renovations' },
-      { type: 'credential', text: 'Self-reported architectural credential' }
+      { type: 'category', text: 'Extensive experience in brownstone & townhome renovations' }
     ],
     credentials: [
       { title: 'Registered Architect', issuing_body: 'MA Board', state: 'MA', status_label: 'Self-reported' }

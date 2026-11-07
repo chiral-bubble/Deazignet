@@ -250,8 +250,8 @@ function faq(): string {
       a: 'Yes! Posting a project on Dezignet is completely free. You only pay when you hire a designer and approve their work. Our escrow system ensures your payments are secure.',
     },
     {
-      q: 'How are designers verified?',
-      a: 'All designers go through a verification process that includes license verification, portfolio review, and identity confirmation. We also collect and display client reviews to help you make informed decisions.',
+      q: 'How do I choose the right designer?',
+      a: 'Designers showcase comprehensive portfolios, past project completions, and credentials. We also collect and display authentic client reviews to help you make informed hiring decisions.',
     },
     {
       q: 'What types of projects can I post?',

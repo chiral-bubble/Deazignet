@@ -46,14 +46,15 @@ export interface DesignerInsurance {
 export function renderCredentialsTab(
   credentials: UsCredential[],
   insurance?: DesignerInsurance | null,
-  insuranceSectionEnabled: boolean = false
+  insuranceSectionEnabled: boolean = false,
+  verificationEnabled: boolean = false
 ): string {
   return `
     <div class="dez-settings-panel" id="dez-credentials-tab-content">
       <div class="dez-panel-header-with-actions" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
         <div>
-          <h2 class="dez-panel-title" style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 4px 0;">Credentials and accreditation (optional)</h2>
-          <p class="dez-panel-subtext" style="font-size: 13px; color: #6B7280; margin: 0;">Add licenses, certifications or registrations you hold. Optional. Verified credentials can earn the Verified badge on paid plans.</p>
+          <h2 class="dez-panel-title" style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 4px 0;">Credentials (optional)</h2>
+          <p class="dez-panel-subtext" style="font-size: 13px; color: #6B7280; margin: 0;">Add licenses, certifications or registrations you hold. Optional. Credentials are self-reported.</p>
         </div>
         <button type="button" class="dez-btn-primary" id="btn-add-credential" style="height: 36px; padding: 0 16px; font-size: 13px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; cursor: pointer;">
           + Add credential
@@ -64,7 +65,7 @@ export function renderCredentialsTab(
       <div class="dez-credentials-list" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px;">
         ${credentials.length === 0 ? `
           <div style="border: 1px dashed #E5E7EB; border-radius: 8px; padding: 32px; text-align: center;">
-            <p style="font-size: 13.5px; color: #6B7280; margin: 0 0 14px 0;">No credentials added yet. Add licenses, certifications or registrations you hold. Optional. Verified credentials can earn the Verified badge on paid plans.</p>
+            <p style="font-size: 13.5px; color: #6B7280; margin: 0 0 14px 0;">No credentials added yet. Add licenses, certifications or registrations you hold. Optional. Credentials are self-reported.</p>
             <button type="button" class="dez-btn-secondary" id="btn-empty-add-cred" style="height: 36px; padding: 0 14px; font-size: 13px;">
               Add credential
             </button>
@@ -74,9 +75,19 @@ export function renderCredentialsTab(
           const typeLabel = typeObj?.label || 'Credential';
           const title = cred.title || typeLabel;
           const maskedNum = cred.license_number ? maskLicenseNumber(cred.license_number) : null;
-          const isVerified = cred.status === 'verified';
-          const isPending = cred.status === 'pending';
-          const isExpired = cred.status === 'expired';
+          const isExpired = cred.status === 'expired' || Boolean(cred.expiration_date && new Date(cred.expiration_date) < new Date());
+
+          const statusText = !verificationEnabled
+            ? (isExpired ? 'Expired' : 'Self-reported')
+            : (cred.status === 'verified' ? 'Verified' : cred.status === 'pending' ? 'Pending Review' : isExpired ? 'Expired' : 'Rejected');
+
+          const statusStyle = statusText === 'Expired'
+            ? 'background: #FEF3C7; color: #92400E;'
+            : statusText === 'Verified'
+            ? 'background: #ECFDF5; color: #047857;'
+            : statusText === 'Pending Review'
+            ? 'background: #EFF6FF; color: #1D4ED8;'
+            : 'background: #F3F4F6; color: #4B5563;';
 
           const details: string[] = [];
           if (cred.issuing_body) details.push(cred.issuing_body);
@@ -90,13 +101,8 @@ export function renderCredentialsTab(
               <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
                   <span style="font-weight: 600; font-size: 14px; color: #111827;">${title}</span>
-                  <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; ${
-                    isVerified ? 'background: #ECFDF5; color: #047857;' :
-                    isPending ? 'background: #EFF6FF; color: #1D4ED8;' :
-                    isExpired ? 'background: #FEF3C7; color: #92400E;' :
-                    'background: #FEF2F2; color: #991B1B;'
-                  }">
-                    ${isVerified ? 'Verified' : isPending ? 'Pending Review' : isExpired ? 'Expired' : 'Rejected'}
+                  <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; ${statusStyle}">
+                    ${statusText}
                   </span>
                   <span style="font-size: 11px; color: #6B7280; background: #F3F4F6; padding: 2px 6px; border-radius: 4px;">
                     ${typeLabel}
@@ -107,7 +113,7 @@ export function renderCredentialsTab(
                     ${details.join(' &bull; ')}
                   </div>
                 ` : ''}
-                ${cred.rejection_reason ? `
+                ${cred.rejection_reason && verificationEnabled ? `
                   <div style="font-size: 12px; color: #991B1B; margin-top: 4px;">Reason: ${cred.rejection_reason}</div>
                 ` : ''}
               </div>
@@ -308,7 +314,7 @@ export function initCredentialsTab(
           .eq('designer_id', user.id);
 
         if (error) throw error;
-        callbacks.onShowToast('Credential updated', 'Saved changes. If modified, review will reset to pending.', 'success');
+        callbacks.onShowToast('Credential updated', 'Saved changes to your profile.', 'success');
       } else {
         // Insert
         const { error } = await (supabase.from as any)('credentials')
@@ -324,7 +330,7 @@ export function initCredentialsTab(
           });
 
         if (error) throw error;
-        callbacks.onShowToast('Credential added', 'Submitted for admin verification.', 'success');
+        callbacks.onShowToast('Credential added', 'Saved changes to your profile.', 'success');
       }
 
       if (modal) modal.style.display = 'none';

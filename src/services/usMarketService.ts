@@ -115,16 +115,26 @@ export function formatUsPhone(phone: string): string {
 
 /**
  * Formats money as USD tabular currency ($12,500.00)
+ * Uses explicit formatting to guarantee exactly one dollar sign across all browser locales.
  */
 export function formatUSD(amount: number | string): string {
-  const num = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]/g, '')) : amount;
+  let num: number;
+  if (typeof amount === 'string') {
+    const isNeg = amount.includes('-');
+    const cleanStr = amount.replace(/[^0-9.]/g, '');
+    num = parseFloat(cleanStr);
+    if (isNaN(num)) return '$0.00';
+    if (isNeg) num = -num;
+  } else {
+    num = amount;
+  }
   if (isNaN(num)) return '$0.00';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  const isNegative = num < 0;
+  const absFormatted = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(num);
+  }).format(Math.abs(num));
+  return `${isNegative ? '-' : ''}$${absFormatted}`;
 }
 
 /**

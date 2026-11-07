@@ -527,7 +527,11 @@ export function initDesignerApp(onLogout: () => void): void {
               currentActiveTab = 'projects';
             }
           } else if (targetTab === 'proposals') {
-            window.location.hash = '#my-work/proposals';
+            if (meta?.selectedProposalId) {
+              window.location.hash = `#my-work/proposals/${meta.selectedProposalId}`;
+            } else {
+              window.location.hash = '#my-work/proposals';
+            }
             return;
           } else if (targetTab === 'payments') {
             window.location.hash = '#payments';
@@ -578,7 +582,11 @@ export function initDesignerApp(onLogout: () => void): void {
         activeTab: myWorkActiveTab,
         subId: myWorkSubId,
         onNavigate: (route: string) => {
-          navigateTo(route);
+          if (route.startsWith('#')) {
+            window.location.hash = route;
+          } else {
+            navigateTo(route);
+          }
         },
         onShowToast: showToast
       });

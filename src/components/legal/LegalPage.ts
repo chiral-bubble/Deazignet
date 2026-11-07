@@ -91,7 +91,7 @@ function renderTermsContent(): string {
           <strong>[Placeholder text marked for legal review]:</strong> Design professionals offering architectural, engineering, landscape, or interior design services through Dezignet are solely and independently responsible for complying with all applicable licensing, credentialing, registration, and statutory regulatory requirements that apply to their services in the jurisdictions where their work is performed or delivered.
         </p>
         <p style="margin: 0; color: #334155;">
-          Dezignet provides credentials and accreditation displays as voluntary trust signals. Dezignet makes no representation, guarantee, or legal warranty regarding professional licensure for specific local permitting, municipal filing, or life-safety requirements. Clients are advised to independently confirm any statutory jurisdiction or sealed drawing requirements needed for their specific building project.
+          Dezignet provides credentials and accreditation displays as voluntary trust signals. The "Pro member" badge indicates an active paid platform membership and does not represent background verification, skill certification, or regulatory validation by Dezignet [Placeholder text marked for legal review]. Dezignet makes no representation, guarantee, or legal warranty regarding professional licensure for specific local permitting, municipal filing, or life-safety requirements. Clients are advised to independently confirm any statutory jurisdiction or sealed drawing requirements needed for their specific building project.
         </p>
       </div>
 

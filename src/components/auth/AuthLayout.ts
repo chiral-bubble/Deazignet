@@ -37,7 +37,7 @@ export function renderAuthLayout(contentHtml: string, sideTitle?: string, sideSu
       <!-- Right: Architecture Photography Column (Desktop only, >= 1024px) -->
       <div class="auth-layout__right" style="flex: 1.2; background: #F7F7F8; display: flex; flex-direction: column; justify-content: space-between; padding: 48px; box-sizing: border-box; position: relative; overflow: hidden;">
         <div style="max-width: 480px; z-index: 2;">
-          <span style="display: inline-block; font-size: 12px; font-weight: 600; color: #2F7BE5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Verified Professionals & Escrow Protected</span>
+          <span style="display: inline-block; font-size: 12px; font-weight: 600; color: #2F7BE5; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Pro Designers & Escrow Protected</span>
           <h2 style="font-family: 'Playfair Display', Georgia, serif; font-size: 32px; font-weight: 600; color: #0F172A; line-height: 1.25; margin: 0 0 12px;">
             ${displayTitle}
           </h2>
@@ -58,7 +58,7 @@ export function renderAuthLayout(contentHtml: string, sideTitle?: string, sideSu
         <div style="display: flex; gap: 32px; font-size: 13px; color: #64748B; z-index: 2; margin-top: 24px;">
           <div><strong style="color: #0F172A;">2,000+</strong> Completed projects</div>
           <div><strong style="color: #0F172A;">100%</strong> Milestone protected</div>
-          <div><strong style="color: #0F172A;">Verified</strong> License checks</div>
+          <div><strong style="color: #0F172A;">Curated</strong> Design talents</div>
         </div>
       </div>
     </div>

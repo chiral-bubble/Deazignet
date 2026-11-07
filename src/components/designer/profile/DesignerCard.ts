@@ -7,9 +7,10 @@
 
 import type { DesignerProfile } from '../../../services/designerProfileService';
 import { formatMoney } from '../../../utils/formatters';
+import { renderMemberBadge } from '../../../utils/badges';
 
 export function renderDesignerCard(designer: DesignerProfile, isSaved: boolean = false): string {
-  const isVerified = (designer.credentials || []).some((c) => c.status === 'verified');
+  const isPaid = Boolean(designer.currentPlanId && designer.currentPlanId !== 'free');
   const initial = (designer.name || 'D').slice(0, 2).toUpperCase();
   const showRate = designer.hourlyRate && !designer.hideRateFromPeers;
 
@@ -37,16 +38,7 @@ export function renderDesignerCard(designer: DesignerProfile, isSaved: boolean =
                   ${designer.name}
                 </a>
               </h3>
-              ${
-                isVerified
-                  ? `
-                <span class="dez-verified-badge" title="Council Authenticated Accreditation" aria-label="Verified Designer">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span>Verified</span>
-                </span>
-              `
-                  : ''
-              }
+              ${isPaid ? renderMemberBadge() : ''}
             </div>
 
             <!-- Save Bookmark Icon Button -->

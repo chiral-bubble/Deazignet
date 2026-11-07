@@ -23,6 +23,7 @@ import {
   type ProjectDraftPayload
 } from '../../services/projectsService';
 import { FileUploader } from '../common/FileUploader';
+import { renderMemberBadge } from '../../utils/badges';
 import { renderClientShell, initClientShell } from './ClientLayout';
 import { US_STATES } from '../../services/usMarketService';
 import { suggestDesigners, inviteDesigner } from '../../services/invitationsService';
@@ -1631,7 +1632,7 @@ function initWizardState(
           </div>
           <h2 style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 8px;">Project Successfully Posted!</h2>
           <p style="font-size: 13.5px; color: #4B5563; line-height: 1.5; max-width: 580px; margin: 0 auto 20px;">
-            "${escapeHtml(title)}" is now published and open for proposals from verified architects and design professionals.
+            "${escapeHtml(title)}" is now published and open for proposals from architects and design professionals.
           </p>
 
           <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
@@ -1652,7 +1653,7 @@ function initWizardState(
                 Designers who match your project
               </h3>
               <p style="font-size: 13px; color: #6B7280; margin: 0;">
-                These verified professionals match your project typology, scope, and licensing requirements.
+                These professionals match your project typology, scope, and criteria.
               </p>
             </div>
             <a href="#find-designers?project=${encodeURIComponent(projectId)}" style="font-size: 13px; font-weight: 600; color: #2F7BE5; text-decoration: none;">
@@ -1764,7 +1765,7 @@ function initWizardState(
           <div style="grid-column: 1 / -1; padding: 36px; text-align: center; color: #6B7280; border: 1px dashed #E5E7EB; border-radius: 8px;">
             <p style="font-size: 13.5px; margin: 0 0 6px 0;">No direct match suggestions generated yet.</p>
             <a href="#find-designers?project=${encodeURIComponent(projectId)}" style="font-size: 13px; color: #2F7BE5; font-weight: 500; text-decoration: underline;">
-              Browse all verified designers
+              Browse all designers
             </a>
           </div>
         `;
@@ -1773,9 +1774,9 @@ function initWizardState(
 
       grid.innerHTML = suggestions.map((s) => {
         const initials = (s.full_name || 'D').slice(0, 2).toUpperCase();
-        const credInfo = s.is_verified
-          ? 'Verified credentials on file'
-          : (s.credentials && s.credentials.length > 0 ? (s.credentials[0].title || 'Credentials on file') : 'Experienced professional');
+        const credInfo = s.credentials && s.credentials.length > 0
+          ? (s.credentials[0].title || 'Credentials on file')
+          : 'Experienced professional';
 
         return `
           <div class="wizard-designer-card" data-id="${s.designer_id}" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;">
@@ -1787,9 +1788,9 @@ function initWizardState(
                     ${initials}
                   </div>
                   <div>
-                    <div style="font-weight: 600; font-size: 14px; color: #111827; display: flex; align-items: center; gap: 5px;">
+                    <div style="font-weight: 600; font-size: 14px; color: #111827; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                       <span>${escapeHtml(s.full_name)}</span>
-                      ${s.is_verified ? `<span style="font-size: 11px; color: #2F7BE5; font-weight: 600;" title="Verified Professional">✓</span>` : ''}
+                      ${(s.has_member_badge || (s as any).plan_key !== 'free') ? renderMemberBadge() : ''}
                     </div>
                     <div style="font-size: 12px; color: #6B7280; margin-top: 1px;">
                       ${escapeHtml(s.discipline || 'Architect')} &bull; ${escapeHtml([s.city, s.state].filter(Boolean).join(', '))}
@@ -1803,7 +1804,7 @@ function initWizardState(
               </div>
 
               <!-- Credentials Status -->
-              <div style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: ${s.is_verified ? '#047857' : '#4B5563'}; margin-bottom: 8px; font-weight: 500;">
+              <div style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #4B5563; margin-bottom: 8px; font-weight: 500;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>${escapeHtml(credInfo)}</span>
               </div>

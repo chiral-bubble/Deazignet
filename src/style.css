@@ -1393,6 +1393,15 @@ ol {
   .client-content-body {
     padding: 16px !important;
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .client-content-body > div {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
   }
 
   /* Summary 2 by 2 on mobile across all widths down to 360px */

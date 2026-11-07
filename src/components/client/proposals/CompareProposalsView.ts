@@ -13,6 +13,7 @@ import {
 } from '../../../services/clientProposalsService';
 import { renderClientShell, initClientShell } from '../ClientLayout';
 import { formatMoney } from '../../../utils/formatters';
+import { renderMemberBadge } from '../../../utils/badges';
 
 export async function renderCompareProposalsView(container: HTMLElement, projectId: string, proposalIds: string[]): Promise<void> {
   container.innerHTML = renderClientShell(
@@ -105,8 +106,11 @@ function renderMatrix(mount: HTMLElement, projectId: string, proposals: Detailed
                     <div style="font-size: 12px; color: #64748B; margin-top: 2px;">
                       ${escapeHtml(p.designer.title || '')} • ${escapeHtml(p.designer.studio_name || '')}
                     </div>
-                    <div style="font-size: 11.5px; color: #94A3B8; margin-top: 3px;">
-                      ${escapeHtml([p.designer.city, p.designer.state_region].filter(Boolean).join(', '))} • ${p.designer.years_experience} yrs exp • ${p.designer.verified ? '✓ Verified' : ''}
+                    <div style="font-size: 11.5px; color: #94A3B8; margin-top: 3px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                      <span>${escapeHtml([p.designer.city, p.designer.state_region].filter(Boolean).join(', '))}</span>
+                      <span>•</span>
+                      <span>${p.designer.years_experience} yrs exp</span>
+                      ${(p.designer as any).plan_key !== 'free' ? renderMemberBadge() : ''}
                     </div>
                   </div>
                 </div>

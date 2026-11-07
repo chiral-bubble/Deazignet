@@ -22,6 +22,7 @@ import { getAuthState } from '../../../services/authService';
 import { inviteDesigner } from '../../../services/invitationsService';
 import { formatMoney } from '../../../utils/formatters';
 import { maskLicenseNumber } from '../../../services/usMarketService';
+import { renderMemberBadge, PRO_MEMBER_TOOLTIP } from '../../../utils/badges';
 
 export function renderPublicProfile(
   designer: DesignerProfile,
@@ -30,9 +31,6 @@ export function renderPublicProfile(
   isSelf: boolean
 ): string {
   const isPaid = Boolean(designer.currentPlanId && designer.currentPlanId !== 'free');
-  const isVerified = isPaid && (designer.credentials || []).some(
-    (c) => c.status === 'verified' && (!c.expirationDate || new Date(c.expirationDate) >= new Date())
-  );
   const initial = (designer.name || 'D').slice(0, 2).toUpperCase();
   const sortedPortfolio = [...(designer.portfolio || [])].sort((a, b) => a.order - b.order);
   const reviews = designer.reviews || [];
@@ -72,22 +70,14 @@ export function renderPublicProfile(
           <div class="dez-pub-identity">
             <div class="dez-pub-name-row">
               <h1 class="dez-pub-name">${designer.name}</h1>
-              ${
-                isVerified
-                  ? `
-                <div class="dez-pub-verified-pill" title="Regulatory council authenticated accreditation">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span>Verified designer</span>
-                </div>
-              `
-                  : ''
-              }
+              ${isPaid ? renderMemberBadge() : ''}
             </div>
 
             <p class="dez-pub-title">
               ${designer.professionalTitle}
               ${designer.companyName ? ` &bull; <span class="dez-pub-company">${designer.companyName}</span>` : ''}
             </p>
+            ${isPaid ? `<p style="font-size: 12px; color: #6B7280; margin: 4px 0 0 0; line-height: 1.4;">${PRO_MEMBER_TOOLTIP}</p>` : ''}
 
             <div class="dez-pub-location-row">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--dez-text-muted);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -302,7 +292,7 @@ export function renderPublicProfile(
 
             <!-- Credentials Section (Partially Masked Reg Numbers) -->
             <div class="dez-pub-side-divider"></div>
-            <h4 class="dez-pub-side-subtitle">Credentials and accreditation (optional)</h4>
+            <h4 class="dez-pub-side-subtitle">Credentials (optional)</h4>
 
             <div class="dez-pub-creds-side-list">
               ${
@@ -313,8 +303,6 @@ export function renderPublicProfile(
                         const isPastExp = Boolean(c.expirationDate && new Date(c.expirationDate) < new Date());
                         const statusLabel = isPastExp || c.status === 'expired'
                           ? 'Expired'
-                          : (c.status === 'verified' && isPaid)
-                          ? 'Verified'
                           : 'Self-reported';
 
                         const title = c.title || c.registrationBody || 'Credential';
@@ -326,8 +314,7 @@ export function renderPublicProfile(
                     <div class="dez-pub-cred-item">
                       <div class="dez-pub-cred-header">
                         <strong class="dez-pub-cred-body">${title}</strong>
-                        <span class="dez-status-plain ${statusLabel === 'Verified' ? 'is-verified' : ''}" style="font-size:11px; padding: 2px 6px; border-radius: 4px; ${
-                          statusLabel === 'Verified' ? 'background: #ECFDF5; color: #047857;' :
+                        <span class="dez-status-plain" style="font-size:11px; padding: 2px 6px; border-radius: 4px; ${
                           statusLabel === 'Expired' ? 'background: #FEF3C7; color: #92400E;' :
                           'background: #F3F4F6; color: #4B5563;'
                         }">${statusLabel}</span>

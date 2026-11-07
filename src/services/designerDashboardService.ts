@@ -19,6 +19,8 @@
  * - getMockState()
  */
 
+import { formatMoney } from '../utils/formatters';
+
 export type MockStateKey = 'full' | 'incomplete' | 'empty';
 
 export interface DesignerSummary {
@@ -630,7 +632,7 @@ export async function withdrawFunds(amount: number): Promise<{ success: boolean;
   notificationsState.unshift({
     id: `notif-${Date.now()}`,
     type: 'payment',
-    title: `Withdrawal initiated ($${amount.toLocaleString()})`,
+    title: `Withdrawal initiated (${formatMoney(amount)})`,
     detail: 'Transfer dispatched to linked verified business bank account.',
     relativeTime: 'Just now',
     isUnread: true
@@ -638,6 +640,6 @@ export async function withdrawFunds(amount: number): Promise<{ success: boolean;
 
   return {
     success: true,
-    message: `$${amount.toLocaleString()} has been dispatched to your linked bank account.`
+    message: `${formatMoney(amount)} has been dispatched to your linked bank account.`
   };
 }

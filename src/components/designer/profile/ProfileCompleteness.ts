@@ -20,7 +20,7 @@ export function renderProfileCompleteness(completeness: ProfileCompletenessResul
         <div class="dez-completeness-meta">
           <div class="dez-completeness-label-row">
             <span class="dez-completeness-title">Profile completeness: <strong>${completeness.score}%</strong></span>
-            <span class="dez-completeness-hint">Complete your profile to qualify for the Verified Designer accreditation</span>
+            <span class="dez-completeness-hint">Complete your profile to increase your client match ranking</span>
           </div>
           <div class="dez-completeness-bar-track">
             <div class="dez-completeness-bar-fill" style="width: ${completeness.score}%;"></div>

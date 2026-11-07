@@ -601,6 +601,11 @@ function renderProposalsList(
   if (usageSlot) {
     getProposalUsage().then((usage) => {
       usageSlot.innerHTML = renderProposalsHeaderUsage(usage);
+      const upgradeLink = usageSlot.querySelector('a[href="#payments/plan"]');
+      upgradeLink?.addEventListener('click', (e) => {
+        e.preventDefault();
+        options.onNavigate('#payments/plan');
+      });
     });
   }
 

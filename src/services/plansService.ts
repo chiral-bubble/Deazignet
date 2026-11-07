@@ -6,6 +6,7 @@
 import { supabase, USE_MOCKS } from '../lib/supabase';
 import { sharedDataset } from '../mocks/dataset';
 import { setDesignerPlan } from './designerProfileService';
+import { formatMoney } from '../utils/formatters';
 
 export interface Plan {
   id: string;
@@ -19,7 +20,7 @@ export interface Plan {
   public_profile: boolean;
   portfolio_enabled: boolean;
   direct_invitations: boolean;
-  verified_badge: boolean;
+  member_badge: boolean;
   studio_insights: boolean;
   studio_url: boolean;
   sort_order: number;
@@ -62,7 +63,7 @@ export const DEFAULT_PLANS: Plan[] = [
     public_profile: false,
     portfolio_enabled: false,
     direct_invitations: false,
-    verified_badge: false,
+    member_badge: false,
     studio_insights: false,
     studio_url: false,
     sort_order: 1
@@ -79,7 +80,7 @@ export const DEFAULT_PLANS: Plan[] = [
     public_profile: true,
     portfolio_enabled: true,
     direct_invitations: true,
-    verified_badge: true,
+    member_badge: true,
     studio_insights: false,
     studio_url: false,
     sort_order: 2
@@ -96,7 +97,7 @@ export const DEFAULT_PLANS: Plan[] = [
     public_profile: true,
     portfolio_enabled: true,
     direct_invitations: true,
-    verified_badge: true,
+    member_badge: true,
     studio_insights: true,
     studio_url: true,
     sort_order: 3
@@ -219,8 +220,8 @@ export function getTieredScheduleDescription(
 
   const parts = [`${tiers[0].rate_percent}% of each milestone`];
   for (let i = 1; i < tiers.length; i++) {
-    const dollars = Math.round(tiers[i].from_amount_cents / 100).toLocaleString();
-    parts.push(`or ${tiers[i].rate_percent}% of milestones over $${dollars}`);
+    const dollars = formatMoney(Math.round(tiers[i].from_amount_cents / 100));
+    parts.push(`or ${tiers[i].rate_percent}% of milestones over ${dollars}`);
   }
   return parts.join(', ');
 }

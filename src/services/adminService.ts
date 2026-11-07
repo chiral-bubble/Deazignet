@@ -6,6 +6,7 @@
  */
 
 import { supabase, USE_MOCKS } from '../lib/supabase';
+import { formatMoney } from '../utils/formatters';
 
 export interface AdminFeedbackItem {
   id: string;
@@ -263,7 +264,6 @@ export interface AdminMatchingSettings {
     subcategory_portfolio: number;
     same_city: number;
     same_state: number;
-    verified: number;
     rating: number;
     completed_projects: number;
   };
@@ -274,6 +274,8 @@ export interface AdminMatchingSettings {
   };
   matching_new_designer_boost: number;
   insurance_section_enabled: boolean;
+  member_badge_label: string;
+  credential_verification_enabled: boolean;
   priority_label_mode: 'label' | 'hidden';
   fee_tier_mode: 'whole_amount' | 'marginal';
   fee_basis: 'per_milestone' | 'cumulative';
@@ -294,6 +296,7 @@ export interface AdminSuggestedDesigner {
   rating_count: number;
   completed_projects_count: number;
   is_verified: boolean;
+  has_member_badge: boolean;
   plan_key: 'free' | 'basic' | 'upgraded';
   match_score: number;
   plan_boost: number;
@@ -319,11 +322,10 @@ const mockAuditLogs: AdminAuditLogItem[] = [
 // In-memory matching and fee calculation settings
 let mockMatchingSettings: AdminMatchingSettings = {
   matching_weights: {
-    specialization_match: 35,
-    subcategory_portfolio: 15,
+    specialization_match: 40,
+    subcategory_portfolio: 20,
     same_city: 15,
     same_state: 10,
-    verified: 10,
     rating: 10,
     completed_projects: 5
   },
@@ -334,6 +336,8 @@ let mockMatchingSettings: AdminMatchingSettings = {
   },
   matching_new_designer_boost: 5,
   insurance_section_enabled: false,
+  member_badge_label: 'Pro member',
+  credential_verification_enabled: false,
   priority_label_mode: 'label',
   fee_tier_mode: 'whole_amount',
   fee_basis: 'per_milestone'
@@ -490,7 +494,7 @@ export async function adminUpdateFeeTiers(
       throw new Error(`Rate percent must be between 0% and 100% (found ${t.rate_percent}%).`);
     }
     if (i > 0 && t.from_amount_cents <= sorted[i - 1].from_amount_cents) {
-      throw new Error(`Thresholds must be strictly ascending (found $${t.from_amount_cents / 100} after $${sorted[i - 1].from_amount_cents / 100}).`);
+      throw new Error(`Thresholds must be strictly ascending (found ${formatMoney(t.from_amount_cents / 100)} after ${formatMoney(sorted[i - 1].from_amount_cents / 100)}).`);
     }
   }
 
@@ -543,6 +547,8 @@ export async function adminGetMatchingSettings(): Promise<AdminMatchingSettings>
           'matching_plan_boost',
           'matching_new_designer_boost',
           'insurance_section_enabled',
+          'member_badge_label',
+          'credential_verification_enabled',
           'priority_label_mode',
           'fee_tier_mode',
           'fee_basis'
@@ -559,6 +565,10 @@ export async function adminGetMatchingSettings(): Promise<AdminMatchingSettings>
               mockMatchingSettings.matching_new_designer_boost = parseInt(String(item.value), 10) || 5;
             } else if (item.key === 'insurance_section_enabled') {
               mockMatchingSettings.insurance_section_enabled = item.value === 'true' || item.value === true;
+            } else if (item.key === 'member_badge_label') {
+              mockMatchingSettings.member_badge_label = typeof item.value === 'string' ? item.value.replace(/^"|"$/g, '') : String(item.value);
+            } else if (item.key === 'credential_verification_enabled') {
+              mockMatchingSettings.credential_verification_enabled = item.value === 'true' || item.value === true;
             } else if (item.key === 'priority_label_mode') {
               mockMatchingSettings.priority_label_mode = item.value as any;
             } else if (item.key === 'fee_tier_mode') {
@@ -600,6 +610,12 @@ export async function adminUpdateMatchingSettings(
       }
       if (settings.insurance_section_enabled !== undefined) {
         await adminUpdateAppSetting('insurance_section_enabled', String(settings.insurance_section_enabled));
+      }
+      if (settings.member_badge_label !== undefined) {
+        await adminUpdateAppSetting('member_badge_label', JSON.stringify(settings.member_badge_label));
+      }
+      if (settings.credential_verification_enabled !== undefined) {
+        await adminUpdateAppSetting('credential_verification_enabled', String(settings.credential_verification_enabled));
       }
       if (settings.priority_label_mode) {
         await adminUpdateAppSetting('priority_label_mode', settings.priority_label_mode);
@@ -662,6 +678,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
             rating_count: item.rating_count || 0,
             completed_projects_count: item.completed_projects_count || 0,
             is_verified: Boolean(item.is_verified),
+            has_member_badge: item.has_member_badge ?? (planKey !== 'free'),
             plan_key: planKey,
             match_score: item.match_score || 0,
             plan_boost: boost,
@@ -710,8 +727,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
       const sameState = Boolean(projectState && d.location.state?.toLowerCase() === projectState.toLowerCase());
       const stateScore = sameState && !sameCity ? weights.same_state : 0;
 
-      const isVerified = (planKey === 'basic' || planKey === 'upgraded') && Boolean(d.credentials && d.credentials.some(c => c.status === 'verified'));
-      const verifiedScore = isVerified ? weights.verified : 0;
+      const isMember = planKey === 'basic' || planKey === 'upgraded';
 
       const ratingScore = d.stats.reviewCount >= 3
         ? Math.round((d.stats.averageRating / 5.0) * weights.rating)
@@ -727,7 +743,6 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
         subcatScore +
         cityScore +
         stateScore +
-        verifiedScore +
         ratingScore +
         completedScore +
         newBoostScore +
@@ -740,21 +755,10 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
       if (subcatScore > 0) {
         reasons.push({ type: 'portfolio', text: `${subcatProjects} ${projectCategory} portfolio project(s) (+${subcatScore})` });
       }
-      if (isVerified) {
-        reasons.push({ type: 'verified', text: `Verified credentials (+${verifiedScore})` });
-      }
       if (sameCity) {
         reasons.push({ type: 'location', text: `Located in same city (${d.location.city}) (+${cityScore})` });
       } else if (sameState) {
         reasons.push({ type: 'location', text: `Located in same state (${d.location.state}) (+${stateScore})` });
-      }
-      if (sameCity) {
-        reasons.push({ type: 'location', text: `Studio located in ${d.location.city} (+${cityScore})` });
-      } else if (sameState) {
-        reasons.push({ type: 'location', text: `Studio located in ${d.location.state} (+${stateScore})` });
-      }
-      if (isVerified) {
-        reasons.push({ type: 'verified', text: `AIA/NCARB certified (+${verifiedScore})` });
       }
       if (ratingScore > 0) {
         reasons.push({ type: 'rating', text: `${d.stats.averageRating} avg rating (${d.stats.reviewCount} reviews) (+${ratingScore})` });
@@ -763,7 +767,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
         reasons.push({ type: 'plan_boost', text: `${planKey.toUpperCase()} plan priority boost (+${planBoost})` });
       }
       if (newBoostScore > 0) {
-        reasons.push({ type: 'new_designer', text: `New verified talent boost (+${newBoostScore})` });
+        reasons.push({ type: 'new_designer', text: `New talent boost (+${newBoostScore})` });
       }
 
       return {
@@ -780,7 +784,8 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
         rating_average: d.stats.averageRating,
         rating_count: d.stats.reviewCount,
         completed_projects_count: d.stats.projectsCompleted,
-        is_verified: isVerified,
+        is_verified: isMember,
+        has_member_badge: isMember,
         plan_key: planKey,
         match_score: totalScore,
         plan_boost: planBoost,
@@ -789,7 +794,6 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
           specialization: specScore,
           portfolio: subcatScore,
           location: cityScore + stateScore,
-          verified: verifiedScore,
           rating: ratingScore,
           completed: completedScore,
           new_designer: newBoostScore,

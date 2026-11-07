@@ -15,6 +15,7 @@
  */
 
 import { PAYMENTS_CONFIG } from '../config/paymentsConfig';
+import { formatMoney } from '../utils/formatters';
 
 // ============================================================================
 // RELATIVE DATE HELPERS
@@ -1229,10 +1230,10 @@ export class DezignetSharedDataset {
   public executeWithdrawal(amount: number, payoutAccountId: string): { success: boolean; error?: string } {
     if (amount <= 0) return { success: false, error: 'Amount must be greater than $0.' };
     if (amount < PAYMENTS_CONFIG.minimumWithdrawalAmount) {
-      return { success: false, error: `Minimum withdrawal amount is $${PAYMENTS_CONFIG.minimumWithdrawalAmount.toFixed(2)}.` };
+      return { success: false, error: `Minimum withdrawal amount is ${formatMoney(PAYMENTS_CONFIG.minimumWithdrawalAmount)}.` };
     }
     if (amount > this.balances.availableToWithdraw) {
-      return { success: false, error: `Requested amount exceeds available balance ($${this.balances.availableToWithdraw.toLocaleString()}).` };
+      return { success: false, error: `Requested amount exceeds available balance (${formatMoney(this.balances.availableToWithdraw)}).` };
     }
 
     const acc = this.payoutAccounts.find((a) => a.id === payoutAccountId) || this.payoutAccounts[0];

@@ -366,18 +366,22 @@ export async function getProposalDetail(
   try {
     const real = await realGetProposalDetail(id);
     if (real) return real;
-    // fallback check in mock
-    const proposal = sharedDataset.proposals.find((p) => p.id === id);
-    if (!proposal) return null;
-    return {
-      proposal: JSON.parse(JSON.stringify(proposal)),
-      projectSnapshot: JSON.parse(JSON.stringify(sharedDataset.projects[0])),
-      clientInfo: JSON.parse(JSON.stringify(sharedDataset.clients[0]))
-    };
   } catch (err) {
-    console.error('[proposalsService] realGetProposalDetail failed', err);
-    return null;
+    console.warn('[proposalsService] realGetProposalDetail failed, checking fallback', err);
   }
+
+  // Fallback check in sharedDataset proposals
+  const proposal = sharedDataset.proposals.find((p) => p.id === id);
+  if (!proposal) return null;
+  const projectSnapshot =
+    sharedDataset.projects.find((p) => p.id === proposal.projectId) || sharedDataset.projects[0];
+  const clientInfo =
+    sharedDataset.clients.find((c) => c.name === proposal.clientName) || sharedDataset.clients[0];
+  return {
+    proposal: JSON.parse(JSON.stringify(proposal)),
+    projectSnapshot: JSON.parse(JSON.stringify(projectSnapshot)),
+    clientInfo: JSON.parse(JSON.stringify(clientInfo))
+  };
 }
 
 export async function editProposal(
