@@ -27,6 +27,9 @@ export interface ProposalListItem {
   is_unviewed: boolean;
   cover_letter_preview: string;
   price_diff_percent: number;
+  can_offer_regulated_services?: string | null;
+  service_area_states?: string[] | null;
+  project_understanding?: string | null;
   designer: {
     id: string;
     full_name: string;
@@ -55,6 +58,10 @@ export interface ProposalMilestoneItem {
 
 export interface DetailedProposal extends ProposalListItem {
   cover_letter: string;
+  project_understanding?: string | null;
+  deliverables?: string[] | null;
+  schedule?: Array<{ milestoneId?: string; phaseName?: string; deliveryDays?: number; targetDate?: string }> | null;
+  attachments?: Array<{ name: string; url: string; size?: number; type?: string }> | null;
   hourly_rate: number | null;
   estimated_hours: number | null;
   assumptions: string[];
@@ -305,6 +312,9 @@ function getMockProjectProposals(projectId: string, _filters: any, _sort: string
       is_unviewed: true,
       cover_letter_preview: 'I have extensive experience delivering luxury residential bungalow drawings in this region with sustainable passive design...',
       price_diff_percent: -7.5,
+      can_offer_regulated_services: 'licensed_in_project_state',
+      service_area_states: ['TX', 'CO', 'CA'],
+      project_understanding: 'Client requires a modern residential building set aligned with municipal code setbacks and integrated site topography.',
       designer: {
         id: 'mock-des-1',
         full_name: 'David Adeleke Studio',
@@ -334,6 +344,9 @@ function getMockProjectProposals(projectId: string, _filters: any, _sort: string
       is_unviewed: false,
       cover_letter_preview: 'Our multi-disciplinary team provides complete structural coordination and turnkey construction documentation...',
       price_diff_percent: 5.0,
+      can_offer_regulated_services: 'will_partner_with_licensed_professional',
+      service_area_states: ['NY', 'NJ', 'TX'],
+      project_understanding: 'Turnkey architectural and interior package with full MEP coordination.',
       designer: {
         id: 'mock-des-2',
         full_name: 'Elena Rostova',
@@ -367,6 +380,10 @@ function getMockDetailedProposal(proposalId: string): DetailedProposal {
     is_unviewed: true,
     cover_letter_preview: 'I have extensive experience delivering luxury residential bungalow drawings...',
     price_diff_percent: -7.5,
+    can_offer_regulated_services: 'licensed_in_project_state',
+    service_area_states: ['TX', 'CO', 'CA'],
+    project_understanding: 'Client requires a contemporary detached residence tailored for energy efficiency and Austin Hill Country geology, with fully coordinated construction documents.',
+    deliverables: ['Schematic floor plans', 'Elevation drawings', 'MEP coordination set', 'Permit submission package'],
     cover_letter: 'Dear Client,\n\nI reviewed your brief for the detached bungalow and would be thrilled to assist. We specialize in contemporary tropical architecture that maximizes natural ventilation while delivering clear, permit-ready construction sets.\n\nAll structural and MEP coordination will be handled seamlessly within the proposed milestone timeline.',
     hourly_rate: 120,
     estimated_hours: 155,

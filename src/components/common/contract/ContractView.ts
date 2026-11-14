@@ -150,7 +150,7 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
         <div>
           <div style="font-size: 14px; font-weight: 600; color: #1E40AF;">Action Required: Please Review & Sign Agreement</div>
           <div style="font-size: 12.5px; color: #2563EB; margin-top: 2px;">
-            Work and escrow funding will activate once both parties provide their legal signature. Deadline: ${new Date(c.expires_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}.
+            Work and milestone funding will activate once both parties provide their legal signature. Deadline: ${new Date(c.expires_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}.
           </div>
         </div>
         <button type="button" id="btn-banner-sign" style="height: 36px; padding: 0 18px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
@@ -229,6 +229,16 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
               <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom: 4px;">Architect / Designer</div>
               <div style="font-weight: 600; color: #0F172A;">${escapeHtml(sec1.designer?.name || 'Designer')}</div>
               <div style="color: #64748B;">${escapeHtml(sec1.designer?.studio_name || '')} • ${escapeHtml(sec1.designer?.professional_type || 'Professional')}</div>
+              ${sec1.designer?.licensure_disclosure || (c as any).licensure_disclosure || (c as any).can_offer_regulated_services ? `
+                <div style="margin-top: 6px; font-size: 11.5px; color: #1E40AF; background: #EFF6FF; border: 1px solid #DBEAFE; border-radius: 4px; padding: 3px 8px;">
+                  <strong>Licensure:</strong> ${escapeHtml(sec1.designer?.licensure_disclosure || (c as any).licensure_disclosure || (c as any).can_offer_regulated_services || '')}
+                </div>
+              ` : ''}
+              ${(sec1.designer?.service_area_states?.length || (c as any).service_area_states?.length) ? `
+                <div style="margin-top: 4px; font-size: 11px; color: #64748B;">
+                  Service Area: ${escapeHtml(((sec1.designer?.service_area_states || (c as any).service_area_states) as string[]).join(', '))}
+                </div>
+              ` : ''}
             </div>
           </div>
         </section>
@@ -268,20 +278,25 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
               </tr>
             </thead>
             <tbody>
-              ${(sec4.milestones || []).map((m: any) => {
-                const mGross = m.amount || 0;
-                const mFee = calculatePlatformFeeFallback(contractPlanKey, Math.round(mGross * 100));
-                const mNet = Math.round(mFee.net_cents / 100);
-                return `
-                <tr style="border-bottom: 1px solid #E5E7EB;">
-                  <td style="padding: 8px 10px; color: #64748B;">${m.phase_number}</td>
-                  <td style="padding: 8px 10px; font-weight: 500; color: #0F172A;">${escapeHtml(m.name)}</td>
-                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right;">${m.fee_percent}%</td>
-                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 500;">${formatMoney(mGross)}</td>
-                  <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; color: #16A34A;">${formatMoney(mNet)}</td>
-                </tr>
-              `;
-              }).join('')}
+              ${(() => {
+                let runningCumCents = 0;
+                return (sec4.milestones || []).map((m: any) => {
+                  const mGross = m.amount || 0;
+                  const mGrossCents = Math.round(mGross * 100);
+                  const mFee = calculatePlatformFeeFallback(contractPlanKey, mGrossCents, runningCumCents);
+                  runningCumCents += mGrossCents;
+                  const mNet = Math.round(mFee.net_cents / 100);
+                  return `
+                  <tr style="border-bottom: 1px solid #E5E7EB;">
+                    <td style="padding: 8px 10px; color: #64748B;">${m.phase_number}</td>
+                    <td style="padding: 8px 10px; font-weight: 500; color: #0F172A;">${escapeHtml(m.name)}</td>
+                    <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right;">${m.fee_percent}%</td>
+                    <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 500;">${formatMoney(mGross)}</td>
+                    <td style="padding: 8px 10px; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; color: #16A34A;">${formatMoney(mNet)}</td>
+                  </tr>
+                `;
+                }).join('');
+              })()}
             </tbody>
             <tfoot>
               <tr style="font-weight: 600; color: #0F172A; background: #F8FAFC; border-top: 1px solid #E5E7EB;">
@@ -296,7 +311,7 @@ function renderContractContent(mount: HTMLElement, c: ContractDetail, currentUse
           <div style="background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 6px; padding: 12px 14px; margin-top: 10px; font-size: 12px; color: #334155; line-height: 1.5;">
             <div style="font-weight: 600; color: #0F172A; margin-bottom: 2px;">Platform Service Fee Schedule</div>
             <div><strong>Tiered Schedule:</strong> ${tieredSchedule}</div>
-            <div style="color: #64748B; margin-top: 4px;">Milestones are funded in escrow at the full gross amount. Platform service fee (-${formatMoney(totalFeeDollars)}) is deducted upon client milestone release.</div>
+            <div style="color: #64748B; margin-top: 4px;">Milestones are funded at the full gross amount and funds are held by our payment provider until you approve. Platform service fee (-${formatMoney(totalFeeDollars)}) is deducted upon client milestone release.</div>
           </div>
         </section>
 

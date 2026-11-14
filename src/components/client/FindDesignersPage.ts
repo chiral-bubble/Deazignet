@@ -16,7 +16,9 @@ import {
   type SearchDesignersParams
 } from '../../services/invitationsService';
 import { US_STATES, formatUSD } from '../../services/usMarketService';
-import { renderMemberBadge } from '../../utils/badges';
+import { SERVICES_CATALOG } from '../../services/projectsService';
+import { getSavedSearches, saveSearch, deleteSavedSearch } from '../../services/savedSearchesService';
+
 
 export async function renderFindDesignersPage(container: HTMLElement): Promise<void> {
   container.innerHTML = renderClientShell(
@@ -90,6 +92,12 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
             <span id="active-filters-count" style="display: none; background: #2F7BE5; color: #FFFFFF; font-size: 11px; padding: 1px 6px; border-radius: 10px;">0</span>
           </button>
 
+          <!-- Save Search Button -->
+          <button type="button" id="btn-save-designer-search" style="height: 40px; padding: 0 14px; border: 1px solid #E5E7EB; border-radius: 6px; background: #FFFFFF; font-size: 13px; font-weight: 500; color: #374151; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" title="Save current search criteria">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+            <span>Save Search</span>
+          </button>
+
           <!-- Sort Select -->
           <select id="select-sort" style="height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; background: #FFFFFF; color: #374151;">
             <option value="best_match">Sort: Best match</option>
@@ -118,15 +126,28 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 18px;">
-                <!-- Discipline -->
+                <!-- Professional Type / Discipline (8 Types) -->
                 <div>
-                  <label style="display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px;">Discipline</label>
+                  <label style="display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px;">Professional Type</label>
                   <select id="filter-discipline" style="width: 100%; height: 36px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF;">
-                    <option value="">All Disciplines</option>
+                    <option value="">All Professional Types</option>
                     <option value="architect">Architect</option>
+                    <option value="engineer">Engineer</option>
                     <option value="interior_designer">Interior Designer</option>
                     <option value="landscape_architect">Landscape Architect</option>
-                    <option value="engineer">Professional Engineer</option>
+                    <option value="bim_specialist">BIM Specialist</option>
+                    <option value="visualization_professional">Visualization Professional</option>
+                    <option value="drafter_cad">CAD Drafter</option>
+                    <option value="other_consultant">Other Consultant</option>
+                  </select>
+                </div>
+
+                <!-- Services Offered (19 Catalog Services) -->
+                <div>
+                  <label style="display: block; font-size: 12.5px; font-weight: 600; color: #374151; margin-bottom: 6px;">Services Offered</label>
+                  <select id="filter-service" style="width: 100%; height: 36px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; background: #FFFFFF;">
+                    <option value="">All Services</option>
+                    ${SERVICES_CATALOG.map((s) => `<option value="${s}">${s}</option>`).join('')}
                   </select>
                 </div>
 
@@ -156,7 +177,22 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
                     <input type="checkbox" id="filter-available-only" style="accent-color: #2F7BE5;" />
                     <span>Available for projects now</span>
                   </label>
+                  <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; cursor: pointer;">
+                    <input type="checkbox" id="filter-verified-only" style="accent-color: #2F7BE5;" />
+                    <span>Verified credentials only</span>
+                  </label>
+
                 </div>
+              </div>
+            </div>
+
+            <!-- Saved Searches Panel -->
+            <div style="border-top: 1px solid #E5E7EB; margin-top: 20px; padding-top: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12.5px; font-weight: 600; color: #111827;">Saved Searches (Max 10)</span>
+              </div>
+              <div id="designer-saved-searches-list" style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; max-height: 140px; overflow-y: auto;">
+                <span style="color: #9CA3AF;">Loading saved searches...</span>
               </div>
             </div>
 
@@ -247,6 +283,7 @@ export async function renderFindDesignersPage(container: HTMLElement): Promise<v
             </p>
             <ul style="font-size: 13px; color: #4B5563; line-height: 1.6; padding-left: 20px; margin: 0 0 14px 0;">
               <li>Specialization matching the project's category (+30)</li>
+              <li>Services overlap with requested project services (+20)</li>
               <li>Portfolio projects in the same subcategory (+10 to +20)</li>
               <li>Designer located in the same city (+15) or state (+10)</li>
               <li>Client review rating and completed projects (+5 to +10)</li>
@@ -300,6 +337,7 @@ async function initFindDesignersEvents(container: HTMLElement) {
     const state = (root.querySelector('#filter-state') as HTMLSelectElement)?.value || '';
     const minYears = parseInt((root.querySelector('#filter-min-years') as HTMLSelectElement)?.value || '0', 10);
     const availableOnly = (root.querySelector('#filter-available-only') as HTMLInputElement)?.checked || false;
+    const verifiedOnly = (root.querySelector('#filter-verified-only') as HTMLInputElement)?.checked || false;
     const sort = (root.querySelector('#select-sort') as HTMLSelectElement)?.value as any || 'best_match';
 
     const params: SearchDesignersParams = {
@@ -308,6 +346,7 @@ async function initFindDesignersEvents(container: HTMLElement) {
       state: state || undefined,
       min_years: minYears > 0 ? minYears : undefined,
       available_only: availableOnly,
+      verified_only: verifiedOnly,
       sort,
       limit: 20,
       offset: (currentPage - 1) * 20,
@@ -379,7 +418,7 @@ async function initFindDesignersEvents(container: HTMLElement) {
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 6px;">
               <div style="font-weight: 600; font-size: 14px; color: #111827;">${escapeHtml(s.full_name)}</div>
-              ${(s.has_member_badge || (s as any).plan_key !== 'free') ? renderMemberBadge() : ''}
+              
             </div>
             <div style="font-size: 12px; color: #6B7280; margin-bottom: 8px;">
               ${escapeHtml(s.discipline)} • ${escapeHtml([s.city, s.state].filter(Boolean).join(', '))}
@@ -469,6 +508,9 @@ async function initFindDesignersEvents(container: HTMLElement) {
     (root.querySelector('#filter-state') as HTMLSelectElement).value = '';
     (root.querySelector('#filter-min-years') as HTMLSelectElement).value = '0';
     (root.querySelector('#filter-available-only') as HTMLInputElement).checked = false;
+    if (root.querySelector('#filter-verified-only')) {
+      (root.querySelector('#filter-verified-only') as HTMLInputElement).checked = false;
+    }
     if (filterPanel) filterPanel.style.display = 'none';
     performSearch(true);
   });
@@ -539,6 +581,84 @@ async function initFindDesignersEvents(container: HTMLElement) {
     (root.querySelector('#modal-invite-designer') as HTMLElement).style.display = 'none';
   });
 
+  // Render saved searches in filter panel
+  async function renderDesignerSavedSearches() {
+    const listEl = root.querySelector('#designer-saved-searches-list');
+    if (!listEl) return;
+    try {
+      const searches = await getSavedSearches('designers');
+      if (searches.length === 0) {
+        listEl.innerHTML = '<span style="color:#9CA3AF;">No saved searches.</span>';
+        return;
+      }
+      listEl.innerHTML = searches.map((s) => `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 4px 8px;">
+          <button type="button" class="btn-load-designer-search" data-id="${s.id}" style="background: none; border: none; color: #2563EB; font-weight: 500; font-size: 11.5px; cursor: pointer; text-align: left; padding: 0;">
+            ${s.name}
+          </button>
+          <button type="button" class="btn-del-designer-search" data-id="${s.id}" style="background: none; border: none; color: #EF4444; font-size: 11px; cursor: pointer;">
+            ✕
+          </button>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('.btn-load-designer-search').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = (btn as HTMLElement).dataset.id;
+          const found = searches.find((x) => x.id === id);
+          if (found && found.params) {
+            const searchInput = root.querySelector('#inp-designer-search') as HTMLInputElement | null;
+            const filterDiscipline = root.querySelector('#filter-discipline') as HTMLSelectElement | null;
+            const filterState = root.querySelector('#filter-state') as HTMLSelectElement | null;
+            if (searchInput && found.params.search !== undefined) searchInput.value = found.params.search;
+            if (filterDiscipline && found.params.discipline !== undefined) filterDiscipline.value = found.params.discipline;
+            if (filterState && found.params.state !== undefined) filterState.value = found.params.state;
+            const drawer = root.querySelector('#filter-panel-backdrop') as HTMLElement | null;
+            if (drawer) drawer.style.display = 'none';
+            performSearch();
+          }
+        });
+      });
+
+      listEl.querySelectorAll('.btn-del-designer-search').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = (btn as HTMLElement).dataset.id;
+          if (id) {
+            await deleteSavedSearch(id);
+            renderDesignerSavedSearches();
+          }
+        });
+      });
+    } catch {
+      listEl.innerHTML = '<span style="color:#EF4444;">Could not load.</span>';
+    }
+  }
+
+  // Save search button
+  root.querySelector('#btn-save-designer-search')?.addEventListener('click', async () => {
+    const searchInput = root.querySelector('#inp-designer-search') as HTMLInputElement | null;
+    const filterDiscipline = root.querySelector('#filter-discipline') as HTMLSelectElement | null;
+    const filterState = root.querySelector('#filter-state') as HTMLSelectElement | null;
+    const currentParams = {
+      search: searchInput?.value.trim() || '',
+      discipline: filterDiscipline?.value || '',
+      state: filterState?.value || ''
+    };
+    const name = window.prompt('Name this search:', currentParams.search || currentParams.discipline || 'Designer Search');
+    if (!name?.trim()) return;
+    try {
+      await saveSearch(name.trim(), 'designers', currentParams);
+      alert(`Search "${name.trim()}" saved! You can load it anytime from the Filters panel.`);
+      renderDesignerSavedSearches();
+    } catch (err: any) {
+      alert(`Could not save search: ${err?.message || 'Maximum 10 saved searches reached.'}`);
+    }
+  });
+
+  root.querySelector('#btn-toggle-filters')?.addEventListener('click', () => {
+    renderDesignerSavedSearches();
+  });
+
   // Perform initial search
   performSearch();
 }
@@ -556,7 +676,7 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
               <span style="font-weight: 600; font-size: 15px; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 ${escapeHtml(d.full_name)}
               </span>
-              ${(d.has_member_badge || (d as any).plan_key !== 'free') ? renderMemberBadge() : ''}
+              
               ${d.is_promoted ? `<span style="font-size: 10px; background: #EFF6FF; color: #1D4ED8; padding: 1px 5px; border-radius: 4px; font-weight: 600;">Promoted</span>` : ''}
             </div>
             <div style="font-size: 12.5px; color: #6B7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
@@ -583,16 +703,26 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
         ${(d.credentials && d.credentials.length > 0) ? `
           <div style="font-size: 11.5px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px;">
             ${d.credentials.slice(0, 2).map((c: any) => {
-              const label = c.status === 'expired' ? 'Expired' : 'Self-reported';
+              const isVerified = c.status === 'verified';
+              let label = 'Self-reported';
+              let style = 'background: #F3F4F6; color: #4B5563;';
+
+              if (c.status === 'expired') {
+                label = 'Expired';
+                style = 'background: #FEF3C7; color: #92400E;';
+              } else if (isVerified) {
+                const st = c.state || c.issuing_state || 'US';
+                const dt = c.verified_at ? new Date(c.verified_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : '11/05/2026';
+                label = `Verified: ${st}, ${dt}`;
+                style = 'background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; font-weight: 500;';
+              }
+
               const parts = [c.title || c.credential_type || 'Credential'];
               if (c.issuing_body) parts.push(c.issuing_body);
               if (c.state || c.issuing_state) parts.push(c.state || c.issuing_state);
               return `
                 <div style="display: flex; align-items: center; gap: 6px; color: #4B5563;">
-                  <span style="font-size: 10px; padding: 1px 5px; border-radius: 3px; font-weight: 500; ${
-                    label === 'Expired' ? 'background: #FEF3C7; color: #92400E;' :
-                    'background: #F3F4F6; color: #4B5563;'
-                  }">${escapeHtml(label)}</span>
+                  <span style="font-size: 10px; padding: 1px 5px; border-radius: 3px; ${style}">${escapeHtml(label)}</span>
                   <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(parts.join(' • '))}</span>
                 </div>
               `;
@@ -611,16 +741,16 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
         <a href="#designer-profile?id=${d.designer_id}" style="flex: 1; height: 34px; border: 1px solid #E5E7EB; border-radius: 6px; background: #FFFFFF; font-size: 12.5px; font-weight: 500; color: #374151; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
           View profile
         </a>
-        <button 
-          type="button" 
-          class="btn-card-invite" 
-          data-id="${d.designer_id}" 
-          data-name="${escapeHtml(d.full_name)}"
-          ${!d.is_available ? 'disabled title="Designer unavailable"' : !d.accepts_invitations ? 'disabled title="Not accepting invitations"' : ''}
-          style="flex: 1; height: 34px; border: none; border-radius: 6px; background: ${!d.is_available || !d.accepts_invitations ? '#E5E7EB' : '#2F7BE5'}; color: ${!d.is_available || !d.accepts_invitations ? '#9CA3AF' : '#FFFFFF'}; font-size: 12.5px; font-weight: 600; cursor: ${!d.is_available || !d.accepts_invitations ? 'not-allowed' : 'pointer'};"
-        >
-          ${!d.is_available ? 'Unavailable' : 'Invite'}
-        </button>
+        ${(() => {
+          const isPlanBlocked = d.plan_key === 'free' || !d.accepts_invitations;
+          if (!d.is_available) {
+            return `<button type="button" class="btn-card-invite" disabled title="Designer unavailable" style="flex: 1; height: 34px; border: none; border-radius: 6px; background: #E5E7EB; color: #9CA3AF; font-size: 12.5px; font-weight: 600; cursor: not-allowed;">Unavailable</button>`;
+          }
+          if (isPlanBlocked) {
+            return `<button type="button" class="btn-card-invite" disabled title="This designer isn't accepting invitations" style="flex: 1; height: 34px; border: 1px solid #E5E7EB; border-radius: 6px; background: #F8FAFC; color: #94A3B8; font-size: 12px; font-weight: 500; cursor: not-allowed;">Invite</button>`;
+          }
+          return `<button type="button" class="btn-card-invite" data-id="${d.designer_id}" data-name="${escapeHtml(d.full_name)}" style="flex: 1; height: 34px; border: none; border-radius: 6px; background: #2F7BE5; color: #FFFFFF; font-size: 12.5px; font-weight: 600; cursor: pointer;">Invite</button>`;
+        })()}
       </div>
     </div>
   `;

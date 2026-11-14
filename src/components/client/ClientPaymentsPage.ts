@@ -48,7 +48,7 @@ export async function renderClientPaymentsPage(container: HTMLElement): Promise<
             Payments
           </h1>
           <p style="font-size: 13.5px; color: #6B7280; margin: 0;">
-            Track milestone escrow deposits, approvals, and transaction history.
+            Track milestone deposits, approvals, and transaction history.
           </p>
         </div>
 
@@ -74,7 +74,7 @@ export async function renderClientPaymentsPage(container: HTMLElement): Promise<
             </div>
             <div style="display: flex; gap: 10px; align-items: baseline;">
               <span style="font-weight: 600; color: #2F7BE5; font-size: 12px;">2.</span>
-              <span>Funds are held in secure escrow while the designer completes deliverables.</span>
+              <span>Funds are held by our payment provider until you approve while the designer completes deliverables.</span>
             </div>
             <div style="display: flex; gap: 10px; align-items: baseline;">
               <span style="font-weight: 600; color: #2F7BE5; font-size: 12px;">3.</span>
@@ -118,7 +118,7 @@ export async function renderClientPaymentsPage(container: HTMLElement): Promise<
                       <td style="padding: 12px 14px; font-variant-numeric: tabular-nums; font-weight: 600; color: #111827;">${formatMoney(m.amount)}</td>
                       <td style="padding: 12px 14px;">
                         <span style="font-size: 11.5px; padding: 2px 8px; border-radius: 4px; background: #FEF3C7; color: #92400E; font-weight: 500;">
-                          Pending Escrow
+                          Pending Funding
                         </span>
                       </td>
                       <td style="padding: 12px 14px; text-align: right;">
@@ -151,7 +151,7 @@ export async function renderClientPaymentsPage(container: HTMLElement): Promise<
           ` : `
             <div style="padding: 32px 16px; text-align: center; border: 1px dashed #E5E7EB; border-radius: 6px;">
               <p style="font-size: 13.5px; font-weight: 500; color: #111827; margin: 0 0 4px;">No milestones awaiting funding</p>
-              <p style="font-size: 12.5px; color: #6B7280; margin: 0;">When a proposal is accepted into an active project engagement, upcoming milestones will appear here for escrow deposit.</p>
+              <p style="font-size: 12.5px; color: #6B7280; margin: 0;">When a proposal is accepted into an active project engagement, upcoming milestones will appear here for funding deposit.</p>
             </div>
           `}
         </div>

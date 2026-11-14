@@ -28,7 +28,7 @@ export function renderPaymentsLayout(initialTab: PaymentsTabKey = 'overview'): s
       <!-- Page Header -->
       <div class="dez-payments-header" style="margin-bottom: 24px;">
         <h1 class="dez-page-title" style="font-size: 28px; margin-bottom: 4px;">Payments</h1>
-        <p class="dez-page-subtext">Manage escrow releases, milestone payments, payout bank accounts, and studio membership.</p>
+        <p class="dez-page-subtext">Manage milestone payouts, payments, payout bank accounts, and studio membership.</p>
       </div>
 
       <!-- Navigation Tabs Bar -->

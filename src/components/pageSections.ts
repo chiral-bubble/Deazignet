@@ -86,7 +86,7 @@ function manageProjects(): string {
               <div class="manage__feature-icon">${icons.shield}</div>
               <div>
                 <p class="manage__feature-title">Secure Payments</p>
-                <p class="manage__feature-desc">Funds are held in escrow and released only when you approve the work. Your money is always protected.</p>
+                <p class="manage__feature-desc">Funds are held by our payment provider until you approve the work. Your money is always protected.</p>
               </div>
             </div>
           </div>
@@ -247,7 +247,7 @@ function faq(): string {
     },
     {
       q: 'Is it free to post a project?',
-      a: 'Yes! Posting a project on Dezignet is completely free. You only pay when you hire a designer and approve their work. Our escrow system ensures your payments are secure.',
+      a: 'Yes! Posting a project on Dezignet is completely free. You only pay when you hire a designer and approve their work. Our payment protection system ensures your payments are secure.',
     },
     {
       q: 'How do I choose the right designer?',
@@ -259,7 +259,7 @@ function faq(): string {
     },
     {
       q: 'How does payment work?',
-      a: 'Payments are managed through our secure escrow system. You define milestones for your project, fund them upfront, and the designer gets paid only when you approve the deliverables for each milestone. This protects both parties.',
+      a: 'Payments are managed through our secure milestone funding system. You define milestones for your project, fund them upfront, and funds are held by our payment provider until you approve deliverables for each milestone. This protects both parties.',
     },
     {
       q: 'Can I become a designer on Dezignet?',

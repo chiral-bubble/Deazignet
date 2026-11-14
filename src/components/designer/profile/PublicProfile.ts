@@ -22,7 +22,7 @@ import { getAuthState } from '../../../services/authService';
 import { inviteDesigner } from '../../../services/invitationsService';
 import { formatMoney } from '../../../utils/formatters';
 import { maskLicenseNumber } from '../../../services/usMarketService';
-import { renderMemberBadge, PRO_MEMBER_TOOLTIP } from '../../../utils/badges';
+
 
 export function renderPublicProfile(
   designer: DesignerProfile,
@@ -30,9 +30,22 @@ export function renderPublicProfile(
   hasReceivedProposal: boolean,
   isSelf: boolean
 ): string {
-  const isPaid = Boolean(designer.currentPlanId && designer.currentPlanId !== 'free');
+  const planId = designer.currentPlanId === 'upgraded' ? 'gold' : (designer.currentPlanId || 'free');
+  const isEnhanced = planId === 'gold';
+  const isBasic = planId === 'basic';
+  const isListing = planId === 'free';
+
+  const canReceiveInvites = (isBasic || isEnhanced) && designer.acceptsInvitations !== false;
   const initial = (designer.name || 'D').slice(0, 2).toUpperCase();
-  const sortedPortfolio = [...(designer.portfolio || [])].sort((a, b) => a.order - b.order);
+
+  // Profile tier limits: Free = 3, Basic = 12, Gold = unlimited
+  const allPortfolio = [...(designer.portfolio || [])].sort((a, b) => a.order - b.order);
+  const sortedPortfolio = isListing
+    ? allPortfolio.slice(0, 3)
+    : isBasic
+    ? allPortfolio.slice(0, 12)
+    : allPortfolio;
+
   const reviews = designer.reviews || [];
 
   return `
@@ -70,14 +83,22 @@ export function renderPublicProfile(
           <div class="dez-pub-identity">
             <div class="dez-pub-name-row">
               <h1 class="dez-pub-name">${designer.name}</h1>
-              ${isPaid ? renderMemberBadge() : ''}
+              
             </div>
 
             <p class="dez-pub-title">
               ${designer.professionalTitle}
               ${designer.companyName ? ` &bull; <span class="dez-pub-company">${designer.companyName}</span>` : ''}
             </p>
-            ${isPaid ? `<p style="font-size: 12px; color: #6B7280; margin: 4px 0 0 0; line-height: 1.4;">${PRO_MEMBER_TOOLTIP}</p>` : ''}
+            
+
+            
+            ${isEnhanced ? `
+              <div style="margin-top: 6px; font-size: 12.5px; color: #2563EB; display: inline-flex; align-items: center; gap: 4px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>dezignet.com/studio/${designer.studioSlug || designer.id}</span>
+              </div>
+            ` : ''}
 
             <div class="dez-pub-location-row">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--dez-text-muted);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -87,7 +108,7 @@ export function renderPublicProfile(
 
           <!-- Desktop Role-Based Action Buttons -->
           <div class="dez-pub-actions-desktop" id="pub-actions-slot">
-            ${renderRoleActions(viewerRole, hasReceivedProposal, isSelf)}
+            ${renderRoleActions(viewerRole, hasReceivedProposal, isSelf, canReceiveInvites)}
           </div>
         </div>
 
@@ -164,6 +185,11 @@ export function renderPublicProfile(
                         </div>
                         <p class="dez-pub-port-loc">${proj.location} &bull; ${proj.role}</p>
                         <p class="dez-pub-port-desc">${proj.shortDescription}</p>
+                        ${proj.challenge || proj.approach || proj.outcome ? `
+                          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #E5E7EB; font-size: 11.5px; color: #4B5563;">
+                            <span style="font-weight: 600; color: #1E293B;">Case study:</span> ${proj.approach || proj.challenge || proj.outcome}
+                          </div>
+                        ` : ''}
                       </div>
                     </div>
                   `;
@@ -208,7 +234,7 @@ export function renderPublicProfile(
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
                 <div class="dez-empty-title" style="font-size:14px;">No reviews yet</div>
-                <div class="dez-empty-subtext">Verified client reviews appear here upon milestone completion and escrow release.</div>
+                <div class="dez-empty-subtext">Verified client reviews appear here upon milestone completion and payment release.</div>
               </div>
             `
                 : `
@@ -301,9 +327,21 @@ export function renderPublicProfile(
                   : (designer.credentials || [])
                       .map((c) => {
                         const isPastExp = Boolean(c.expirationDate && new Date(c.expirationDate) < new Date());
-                        const statusLabel = isPastExp || c.status === 'expired'
-                          ? 'Expired'
-                          : 'Self-reported';
+                        const isVerified = c.status === 'verified';
+                        let statusLabel = 'Self-reported';
+                        let statusStyle = 'background: #F3F4F6; color: #4B5563;';
+
+                        if (isPastExp || c.status === 'expired') {
+                          statusLabel = 'Expired';
+                          statusStyle = 'background: #FEF3C7; color: #92400E;';
+                        } else if (isVerified) {
+                          const statePart = c.issuingState || c.stateOrRegion || 'US';
+                          const datePart = c.verifiedAt
+                            ? new Date(c.verifiedAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+                            : (c.year ? `01/01/${c.year}` : '11/05/2026');
+                          statusLabel = `Verified: ${statePart}, ${datePart}`;
+                          statusStyle = 'background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; font-weight: 500;';
+                        }
 
                         const title = c.title || c.registrationBody || 'Credential';
                         const locationOrBody = [c.issuingBody, c.issuingState || c.stateOrRegion].filter(Boolean).join(' • ');
@@ -315,8 +353,7 @@ export function renderPublicProfile(
                       <div class="dez-pub-cred-header">
                         <strong class="dez-pub-cred-body">${title}</strong>
                         <span class="dez-status-plain" style="font-size:11px; padding: 2px 6px; border-radius: 4px; ${
-                          statusLabel === 'Expired' ? 'background: #FEF3C7; color: #92400E;' :
-                          'background: #F3F4F6; color: #4B5563;'
+                          statusStyle
                         }">${statusLabel}</span>
                       </div>
                       ${masked ? `<div class="dez-pub-cred-num">ID: <strong>${masked}</strong></div>` : ''}
@@ -333,7 +370,7 @@ export function renderPublicProfile(
 
       <!-- Mobile Sticky Bottom Action Bar -->
       <div class="dez-pub-mobile-sticky-bar">
-        ${renderRoleActions(viewerRole, hasReceivedProposal, isSelf, true)}
+        ${renderRoleActions(viewerRole, hasReceivedProposal, isSelf, canReceiveInvites, true)}
       </div>
 
       <!-- Lightbox Slot -->
@@ -381,7 +418,7 @@ export function renderPublicProfile(
           </div>
           <div class="dez-dash-modal-body">
             <p style="font-size:13px; color:var(--dez-text-muted); margin-bottom:12px;">
-              Re: Received Architectural Proposal &bull; Escrow Protected
+              Re: Received Architectural Proposal &bull; Protected Payment
             </p>
             <div class="dez-form-group">
               <label for="quick-msg-input" class="dez-label">Message</label>
@@ -404,6 +441,7 @@ function renderRoleActions(
   viewerRole: ViewerRole,
   hasReceivedProposal: boolean,
   isSelf: boolean,
+  canReceiveInvites: boolean,
   isMobile = false
 ): string {
   // Rule 1: The designer viewing their own profile -> "Edit profile" button
@@ -433,9 +471,15 @@ function renderRoleActions(
   // Rule 3: Client viewing
   return `
     <div class="dez-pub-client-actions ${isMobile ? 'is-mobile' : ''}">
-      <button type="button" class="dez-btn-primary" id="${isMobile ? 'btn-m-invite' : 'btn-pub-invite'}" style="height:36px; padding:0 18px; ${isMobile ? 'flex:1;' : ''}">
-        Invite to project
-      </button>
+      ${canReceiveInvites ? `
+        <button type="button" class="dez-btn-primary" id="${isMobile ? 'btn-m-invite' : 'btn-pub-invite'}" style="height:36px; padding:0 18px; ${isMobile ? 'flex:1;' : ''}">
+          Invite to project
+        </button>
+      ` : `
+        <button type="button" class="dez-btn-secondary" disabled title="This designer isn't accepting invitations" style="height:36px; padding:0 18px; opacity:0.65; cursor:not-allowed; font-size:13px; ${isMobile ? 'flex:1;' : ''}">
+          This designer isn't accepting invitations
+        </button>
+      `}
 
       ${
         hasReceivedProposal

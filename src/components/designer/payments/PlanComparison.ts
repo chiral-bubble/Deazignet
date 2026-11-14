@@ -10,7 +10,7 @@ export function renderPlanComparison(): string {
     <div class="dez-plan-comparison-section" style="margin-top: 32px;">
       <div style="margin-bottom: 16px;">
         <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin: 0;">Plan feature comparison</h3>
-        <p style="font-size: 13px; color: #6B7280; margin: 2px 0 0 0;">Compare proposal allocations, escrow platform fees, and portfolio visibility benefits.</p>
+        <p style="font-size: 13px; color: #6B7280; margin: 2px 0 0 0;">Compare proposal allocations, portfolio visibility, and platform tools across tiers.</p>
       </div>
 
       <div class="dez-table-card" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
@@ -21,11 +21,12 @@ export function renderPlanComparison(): string {
                 <th style="padding: 14px 16px; width: 40%;">Feature</th>
                 <th style="padding: 14px 16px; text-align: center; width: 20%;">Free</th>
                 <th style="padding: 14px 16px; text-align: center; width: 20%;">Basic</th>
-                <th style="padding: 14px 16px; text-align: center; width: 20%;">Upgraded</th>
+                <th style="padding: 14px 16px; text-align: center; width: 20%;">Gold</th>
               </tr>
             </thead>
             <tbody>
-              ${PLAN_FEATURES_TABLE.map((row: PlanFeatureRow, idx: number) => `
+              ${PLAN_FEATURES_TABLE.map((row: PlanFeatureRow, idx: number) => {
+                return `
                 <tr style="border-bottom: 1px solid #F3F4F6; background: ${idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA'};">
                   <td style="padding: 12px 16px; font-weight: 500; color: #374151;">${row.name}</td>
                   <td style="padding: 12px 16px; text-align: center; color: #4B5563;">
@@ -35,20 +36,27 @@ export function renderPlanComparison(): string {
                     ${renderFeatureValue(row.basic)}
                   </td>
                   <td style="padding: 12px 16px; text-align: center; color: #111827; font-weight: 500;">
-                    ${renderFeatureValue(row.upgraded)}
+                    ${renderFeatureValue(row.gold ?? row.upgraded)}
                   </td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </tbody>
           </table>
         </div>
       </div>
-      <p style="font-size: 11.5px; color: #6B7280; margin-top: 8px;">* Upgraded tier includes /studio/{slug} web address; custom domains coming later.</p>
+      <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 4px;">
+        <p style="font-size: 12.5px; font-weight: 500; color: #374151; margin: 0;">The platform commission is the same progressive scale on every plan.</p>
+        <p style="font-size: 11.5px; color: #6B7280; margin: 0;">* Fair use policies apply to unlimited proposals and projects.</p>
+      </div>
     </div>
   `;
 }
 
-function renderFeatureValue(val: string | boolean): string {
+function renderFeatureValue(val?: string | boolean): string {
+  if (val === undefined || val === null) {
+    return `<span style="color: #9CA3AF; font-size: 15px;">—</span>`;
+  }
   if (typeof val === 'boolean') {
     return val
       ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F7BE5" stroke-width="2.5" style="display: inline-block; vertical-align: middle;"><polyline points="20 6 9 17 4 12"/></svg>`

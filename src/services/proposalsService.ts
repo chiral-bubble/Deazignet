@@ -72,7 +72,8 @@ function mapRowToSharedProposal(
     status: 'upcoming'
   }));
 
-  const paymentType: 'Milestone' | 'Hourly' = pSnapshot.payment_type === 'hourly' || row.hourly_rate ? 'Hourly' : 'Milestone';
+  const paymentType: 'Milestone' | 'Hourly' | 'Fixed Fee' =
+    pSnapshot.payment_type === 'fixed_fee' ? 'Fixed Fee' : (pSnapshot.payment_type === 'hourly' || row.hourly_rate ? 'Hourly' : 'Milestone');
 
   return {
     id: row.id,
@@ -97,7 +98,16 @@ function mapRowToSharedProposal(
     withdrawnReason: row.withdraw_reason ?? undefined,
     timeline,
     editCount: (row.version_count ?? 1) - 1,
-    hasClientMessaged: false
+    hasClientMessaged: false,
+    projectUnderstanding: row.project_understanding ?? undefined,
+    project_understanding: row.project_understanding ?? undefined,
+    deliverables: row.deliverables ?? undefined,
+    schedule: row.schedule ?? undefined,
+    attachments: row.attachments ?? undefined,
+    canOfferRegulatedServices: row.can_offer_regulated_services ?? undefined,
+    can_offer_regulated_services: row.can_offer_regulated_services ?? undefined,
+    serviceAreaStates: row.service_area_states ?? undefined,
+    service_area_states: row.service_area_states ?? undefined
   };
 }
 
@@ -282,7 +292,7 @@ async function realGetProposalUsage(): Promise<ProposalUsageInfo> {
   if (error || !data || data.length === 0) {
     return {
       used: 0,
-      limit: 5,
+      limit: 3,
       planName: 'Free',
       isUnlimited: false
     };
@@ -291,13 +301,14 @@ async function realGetProposalUsage(): Promise<ProposalUsageInfo> {
   const { used, limit } = data[0];
   const { data: dp } = await db.from('designer_profiles').select('plan').eq('user_id', user.id).maybeSingle();
   const plan = dp?.plan ?? 'free';
-  const planName = plan === 'upgraded' ? 'Upgraded' : (plan === 'basic' ? 'Basic' : 'Free');
+  const planName = (plan === 'gold' || plan === 'upgraded') ? 'Gold' : (plan === 'basic' ? 'Basic' : 'Free');
+  const isUnlimited = plan === 'gold' || plan === 'upgraded';
 
   return {
     used: Number(used),
-    limit: Number(limit),
+    limit: isUnlimited ? null : Number(limit),
     planName,
-    isUnlimited: plan === 'upgraded'
+    isUnlimited
   };
 }
 
@@ -444,14 +455,17 @@ export async function acceptProposalDev(
 export async function getProposalUsage(): Promise<ProposalUsageInfo> {
   if (USE_MOCKS.proposals) {
     await delay(80);
+    const rawPlanId = sharedDataset.planState.currentPlanId as string;
+    const planId = rawPlanId === 'upgraded' ? 'gold' : rawPlanId;
     const currentPlan =
-      PLAN_TIERS_CONFIG.find((t) => t.id === sharedDataset.planState.currentPlanId) ||
-      PLAN_TIERS_CONFIG[1];
+      PLAN_TIERS_CONFIG.find((t) => t.id === planId) ||
+      PLAN_TIERS_CONFIG[0];
+    const isUnlimited = currentPlan.id === 'gold';
     return {
       used: sharedDataset.planState.proposalsUsedThisMonth,
       limit: currentPlan.proposalsPerMonth,
       planName: currentPlan.name,
-      isUnlimited: currentPlan.id === 'upgraded'
+      isUnlimited
     };
   }
 
@@ -461,7 +475,7 @@ export async function getProposalUsage(): Promise<ProposalUsageInfo> {
     console.error('[proposalsService] realGetProposalUsage failed, using plan limits', err);
     return {
       used: 0,
-      limit: 5,
+      limit: 3,
       planName: 'Free',
       isUnlimited: false
     };

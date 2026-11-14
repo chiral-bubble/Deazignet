@@ -95,7 +95,7 @@ export function initCommandPalette(
         id: 'nav-contracts',
         category: 'Navigation',
         title: 'View Active Contracts',
-        subtitle: 'Signed agreements & escrow',
+        subtitle: 'Signed agreements & payments',
         icon: dashIcons.contracts,
         action: () => onNavigateTab('contracts')
       },

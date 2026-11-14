@@ -55,7 +55,7 @@ export function initTesterControls(root: HTMLElement = document.body): void {
           <!-- Control 1: Fund Next Milestone -->
           <div style="border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; background: #F8FAFC;">
             <div style="font-size: 12.5px; font-weight: 600; color: #1E293B;">Fund Next Milestone</div>
-            <div style="font-size: 11px; color: #64748B; margin: 2px 0 8px;">Places the next unfunded milestone fee into simulated escrow.</div>
+            <div style="font-size: 11px; color: #64748B; margin: 2px 0 8px;">Places the next unfunded milestone fee into simulated funded state.</div>
             <button id="tc-btn-fund-milestone" type="button" style="width: 100%; height: 30px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">
               Fund Milestone
             </button>
@@ -122,7 +122,7 @@ export function initTesterControls(root: HTMLElement = document.body): void {
         }
 
         await devFundMilestone(ms.id);
-        alert(`Funded milestone "${ms.name}" with ${formatMoney(ms.amount)}. Funds placed in escrow.`);
+        alert(`Funded milestone "${ms.name}" with ${formatMoney(ms.amount)}. Funds are held by our payment provider until you approve.`);
         window.location.reload();
       } catch (err: any) {
         alert(`Error funding milestone: ${err?.message}`);

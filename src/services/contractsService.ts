@@ -198,7 +198,7 @@ function getMockContract(engagementId: string): ContractDetail {
         policy: 'Milestone due dates are computed upon activation and funding of each phase.'
       },
       section_8_payment_terms: {
-        escrow_funding: 'Milestones must be funded in escrow before design commencement.',
+        escrow_funding: 'Milestones must be funded before design commencement and funds are held by our payment provider until you approve.',
         review_period_days: 14,
         security_hold_days: 5,
         platform_fee_percent: 10

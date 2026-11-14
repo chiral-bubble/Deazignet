@@ -12,18 +12,38 @@ export type Json =
   | Json[];
 
 export type UserRole = 'client' | 'designer' | 'admin';
-export type ProfessionalType = 'architect' | 'interior_designer' | 'landscape_architect' | 'engineer';
+export type ProfessionalType =
+  | 'architect'
+  | 'engineer'
+  | 'interior_designer'
+  | 'landscape_architect'
+  | 'bim_specialist'
+  | 'visualization_professional'
+  | 'drafter_cad'
+  | 'other_consultant';
 export type CredentialStatus = 'pending' | 'verified' | 'rejected';
 
 // Phase 2 enums
 export type ProjectStatus = 'draft' | 'open' | 'awarded' | 'closed' | 'cancelled';
-export type PaymentType = 'milestone' | 'hourly';
+export type PaymentType = 'milestone' | 'hourly' | 'fixed_fee';
 export type ProposalStatus = 'pending' | 'viewed' | 'shortlisted' | 'accepted' | 'declined' | 'withdrawn' | 'expired';
-export type PlanTier = 'free' | 'basic' | 'upgraded';
+export type PlanTier = 'free' | 'basic' | 'gold' | 'upgraded';
 export type BuildingStatus = 'new_build' | 'renovation' | 'extension';
 export type SiteStatus = 'has_land' | 'no_land_yet';
 export type AreaUnit = 'sqft' | 'sqm';
 export type ClientAccountType = 'individual' | 'company';
+
+export type LicensureRequirement =
+  | 'licensed_professional_required'
+  | 'stamping_required'
+  | 'not_required'
+  | 'not_sure';
+export type ProjectVisibility = 'public' | 'invitation_only';
+export type CanOfferRegulatedServices =
+  | 'licensed_in_project_state'
+  | 'will_partner_with_licensed_professional'
+  | 'not_required_for_this_service'
+  | 'cannot_offer_regulated_services';
 
 export type ReimbursableExpensesType = 'none' | 'at_cost' | 'capped';
 export type DeclineReasonCode =
@@ -171,6 +191,8 @@ export type Database = {
           studio_name: string | null;
           bio: string | null;
           specializations: string[];
+          services_offered: string[];
+          service_area_states?: string[];
           languages: string[];
           years_experience: number;
           hourly_rate: number | null;
@@ -188,6 +210,8 @@ export type Database = {
           studio_name?: string | null;
           bio?: string | null;
           specializations?: string[];
+          services_offered?: string[];
+          service_area_states?: string[];
           languages?: string[];
           years_experience?: number;
           hourly_rate?: number | null;
@@ -205,6 +229,8 @@ export type Database = {
           studio_name?: string | null;
           bio?: string | null;
           specializations?: string[];
+          services_offered?: string[];
+          service_area_states?: string[];
           languages?: string[];
           years_experience?: number;
           hourly_rate?: number | null;
@@ -234,6 +260,9 @@ export type Database = {
           location: string | null;
           description: string | null;
           role: string | null;
+          challenge?: string | null;
+          approach?: string | null;
+          outcome?: string | null;
           sort_order: number;
           cover_image_path: string | null;
           created_at: string;
@@ -248,6 +277,9 @@ export type Database = {
           location?: string | null;
           description?: string | null;
           role?: string | null;
+          challenge?: string | null;
+          approach?: string | null;
+          outcome?: string | null;
           sort_order?: number;
           cover_image_path?: string | null;
           created_at?: string;
@@ -262,6 +294,9 @@ export type Database = {
           location?: string | null;
           description?: string | null;
           role?: string | null;
+          challenge?: string | null;
+          approach?: string | null;
+          outcome?: string | null;
           sort_order?: number;
           cover_image_path?: string | null;
           created_at?: string;
@@ -422,9 +457,14 @@ export type Database = {
           category: string;
           subcategory: string | null;
           disciplines?: string[];
+          requested_services?: string[];
           project_type_notes: string | null;
           design_budget: number;
           budget?: number;
+          budget_min?: number | null;
+          licensure_requirement?: LicensureRequirement;
+          visibility?: ProjectVisibility;
+          deliverables_checklist?: string[];
           construction_cost_estimate: number | null;
           currency: string;
           payment_type: PaymentType;
@@ -457,9 +497,14 @@ export type Database = {
           category: string;
           subcategory?: string | null;
           disciplines?: string[];
+          requested_services?: string[];
           project_type_notes?: string | null;
           design_budget?: number;
           budget?: number;
+          budget_min?: number | null;
+          licensure_requirement?: LicensureRequirement;
+          visibility?: ProjectVisibility;
+          deliverables_checklist?: string[];
           construction_cost_estimate?: number | null;
           currency?: string;
           payment_type: PaymentType;
@@ -492,8 +537,14 @@ export type Database = {
           category?: string;
           subcategory?: string | null;
           disciplines?: string[];
+          requested_services?: string[];
+          project_type_notes?: string | null;
           design_budget?: number;
           budget?: number;
+          budget_min?: number | null;
+          licensure_requirement?: LicensureRequirement;
+          visibility?: ProjectVisibility;
+          deliverables_checklist?: string[];
           construction_cost_estimate?: number | null;
           currency?: string;
           payment_type?: PaymentType;
@@ -583,6 +634,12 @@ export type Database = {
           question_for_client: string | null; client_answer: string | null;
           sent_at: string; viewed_at: string | null; decided_at: string | null;
           decline_reason: string | null; withdraw_reason: string | null;
+          project_understanding?: string | null;
+          deliverables?: string[];
+          schedule?: Json;
+          attachments?: Json;
+          can_offer_regulated_services?: CanOfferRegulatedServices | null;
+          service_area_states?: string[];
           version_count: number; project_snapshot: Json; created_at: string; updated_at: string;
         };
         Insert: {
@@ -597,6 +654,12 @@ export type Database = {
           question_for_client?: string | null; client_answer?: string | null;
           sent_at?: string; viewed_at?: string | null; decided_at?: string | null;
           decline_reason?: string | null; withdraw_reason?: string | null;
+          project_understanding?: string | null;
+          deliverables?: string[];
+          schedule?: Json;
+          attachments?: Json;
+          can_offer_regulated_services?: CanOfferRegulatedServices | null;
+          service_area_states?: string[];
           version_count?: number; project_snapshot?: Json; created_at?: string; updated_at?: string;
         };
         Update: {
@@ -611,6 +674,12 @@ export type Database = {
           question_for_client?: string | null; client_answer?: string | null;
           sent_at?: string; viewed_at?: string | null; decided_at?: string | null;
           decline_reason?: string | null; withdraw_reason?: string | null;
+          project_understanding?: string | null;
+          deliverables?: string[];
+          schedule?: Json;
+          attachments?: Json;
+          can_offer_regulated_services?: CanOfferRegulatedServices | null;
+          service_area_states?: string[];
           version_count?: number; project_snapshot?: Json; created_at?: string; updated_at?: string;
         };
         Relationships: [
@@ -834,6 +903,70 @@ export type Database = {
         };
         Relationships: [];
       };
+
+      services_catalog: {
+        Row: {
+          id: string;
+          name: string;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          sort_order: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      saved_searches: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          type: 'projects' | 'designers';
+          params: Json;
+          notify: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          type: 'projects' | 'designers';
+          params?: Json;
+          notify?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          type?: 'projects' | 'designers';
+          params?: Json;
+          notify?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'saved_searches_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id']; }
+        ];
+      };
     };
     Views: {
       // Phase 1 views
@@ -848,6 +981,8 @@ export type Database = {
           bio: string | null;
           professional_type: ProfessionalType;
           specializations: string[];
+          services_offered?: string[];
+          service_area_states?: string[];
           languages: string[];
           years_experience: number;
           is_available: boolean;
@@ -870,6 +1005,9 @@ export type Database = {
           location: string | null;
           description: string | null;
           role: string | null;
+          challenge?: string | null;
+          approach?: string | null;
+          outcome?: string | null;
           sort_order: number;
           cover_image_path: string | null;
           images: Array<{
@@ -904,6 +1042,11 @@ export type Database = {
           category: string;
           subcategory: string | null;
           budget: number;
+          budget_min?: number | null;
+          requested_services?: string[];
+          licensure_requirement?: LicensureRequirement;
+          visibility?: ProjectVisibility;
+          deliverables_checklist?: string[];
           currency: string;
           payment_type: PaymentType;
           hourly_rate_max: number | null;
@@ -2066,6 +2209,9 @@ export type Database = {
       notification_type: NotificationType;
       file_purpose: FilePurpose;
       file_status: FileStatus;
+      licensure_requirement: LicensureRequirement;
+      project_visibility: ProjectVisibility;
+      can_offer_regulated_services: CanOfferRegulatedServices;
     };
     CompositeTypes: Record<string, never>;
   };

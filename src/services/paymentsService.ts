@@ -85,7 +85,7 @@ export async function getPaymentsOverview(): Promise<PaymentsOverviewData> {
           milestoneTitle: m.title,
           amount: m.amount,
           estReleaseDate: m.dueDate,
-          statusText: m.status === 'in_review' ? 'In client review' : 'Funded in escrow'
+          statusText: m.status === 'in_review' ? 'In client review' : 'Funded, held'
         });
       }
     });
@@ -214,11 +214,12 @@ export async function getPlanState(): Promise<SharedPlanState> {
 }
 
 export async function updatePlanSubscription(
-  tierId: 'free' | 'basic' | 'upgraded',
+  tierId: 'free' | 'basic' | 'gold' | 'upgraded',
   cycle: 'monthly' | 'yearly'
 ): Promise<void> {
   await delay(100);
-  sharedDataset.planState.currentPlanId = tierId;
+  const normalized = tierId === 'upgraded' ? 'gold' : tierId;
+  sharedDataset.planState.currentPlanId = normalized;
   sharedDataset.planState.billingCycle = cycle;
 }
 
@@ -258,15 +259,15 @@ export async function getInvoices(): Promise<InvoiceItem[]> {
       id: 'inv-1',
       date: 'Oct 1, 2026',
       number: 'INV-DEZ-2026-0091',
-      description: 'Annual Membership — Upgraded Studio Tier (12 months)',
-      amount: 479.90,
+      description: 'Annual Membership — Gold Studio Tier (12 months)',
+      amount: 490.00,
       status: 'Paid'
     },
     {
       id: 'inv-2',
       date: 'Sep 15, 2026',
       number: 'INV-DEZ-2026-0042',
-      description: 'Milestone 1 Escrow Release Platform Fee (Cantilevered Residence)',
+      description: 'Milestone 1 Release Platform Service Fee (Cantilevered Residence)',
       amount: 375.00,
       status: 'Paid'
     },

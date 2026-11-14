@@ -306,7 +306,7 @@ export function initProjectsSection(onPostProjectClick: () => void): void {
         </div>
 
         <div class="project-modal-section">
-          <h4>Milestone Schedule & Escrow Protection</h4>
+          <h4>Milestone Schedule & Payment Protection</h4>
           <div class="modal-milestones-list">
             <div class="modal-milestone-row">
               <span class="m-icon is-done">${dashIcons.shieldCheck}</span>
@@ -314,7 +314,7 @@ export function initProjectsSection(onPostProjectClick: () => void): void {
             </div>
             <div class="modal-milestone-row">
               <span class="m-icon ${p.progress && p.progress > 30 ? 'is-done' : 'is-active'}">${dashIcons.box}</span>
-              <div><strong>Phase 2: 3D Visualization & Interior Perspectives</strong><small>$18,000 • Secured in Escrow</small></div>
+              <div><strong>Phase 2: 3D Visualization & Interior Perspectives</strong><small>$18,000 • Funded, held</small></div>
             </div>
             <div class="modal-milestone-row">
               <span class="m-icon">${dashIcons.contracts}</span>

@@ -353,7 +353,7 @@ export async function renderClientAccountSettings(container: HTMLElement, active
         <div style="background: #FFFFFF; border: 1px solid #FECACA; border-radius: 8px; padding: 24px;">
           <h3 style="font-size: 15px; font-weight: 600; color: #B91C1C; margin: 0 0 6px;">Danger Zone</h3>
           <p style="font-size: 13px; color: #4B5563; margin: 0 0 16px; line-height: 1.5;">
-            Submit a formal request to delete your account and personal data. Deletion is blocked while you have active projects, ongoing designer contracts, or funds in escrow. Certain transaction history must be retained for legal compliance.
+            Submit a formal request to delete your account and personal data. Deletion is blocked while you have active projects, ongoing designer contracts, or funded milestones. Certain transaction history must be retained for legal compliance.
           </p>
 
           <button type="button" id="btn-request-deletion" style="background: #FEF2F2; border: 1px solid #FCA5A5; color: #DC2626; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 6px; cursor: pointer;">

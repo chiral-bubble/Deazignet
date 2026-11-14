@@ -32,9 +32,9 @@ export function renderSummaryRow(summary: DesignerSummary): string {
         </div>
       </div>
 
-      <!-- Block 3: In Escrow -->
+      <!-- Block 3: Funded milestones -->
       <div class="dez-summary-block">
-        <span class="dez-summary-label">In escrow</span>
+        <span class="dez-summary-label">Funded milestones</span>
         <div class="dez-summary-value">${inEscrowFormatted}</div>
         <div class="dez-summary-support">Held for active milestones</div>
       </div>

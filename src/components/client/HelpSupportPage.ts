@@ -28,8 +28,8 @@ export async function renderHelpSupportPage(container: HTMLElement): Promise<voi
 
   const faqs = [
     {
-      q: 'How does escrow protection work on Dezignet?',
-      a: 'Funds for each architectural milestone are deposited into escrow before work begins. Your funds are held securely and only released to the designer after you review and approve the submitted deliverables.'
+      q: 'How does payment protection work on Dezignet?',
+      a: 'Funds for each architectural milestone are funded before work begins. Your funds are held by our payment provider until you approve and only released to the designer after you review and approve the submitted deliverables.'
     },
     {
       q: 'What happens if I need changes to submitted drawings?',
@@ -121,7 +121,7 @@ export async function renderHelpSupportPage(container: HTMLElement): Promise<voi
                   <option value="General Question">General Question</option>
                   <option value="Project Creation & Publishing">Project Creation & Publishing</option>
                   <option value="Proposal Review & Designer Matching">Proposal Review & Designer Matching</option>
-                  <option value="Milestone & Escrow Assistance">Milestone & Escrow Assistance</option>
+                  <option value="Milestone & Payment Protection Assistance">Milestone & Payment Protection Assistance</option>
                   <option value="Account & Security">Account & Security</option>
                 </select>
               </div>

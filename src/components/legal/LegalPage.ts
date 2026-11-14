@@ -177,7 +177,7 @@ function renderPrivacyContent(): string {
       <div>
         <h2 style="font-size: 18px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">4. Email Communication Consent</h2>
         <p style="margin: 0; color: #334155;">
-          By creating an account, you consent to receive transactional and operational email communications regarding milestone escrow funding, deliverable submissions, proposal notifications, and account security. You can manage notification preferences in your Account Settings.
+          By creating an account, you consent to receive transactional and operational email communications regarding milestone funding, deliverable submissions, proposal notifications, and account security. You can manage notification preferences in your Account Settings.
         </p>
       </div>
     </section>

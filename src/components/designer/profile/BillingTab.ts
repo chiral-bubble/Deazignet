@@ -1,26 +1,30 @@
 /**
  * BillingTab Component (Tab 5: Billing & Plans)
- * Subscription plans (Free, Basic, Upgraded) with Monthly/Yearly discount toggle,
+ * Subscription plans (Free, Basic, Gold) with Monthly/Yearly discount toggle (when enabled),
  * plan features comparison table driven by plansConfig.ts,
  * payout accounts with masked numbers, and mock invoice history.
  */
 
 import { PLAN_TIERS, PLAN_FEATURES_COMPARISON } from '../../../config/plansConfig';
+import { getPaymentsSettings } from '../../../config/paymentsConfig';
 import type { PayoutAccount, InvoiceItem } from '../../../services/designerProfileService';
 import { formatMoney } from '../../../utils/formatters';
 
 export function renderBillingTab(
-  currentPlanId: 'free' | 'basic' | 'upgraded',
+  currentPlanId: 'free' | 'basic' | 'gold' | 'upgraded',
   billingCycle: 'monthly' | 'yearly',
   payoutAccounts: PayoutAccount[],
   invoices: InvoiceItem[]
 ): string {
-  const isYearly = billingCycle === 'yearly';
+  const settings = getPaymentsSettings();
+  const effectiveAnnualBilling = settings.annual_billing_enabled;
+  const isYearly = effectiveAnnualBilling && billingCycle === 'yearly';
+  const effectiveCurrentPlan = currentPlanId === 'upgraded' ? 'gold' : currentPlanId;
 
   return `
     <div class="dez-settings-panel" id="dez-billing-tab-content">
       <div class="dez-panel-header">
-        <h2 class="dez-panel-title">Studio Subscription & Escrow Payouts</h2>
+        <h2 class="dez-panel-title">Studio Subscription & Payouts</h2>
         <p class="dez-panel-subtext">Manage your studio tier, bank wire destinations, and fee structures.</p>
       </div>
 
@@ -32,7 +36,10 @@ export function renderBillingTab(
             <p class="dez-box-subtext">Choose the right tier for your studio size and proposal volume.</p>
           </div>
 
-          <!-- Billing Cycle Toggle -->
+          <!-- Billing Cycle Toggle (only if annual billing enabled) -->
+          ${
+            effectiveAnnualBilling
+              ? `
           <div class="dez-cycle-toggle-wrap">
             <span class="dez-cycle-label ${!isYearly ? 'is-active' : ''}">Monthly</span>
             <label class="dez-switch">
@@ -40,15 +47,18 @@ export function renderBillingTab(
               <span class="dez-slider"></span>
             </label>
             <span class="dez-cycle-label ${isYearly ? 'is-active' : ''}">
-              Annual <span class="dez-discount-chip">Save 20%</span>
+              Annual <span class="dez-discount-chip">Save 17%</span>
             </span>
           </div>
+          `
+              : ''
+          }
         </div>
 
         <!-- 3 Tier Cards Grid -->
         <div class="dez-plan-cards-grid" id="plan-cards-container">
           ${PLAN_TIERS.map((tier) => {
-            const isCurrent = tier.id === currentPlanId;
+            const isCurrent = tier.id === effectiveCurrentPlan;
             const price = isYearly ? tier.yearlyPrice : tier.monthlyPrice;
             const period = isYearly ? '/year' : '/month';
 
@@ -61,7 +71,7 @@ export function renderBillingTab(
                 </div>
                 <div class="dez-plan-price-row">
                   <span class="dez-plan-currency">$</span>
-                  <span class="dez-plan-amount">${price === 0 ? '0' : price.toFixed(2)}</span>
+                  <span class="dez-plan-amount">${price === 0 ? '0' : price.toFixed(0)}</span>
                   <span class="dez-plan-period">${price === 0 ? 'Forever free' : period}</span>
                 </div>
                 <p class="dez-plan-desc">${tier.description}</p>
@@ -90,8 +100,8 @@ export function renderBillingTab(
                 <tr>
                   <th style="width: 40%;">Feature</th>
                   <th style="width: 20%; text-align: center;">Free ($0)</th>
-                  <th style="width: 20%; text-align: center;">Basic ($29.99)</th>
-                  <th style="width: 20%; text-align: center;">Upgraded ($49.99)</th>
+                  <th style="width: 20%; text-align: center;">Basic ($19)</th>
+                  <th style="width: 20%; text-align: center;">Gold ($49)</th>
                 </tr>
               </thead>
               <tbody>
@@ -101,13 +111,14 @@ export function renderBillingTab(
                     <td class="dez-feat-name">${feat.name}</td>
                     <td class="dez-feat-val">${renderFeatureValue(feat.free)}</td>
                     <td class="dez-feat-val">${renderFeatureValue(feat.basic)}</td>
-                    <td class="dez-feat-val">${renderFeatureValue(feat.upgraded)}</td>
+                    <td class="dez-feat-val">${renderFeatureValue(feat.gold ?? feat.upgraded)}</td>
                   </tr>
                 `
                 ).join('')}
               </tbody>
             </table>
           </div>
+          <p style="font-size: 12px; color: var(--dez-text-secondary); margin-top: 10px;">The platform commission is the same progressive scale on every plan.</p>
         </div>
       </div>
 
@@ -116,7 +127,7 @@ export function renderBillingTab(
         <div class="dez-panel-header-with-actions" style="margin-bottom: 14px;">
           <div>
             <h3 class="dez-box-title">Payout Bank Accounts</h3>
-            <p class="dez-box-subtext">Direct escrow earnings withdrawals to verified commercial banking accounts.</p>
+            <p class="dez-box-subtext">Direct earnings withdrawals to verified commercial banking accounts.</p>
           </div>
           <button type="button" class="dez-btn-secondary" id="btn-add-payout-modal-trigger" style="height:32px; padding:0 12px; font-size:12.5px;">
             + Add payout account
@@ -203,7 +214,7 @@ export function renderBillingTab(
               Payments are being set up. You will be able to manage payment methods and billing securely before contracts begin.
             </p>
             <p style="font-size:13px; color:var(--dez-text-muted); margin-top:8px; line-height:1.5;">
-              Plan selection, escrow billing, and automated recurring upgrades will be activated shortly.
+              Plan selection, subscription billing, and automated recurring upgrades will be activated shortly.
             </p>
           </div>
           <div class="dez-dash-modal-footer">
@@ -264,7 +275,10 @@ export function renderBillingTab(
   `;
 }
 
-function renderFeatureValue(val: string | boolean): string {
+function renderFeatureValue(val?: string | boolean): string {
+  if (val === undefined || val === null) {
+    return `<span class="dez-feat-dash">—</span>`;
+  }
   if (typeof val === 'boolean') {
     return val
       ? `<span style="color:var(--dez-brand); font-weight:bold;">&check;</span>`
@@ -295,110 +309,104 @@ export function initBillingTab(
   const btnClosePnc = root.querySelector('#btn-close-pnc-modal') as HTMLButtonElement;
   const btnOkPnc = root.querySelector('#btn-ok-pnc-modal') as HTMLButtonElement;
 
-  const openPnc = () => {
-    if (pncModal) {
-      pncModal.style.display = 'flex';
-      pncModal.classList.add('is-open');
-      document.body.style.overflow = 'hidden';
-    }
-  };
-  const closePnc = () => {
-    if (pncModal) {
-      pncModal.style.display = 'none';
-      pncModal.classList.remove('is-open');
-      document.body.style.overflow = '';
-    }
-  };
-
   root.querySelectorAll('[data-action="select-plan"]').forEach((btn) => {
-    btn.addEventListener('click', openPnc);
+    btn.addEventListener('click', () => {
+      if (pncModal) pncModal.style.display = 'flex';
+    });
   });
+
+  const closePnc = () => {
+    if (pncModal) pncModal.style.display = 'none';
+  };
   btnClosePnc?.addEventListener('click', closePnc);
   btnOkPnc?.addEventListener('click', closePnc);
   pncModal?.addEventListener('click', (e) => {
     if (e.target === pncModal) closePnc();
   });
 
-  // Download PDF invoice
-  root.querySelectorAll('[data-action="download-inv"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      callbacks.onShowToast('Invoice Downloaded', 'PDF receipt downloaded for your records.', 'info');
-    });
-  });
-
-  // Payout Account Modal
+  // Add Payout Modal
   const payoutModal = root.querySelector('#modal-add-payout') as HTMLElement;
-  const btnOpenPayout = root.querySelector('#btn-add-payout-modal-trigger') as HTMLButtonElement;
-  const btnClosePayout = root.querySelector('#btn-close-payout-modal') as HTMLButtonElement;
+  const btnTriggerPayout = root.querySelector('#btn-add-payout-modal-trigger') as HTMLButtonElement;
   const btnCancelPayout = root.querySelector('#btn-cancel-payout-modal') as HTMLButtonElement;
   const btnSavePayout = root.querySelector('#btn-save-payout-modal') as HTMLButtonElement;
-
-  const bankSelect = root.querySelector('#payout-bank-select') as HTMLSelectElement;
-  const numInput = root.querySelector('#payout-acc-number') as HTMLInputElement;
-  const nameInput = root.querySelector('#payout-acc-name') as HTMLInputElement;
+  const formPayout = root.querySelector('#form-add-payout') as HTMLFormElement;
 
   const openPayoutModal = () => {
     if (payoutModal) {
+      formPayout?.reset();
+      clearPayoutErrors(root);
       payoutModal.style.display = 'flex';
-      payoutModal.classList.add('is-open');
-      document.body.style.overflow = 'hidden';
-      if (numInput) numInput.value = '';
-      if (nameInput) nameInput.value = '';
-      ['err-payout-num', 'err-payout-name'].forEach((id) => {
-        const el = root.querySelector(`#${id}`);
-        if (el) el.textContent = '';
-      });
     }
   };
 
   const closePayoutModal = () => {
-    if (payoutModal) {
-      payoutModal.style.display = 'none';
-      payoutModal.classList.remove('is-open');
-      document.body.style.overflow = '';
-    }
+    if (payoutModal) payoutModal.style.display = 'none';
   };
 
-  btnOpenPayout?.addEventListener('click', openPayoutModal);
-  btnClosePayout?.addEventListener('click', closePayoutModal);
+  btnTriggerPayout?.addEventListener('click', openPayoutModal);
   btnCancelPayout?.addEventListener('click', closePayoutModal);
   payoutModal?.addEventListener('click', (e) => {
     if (e.target === payoutModal) closePayoutModal();
   });
 
   btnSavePayout?.addEventListener('click', async () => {
-    const bank = bankSelect?.value;
-    const num = numInput?.value.trim() || '';
-    const name = nameInput?.value.trim() || '';
+    clearPayoutErrors(root);
+    const bankSelect = root.querySelector('#payout-bank-select') as HTMLSelectElement;
+    const numInput = root.querySelector('#payout-acc-number') as HTMLInputElement;
+    const nameInput = root.querySelector('#payout-acc-name') as HTMLInputElement;
 
-    let valid = true;
-    if (num.length !== 10 || !/^\d+$/.test(num)) {
-      const err = root.querySelector('#err-payout-num');
-      if (err) err.textContent = 'Account number must be 10 numeric digits.';
-      valid = false;
+    let hasError = false;
+    const numVal = numInput?.value.trim() ?? '';
+    const nameVal = nameInput?.value.trim() ?? '';
+
+    if (!/^\d{10}$/.test(numVal)) {
+      showPayoutError(root, '#err-payout-num', 'Please enter a valid 10-digit account number.');
+      hasError = true;
     }
-    if (!name) {
-      const err = root.querySelector('#err-payout-name');
-      if (err) err.textContent = 'Account name is required.';
-      valid = false;
+    if (nameVal.length < 3) {
+      showPayoutError(root, '#err-payout-name', 'Account name must be at least 3 characters.');
+      hasError = true;
     }
 
-    if (!valid) return;
+    if (hasError) return;
 
     btnSavePayout.disabled = true;
-    btnSavePayout.textContent = 'Saving account...';
+    btnSavePayout.textContent = 'Saving...';
 
     try {
+      const masked = '••••••••' + numVal.slice(-4);
       await callbacks.onAddPayoutAccount({
-        bankName: bank,
-        accountNumberMasked: num,
-        accountName: name
+        bankName: bankSelect?.value ?? 'Commercial Bank',
+        accountNumberMasked: masked,
+        accountName: nameVal
       });
-      callbacks.onShowToast('Payout Account Added', 'New bank account linked for escrow transfers.', 'success');
       closePayoutModal();
+      callbacks.onShowToast('Account Added', 'Your payout bank account has been added successfully.', 'success');
+    } catch {
+      callbacks.onShowToast('Error', 'Failed to add payout account. Please try again.', 'error');
     } finally {
       btnSavePayout.disabled = false;
       btnSavePayout.textContent = 'Add account';
     }
   });
+
+  // Download PDF Invoice
+  root.querySelectorAll('[data-action="download-inv"]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const invId = (e.currentTarget as HTMLElement).getAttribute('data-inv-id');
+      callbacks.onShowToast('Downloading Receipt', `Invoice ${invId ?? ''} PDF download initiated.`, 'info');
+    });
+  });
+}
+
+function clearPayoutErrors(root: HTMLElement): void {
+  const e1 = root.querySelector('#err-payout-num');
+  const e2 = root.querySelector('#err-payout-name');
+  if (e1) e1.textContent = '';
+  if (e2) e2.textContent = '';
+}
+
+function showPayoutError(root: HTMLElement, selector: string, msg: string): void {
+  const el = root.querySelector(selector);
+  if (el) el.textContent = msg;
 }

@@ -180,7 +180,7 @@ export function renderAuthPage(): string {
             <div class="toggle-panel toggle-right">
               <div class="toggle-brand-tag">DEZIGNET PLATFORM</div>
               <h1 class="toggle-heading">Welcome Back!</h1>
-              <p class="toggle-desc">Already have an account? Sign in to track ongoing projects, proposals, and escrow payments.</p>
+              <p class="toggle-desc">Already have an account? Sign in to track ongoing projects, proposals, and funded milestone payments.</p>
               <button type="button" class="btn-toggle login-btn" id="login-toggle-btn">
                 <span>Login</span>
               </button>

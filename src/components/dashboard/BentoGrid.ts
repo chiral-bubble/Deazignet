@@ -137,7 +137,7 @@ export function renderBentoGrid(): string {
         <div class="bento-stat-inner">
           <div class="bento-stat-header">
             <span class="bento-stat-label">TOTAL INVESTED</span>
-            <span class="bento-stat-badge bento-stat-badge--escrow">100% Escrow</span>
+            <span class="bento-stat-badge bento-stat-badge--escrow">100% Protected</span>
           </div>
           <div class="bento-stat-number bento-stat-number--money" data-target="128450">$0</div>
           <svg class="bento-sparkline" viewBox="0 0 100 24" fill="none">

@@ -6,6 +6,7 @@
  */
 
 import type { PortfolioProject, PortfolioImage } from '../../../services/designerProfileService';
+import { getPaymentsSettings } from '../../../config/paymentsConfig';
 
 const PROJECT_CATEGORIES = [
   'Residential',
@@ -22,6 +23,7 @@ const PROJECT_CATEGORIES = [
 export function renderPortfolioProjectDrawer(project?: PortfolioProject | null): string {
   const isEdit = Boolean(project);
   const currentImages = project?.images || [];
+  const maxImages = getPaymentsSettings().images_per_portfolio_project || 10;
 
   return `
     <div class="dez-drawer-backdrop" id="drawer-portfolio-project" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="drawer-port-title">
@@ -83,11 +85,33 @@ export function renderPortfolioProjectDrawer(project?: PortfolioProject | null):
               <div class="dez-field-error" id="err-port-desc"></div>
             </div>
 
-            <!-- Project Images Section (1 to 12) -->
+            
+            <!-- Case Study Sections (Enhanced Gold Tier) -->
+            <div class="dez-bordered-box" style="margin-top: 18px; padding: 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px;">
+              <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-bottom: 4px;">Case Study Narrative</div>
+              <p style="font-size: 12px; color: #64748B; margin: 0 0 12px 0;">Highlight the architectural story on enhanced profile pages.</p>
+
+              <div class="dez-form-group" style="margin-bottom: 10px;">
+                <label for="port-challenge" class="dez-label">The Challenge <span class="dez-opt">(Optional)</span></label>
+                <textarea id="port-challenge" class="dez-textarea" rows="2" placeholder="Site constraints, zoning limitations, client brief...">${project?.challenge || ''}</textarea>
+              </div>
+
+              <div class="dez-form-group" style="margin-bottom: 10px;">
+                <label for="port-approach" class="dez-label">The Approach & Strategy <span class="dez-opt">(Optional)</span></label>
+                <textarea id="port-approach" class="dez-textarea" rows="2" placeholder="Architectural concept, spatial planning, structural solutions...">${project?.approach || ''}</textarea>
+              </div>
+
+              <div class="dez-form-group" style="margin-bottom: 10px;">
+                <label for="port-outcome" class="dez-label">The Outcome & Delivery <span class="dez-opt">(Optional)</span></label>
+                <textarea id="port-outcome" class="dez-textarea" rows="2" placeholder="Finished build metrics, sustainability performance, client response...">${project?.outcome || ''}</textarea>
+              </div>
+            </div>
+
+            <!-- Project Images Section -->
             <div class="dez-form-group" style="margin-top: 20px;">
               <div class="dez-label-with-action">
                 <label class="dez-label">Project photography & drawings <span class="dez-req">*</span></label>
-                <span class="dez-field-hint" id="image-count-indicator">${currentImages.length}/12 images</span>
+                <span class="dez-field-hint" id="image-count-indicator">${currentImages.length}/${maxImages} images</span>
               </div>
               <p class="dez-sub-hint">Upload high-resolution photography. JPG, PNG or WebP up to 5MB each. Minimum 1 image required.</p>
 
@@ -99,7 +123,7 @@ export function renderPortfolioProjectDrawer(project?: PortfolioProject | null):
                   <polyline points="21 15 16 10 5 21"/>
                 </svg>
                 <div class="dez-dropzone-prompt"><strong>Click to add images</strong> or drag and drop</div>
-                <div class="dez-dropzone-subtext">Up to 12 files (max 5MB each)</div>
+                <div class="dez-dropzone-subtext">Up to 10 files (max 5MB each)</div>
                 <input type="file" id="port-file-input" multiple accept="image/jpeg,image/png,image/webp" style="display: none;" />
               </div>
 
@@ -250,8 +274,8 @@ export function initPortfolioProjectDrawer(
       return true;
     });
 
-    if (workingImages.length + validFiles.length > 12) {
-      if (errImages) errImages.textContent = 'Maximum 12 images allowed per portfolio project.';
+    if (workingImages.length + validFiles.length > (getPaymentsSettings().images_per_portfolio_project || 10)) {
+      if (errImages) errImages.textContent = 'Maximum 10 images allowed per portfolio project.';
       return;
     }
 
@@ -330,6 +354,9 @@ export function initPortfolioProjectDrawer(
     const location = (drawer.querySelector('#port-location') as HTMLInputElement)?.value.trim();
     const role = (drawer.querySelector('#port-role') as HTMLInputElement)?.value.trim();
     const shortDescription = (drawer.querySelector('#port-desc') as HTMLTextAreaElement)?.value.trim();
+    const challenge = (drawer.querySelector('#port-challenge') as HTMLTextAreaElement)?.value.trim() || undefined;
+    const approach = (drawer.querySelector('#port-approach') as HTMLTextAreaElement)?.value.trim() || undefined;
+    const outcome = (drawer.querySelector('#port-outcome') as HTMLTextAreaElement)?.value.trim() || undefined;
 
     let valid = true;
     const setErr = (id: string, msg: string) => {
@@ -370,6 +397,9 @@ export function initPortfolioProjectDrawer(
         location,
         role,
         shortDescription,
+        challenge,
+        approach,
+        outcome,
         images: workingImages
       });
       close();

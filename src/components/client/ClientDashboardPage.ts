@@ -162,9 +162,9 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
           <div style="font-size: 12px; color: #6B7280;">Under design execution</div>
         </div>
 
-        <!-- Funds in Escrow -->
+        <!-- Funded milestones -->
         <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px;">
-          <div style="font-size: 13px; font-weight: 500; color: #6B7280;">Funds in Escrow</div>
+          <div style="font-size: 13px; font-weight: 500; color: #6B7280;">Funded milestones</div>
           <div style="font-size: 28px; font-weight: 700; color: #2F7BE5; margin: 4px 0 2px; font-variant-numeric: tabular-nums;">
             ${formatMoney(data.summary.funds_in_escrow || 0)}
           </div>
@@ -233,7 +233,7 @@ function renderDashboardContent(container: HTMLElement, data: ClientDashboardDat
                           </div>
                         </div>
                         <div style="text-align: right;">
-                          <span style="font-size: 12px; color: #6B7280;">In Escrow</span>
+                          <span style="font-size: 12px; color: #6B7280;">Funded, held</span>
                           <div style="font-weight: 700; color: #2F7BE5; font-size: 14px; font-variant-numeric: tabular-nums;">
                             ${formatMoney(ap.escrow_amount || 0)}
                           </div>

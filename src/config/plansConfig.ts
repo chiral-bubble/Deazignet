@@ -7,15 +7,16 @@ export interface PlanFeature {
   name: string;
   free: string | boolean;
   basic: string | boolean;
-  upgraded: string | boolean;
+  gold: string | boolean;
+  upgraded?: string | boolean; // compatibility alias
 }
 
 export interface PlanTier {
-  id: 'free' | 'basic' | 'upgraded';
+  id: 'free' | 'basic' | 'gold';
   name: string;
   monthlyPrice: number;
   yearlyPrice: number; // Yearly price with discount
-  yearlyDiscountPercent: number; // E.g. 20%
+  yearlyDiscountPercent: number; // E.g. 17%
   description: string;
   badge?: string;
   popular?: boolean;
@@ -28,81 +29,78 @@ export const PLAN_TIERS: PlanTier[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     yearlyDiscountPercent: 0,
-    description: 'Essential platform access to submit proposals and build your studio presence.'
+    description: 'Submit up to 3 proposals per month, public directory listing, and up to 3 portfolio projects.'
   },
   {
     id: 'basic',
     name: 'Basic',
-    monthlyPrice: 29.99,
-    yearlyPrice: 287.90, // ~20% discount ($23.99/mo)
-    yearlyDiscountPercent: 20,
-    description: 'For growing architectural studios seeking enhanced portfolio visibility and lower escrow fees.',
+    monthlyPrice: 19.00,
+    yearlyPrice: 190.00,
+    yearlyDiscountPercent: 17,
+    description: '15 proposals per month, portfolio page with up to 12 projects, direct client invitations, and profile views analytics.',
     popular: true
   },
   {
-    id: 'upgraded',
-    name: 'Upgraded',
-    monthlyPrice: 49.99,
-    yearlyPrice: 479.90, // ~20% discount ($39.99/mo)
-    yearlyDiscountPercent: 20,
-    description: 'For elite architecture & engineering firms requiring dedicated client matching and zero escrow fees.',
-    badge: 'Elite'
+    id: 'gold',
+    name: 'Gold',
+    monthlyPrice: 49.00,
+    yearlyPrice: 490.00,
+    yearlyDiscountPercent: 17,
+    description: 'Unlimited proposals and projects, priority search placement, direct invitations, case-study sections, studio web address, and full analytics.'
   }
 ];
 
 export const PLAN_FEATURES_COMPARISON: PlanFeature[] = [
   {
-    name: 'Portfolio project limit',
-    free: 'Up to 3 projects',
-    basic: 'Up to 20 projects',
-    upgraded: 'Unlimited'
+    name: 'Proposal submissions per month',
+    free: '3',
+    basic: '15',
+    gold: 'Unlimited*',
+    upgraded: 'Unlimited*'
   },
   {
-    name: 'Proposals per month',
-    free: '5 proposals',
-    basic: '30 proposals',
-    upgraded: 'Unlimited proposals'
+    name: 'Public professional profile',
+    free: 'Directory listing',
+    basic: 'Basic portfolio page',
+    gold: 'Enhanced portfolio page',
+    upgraded: 'Enhanced portfolio page'
   },
   {
-    name: 'Escrow platform fee',
-    free: '10%',
-    basic: '5%',
-    upgraded: '2.5%'
-  },
-  {
-    name: 'Pro member badge',
-    free: false,
-    basic: true,
-    upgraded: true
-  },
-  {
-    name: 'High-res image gallery (up to 12 per project)',
-    free: false,
-    basic: true,
-    upgraded: true
-  },
-  {
-    name: 'Priority client directory placement',
-    free: false,
-    basic: true,
-    upgraded: true
-  },
-  {
-    name: 'Custom studio domain & analytics',
-    free: false,
-    basic: false,
-    upgraded: true
+    name: 'Portfolio projects',
+    free: '3',
+    basic: '12',
+    gold: 'Unlimited*',
+    upgraded: 'Unlimited*'
   },
   {
     name: 'Direct client project invitations',
     free: false,
     basic: true,
+    gold: true,
     upgraded: true
   },
   {
-    name: 'Dedicated account advisor',
-    free: false,
-    basic: false,
-    upgraded: true
+    name: 'Search placement',
+    free: 'Standard',
+    basic: 'Standard',
+    gold: 'Priority among relevant results',
+    upgraded: 'Priority among relevant results'
+  },
+  {
+    name: 'Analytics',
+    free: 'Basic',
+    basic: 'Profile views',
+    gold: 'Views, leads and proposal analytics',
+    upgraded: 'Views, leads and proposal analytics'
+  },
+  {
+    name: 'Verification eligibility',
+    free: 'Yes',
+    basic: 'Yes',
+    gold: 'Yes',
+    upgraded: 'Yes'
   }
 ];
+
+export const PLATFORM_COMMISSION_LINE =
+  'The platform commission is the same progressive scale on every plan.';

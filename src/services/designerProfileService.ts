@@ -11,6 +11,14 @@ import { getAuthState, changePasswordWithVerification } from './authService';
 const db = supabase as any;
 
 export type ProfessionalType =
+  | 'architect'
+  | 'engineer'
+  | 'interior_designer'
+  | 'landscape_architect'
+  | 'bim_specialist'
+  | 'visualization_professional'
+  | 'drafter_cad'
+  | 'other_consultant'
   | 'Architect'
   | 'Interior Designer'
   | 'Landscape Architect'
@@ -30,6 +38,7 @@ export interface DesignerCredential {
   certificateUrl?: string;
   status: CredentialStatus;
   rejectionReason?: string;
+  verifiedAt?: string | null;
   // legacy aliases for backwards compatibility
   registrationBody?: string;
   registrationNumber?: string;
@@ -53,6 +62,9 @@ export interface PortfolioProject {
   role: string;
   images: PortfolioImage[];
   order: number;
+  challenge?: string;
+  approach?: string;
+  outcome?: string;
 }
 
 export interface DesignerReview {
@@ -140,7 +152,7 @@ export interface DesignerProfile {
     reviewCount: number;
     responseTime: string;
   };
-  currentPlanId: 'free' | 'basic' | 'upgraded';
+  currentPlanId: 'free' | 'basic' | 'gold' | 'upgraded';
   planBillingCycle: 'monthly' | 'yearly';
   hasActiveProjectsOrEscrow: boolean;
   credentials: DesignerCredential[];
@@ -153,6 +165,10 @@ export interface DesignerProfile {
   showInDesignerSearch?: boolean;
   hideRateFromPeers?: boolean;
   showHourlyRate?: boolean;
+  acceptsInvitations?: boolean;
+  studioSlug?: string;
+  servicesOffered?: string[];
+  services_offered?: string[];
 }
 
 export interface CompletenessCheckItem {
@@ -212,7 +228,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
       reviewCount: 24,
       responseTime: 'Under 1 hour'
     },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: true,
     credentials: [
@@ -309,7 +325,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
         clientName: 'Sophia Montgomery',
         clientCompany: 'Horizon Ventures',
         rating: 5,
-        reviewText: 'Outstanding professionalism. Our 8-story corporate headquarters is now the crown jewel of Victoria Island. Clear communication throughout the entire escrow process.',
+        reviewText: 'Outstanding professionalism. Our 8-story corporate headquarters is now the crown jewel of Victoria Island. Clear communication throughout the entire milestone payment process.',
         projectName: 'City of London Fintech Headquarters',
         date: 'June 2, 2025'
       },
@@ -487,7 +503,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
       reviewCount: 31,
       responseTime: 'Within 3 hours'
     },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'monthly',
     hasActiveProjectsOrEscrow: true,
     credentials: [
@@ -788,7 +804,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
       reviewCount: 28,
       responseTime: 'Under 2 hours'
     },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [
@@ -877,7 +893,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
       reviewCount: 19,
       responseTime: 'Under 1 hour'
     },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'monthly',
     hasActiveProjectsOrEscrow: false,
     credentials: [
@@ -962,7 +978,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Accepting select CLT residential commissions for 2027.',
     memberSince: 'January 2021',
     stats: { projectsCompleted: 42, averageRating: 4.98, reviewCount: 31, responseTime: 'Under 1 hour' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-91', registrationBody: 'RIBA', registrationNumber: 'DK-9921', stateOrRegion: 'Copenhagen', year: 2011, status: 'verified' }],
@@ -1020,7 +1036,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Booking structural calculations for Q1/Q2 high-wind and seismic builds.',
     memberSince: 'September 2021',
     stats: { projectsCompleted: 58, averageRating: 4.99, reviewCount: 44, responseTime: 'Under 1 hour' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-111', registrationBody: 'PE', registrationNumber: 'CA-88912', stateOrRegion: 'California', year: 2010, status: 'verified' }],
@@ -1078,7 +1094,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Booked through Q3 2027. Inquiries for 2028 welcome.',
     memberSince: 'February 2020',
     stats: { projectsCompleted: 50, averageRating: 4.97, reviewCount: 38, responseTime: 'Under 4 hours' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-131', registrationBody: 'AIA', registrationNumber: 'FR-1092', stateOrRegion: 'Paris', year: 2008, status: 'verified' }],
@@ -1107,7 +1123,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Accepting select international residential commissions.',
     memberSince: 'August 2021',
     stats: { projectsCompleted: 46, averageRating: 5.0, reviewCount: 39, responseTime: 'Under 1 hour' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-141', registrationBody: 'AIA', registrationNumber: 'JP-3301', stateOrRegion: 'Tokyo', year: 2006, status: 'verified' }],
@@ -1165,7 +1181,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Advising on Scottish coastal, Hebridean, and Irish Atlantic cliffs.',
     memberSince: 'March 2022',
     stats: { projectsCompleted: 33, averageRating: 4.96, reviewCount: 25, responseTime: 'Under 3 hours' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'monthly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-161', registrationBody: 'PE', registrationNumber: 'UK-6712', stateOrRegion: 'Edinburgh', year: 2012, status: 'verified' }],
@@ -1194,7 +1210,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Booking St. Moritz and Zermatt chalet builds for 2027.',
     memberSince: 'June 2021',
     stats: { projectsCompleted: 40, averageRating: 4.98, reviewCount: 32, responseTime: 'Under 1 hour' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-171', registrationBody: 'AIA', registrationNumber: 'CH-9914', stateOrRegion: 'Grisons', year: 2009, status: 'verified' }],
@@ -1252,7 +1268,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Booking spring and summer botanical landscape designs.',
     memberSince: 'April 2021',
     stats: { projectsCompleted: 38, averageRating: 4.96, reviewCount: 30, responseTime: 'Under 2 hours' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-191', registrationBody: 'RIBA', registrationNumber: 'CH-8411', stateOrRegion: 'Geneva', year: 2011, status: 'verified' }],
@@ -1281,7 +1297,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Accepting Hill Country and desert modern commissions.',
     memberSince: 'July 2022',
     stats: { projectsCompleted: 31, averageRating: 4.93, reviewCount: 23, responseTime: 'Under 1 hour' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'monthly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-201', registrationBody: 'AIA', registrationNumber: 'TX-2901', stateOrRegion: 'Texas', year: 2012, status: 'verified' }],
@@ -1339,7 +1355,7 @@ const INITIAL_DESIGNERS: DesignerProfile[] = [
     availabilityNote: 'Consulting on European high-performance façade engineering.',
     memberSince: 'January 2022',
     stats: { projectsCompleted: 37, averageRating: 4.94, reviewCount: 28, responseTime: 'Under 1 hour' },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: [{ id: 'cred-221', registrationBody: 'PE', registrationNumber: 'DE-7719', stateOrRegion: 'Berlin', year: 2011, status: 'verified' }],
@@ -1430,11 +1446,22 @@ let mockProposalHistory: Record<string, boolean> = {
 };
 
 // ============================================================================
-// PROFILE COMPLETENESS CALCULATION
+// PROFILE COMPLETENESS CALCULATION (Same for all plans, no credential required)
 // ============================================================================
 export function calculateProfileCompleteness(profile: DesignerProfile): ProfileCompletenessResult {
-  const isPaid = profile.currentPlanId && profile.currentPlanId !== 'free';
   const checklist: CompletenessCheckItem[] = [
+    {
+      id: 'photo',
+      label: 'Profile photo',
+      tab: 'profile',
+      completed: Boolean(profile.avatarUrl && profile.avatarUrl.trim().length > 0)
+    },
+    {
+      id: 'bio',
+      label: 'About & bio',
+      tab: 'profile',
+      completed: Boolean(profile.about && profile.about.trim().length > 0)
+    },
     {
       id: 'professional_type',
       label: 'Professional discipline',
@@ -1443,7 +1470,7 @@ export function calculateProfileCompleteness(profile: DesignerProfile): ProfileC
     },
     {
       id: 'specialization',
-      label: 'Specialization & title',
+      label: 'Specializations & services',
       tab: 'profile',
       completed: Boolean(
         profile.specializations &&
@@ -1457,21 +1484,12 @@ export function calculateProfileCompleteness(profile: DesignerProfile): ProfileC
       completed: Boolean(profile.location && (profile.location.state || profile.location.city || profile.location.country))
     },
     {
-      id: 'bio',
-      label: 'About & bio',
-      tab: 'profile',
-      completed: Boolean(profile.about && profile.about.trim().length > 0)
+      id: 'portfolio',
+      label: 'Portfolio (min 1 project)',
+      tab: 'portfolio',
+      completed: Boolean(profile.portfolio && profile.portfolio.length >= 1)
     }
   ];
-
-  if (isPaid) {
-    checklist.push({
-      id: 'portfolio',
-      label: 'Portfolio (min 2 projects)',
-      tab: 'portfolio',
-      completed: Boolean(profile.portfolio && profile.portfolio.length >= 2)
-    });
-  }
 
   const completedCount = checklist.filter((item) => item.completed).length;
   const score = Math.round((completedCount / checklist.length) * 100);
@@ -1554,6 +1572,9 @@ function mapDbToDesignerProfile(
       shortDescription: p.description || '',
       role: p.role || 'Lead Architect',
       order: p.sort_order || idx + 1,
+      challenge: p.challenge || undefined,
+      approach: p.approach || undefined,
+      outcome: p.outcome || undefined,
       images
     };
   });
@@ -1594,7 +1615,7 @@ function mapDbToDesignerProfile(
       reviewCount: 18,
       responseTime: 'Under 1 hour'
     },
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     planBillingCycle: 'yearly',
     hasActiveProjectsOrEscrow: false,
     credentials: mappedCredentials,
@@ -1754,6 +1775,14 @@ export async function uploadPortfolioItem(
     const profile = designersStore.find((d) => d.id === activeLoggedUserId);
     if (!profile) throw new Error('Designer profile not found');
 
+    const rawPlan = profile.currentPlanId || 'free';
+    const plan = rawPlan === 'upgraded' ? 'gold' : rawPlan;
+    const limit = plan === 'free' ? 3 : plan === 'basic' ? 12 : null;
+
+    if (limit !== null && profile.portfolio.length >= limit) {
+      throw new Error('plan_portfolio_limit');
+    }
+
     const newId = `port-${Date.now()}`;
     const newOrder = profile.portfolio.length + 1;
     const newProject: PortfolioProject = {
@@ -1771,7 +1800,7 @@ export async function uploadPortfolioItem(
     const userId = authUser?.id;
     if (!userId) throw new Error('Must be logged in to add portfolio projects');
 
-    // Get current project count for sort order
+    // Get current project count for sort order and limit check
     const { count } = await supabase
       .from('portfolio_projects')
       .select('*', { count: 'exact', head: true })
@@ -1790,13 +1819,21 @@ export async function uploadPortfolioItem(
         location: item.location,
         description: item.shortDescription,
         role: item.role,
+        challenge: item.challenge || null,
+        approach: item.approach || null,
+        outcome: item.outcome || null,
         sort_order: sortOrder,
         cover_image_path: coverUrl
       })
       .select()
       .single();
 
-    if (projErr) throw projErr;
+    if (projErr) {
+      if (projErr.message?.includes('plan_portfolio_limit') || projErr.details?.includes('plan_portfolio_limit')) {
+        throw new Error('plan_portfolio_limit');
+      }
+      throw projErr;
+    }
 
     // Insert associated images
     const imagesToInsert = (item.images || []).map((img, idx) => ({
@@ -1817,10 +1854,16 @@ export async function uploadPortfolioItem(
       location: newProject.location || '',
       shortDescription: newProject.description || '',
       role: newProject.role || '',
+      challenge: newProject.challenge || undefined,
+      approach: newProject.approach || undefined,
+      outcome: newProject.outcome || undefined,
       order: newProject.sort_order,
       images: item.images || []
     };
   } catch (err: any) {
+    if (err.message === 'plan_portfolio_limit') {
+      throw err;
+    }
     console.error('uploadPortfolioItem error:', err);
     throw new Error(err.message || 'Failed to create portfolio item');
   }
@@ -2189,7 +2232,7 @@ export async function deleteAccount(
   if (profile.hasActiveProjectsOrEscrow) {
     return {
       success: false,
-      error: 'Cannot delete account while you have active milestone projects or funds in escrow. Complete or cancel all ongoing commissions first.'
+      error: 'Cannot delete account while you have active milestone projects or funded milestones. Complete or cancel all ongoing commissions first.'
     };
   }
 
@@ -2234,16 +2277,17 @@ export function getActiveLoggedUserId(): string {
   return activeLoggedUserId;
 }
 
-export function getCurrentDesignerPlan(designerId?: string): 'free' | 'basic' | 'upgraded' {
+export function getCurrentDesignerPlan(designerId?: string): 'free' | 'basic' | 'gold' | 'upgraded' {
   const targetId = designerId || activeLoggedUserId;
   const designer = designersStore.find(d => d.id === targetId);
-  return (designer?.currentPlanId as any) || 'free';
+  const raw = designer?.currentPlanId as string;
+  return (raw === 'upgraded' ? 'gold' : raw as any) || 'free';
 }
 
-export function setDesignerPlan(designerId: string, planId: 'free' | 'basic' | 'upgraded'): void {
+export function setDesignerPlan(designerId: string, planId: 'free' | 'basic' | 'gold' | 'upgraded'): void {
   const designer = designersStore.find(d => d.id === designerId);
   if (designer) {
-    designer.currentPlanId = planId;
+    designer.currentPlanId = planId === 'upgraded' ? 'gold' : planId;
   }
 }
 

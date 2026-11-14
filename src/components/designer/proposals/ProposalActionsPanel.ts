@@ -68,7 +68,7 @@ export function renderProposalActionsPanel(
             <span class="dez-tabular-num" style="font-weight: 500; color: #111827;">${formatMoney(gross)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 6px; color: #4B5563;">
-            <span>Studio escrow fee (${feePercent}%)</span>
+            <span>Platform service fee (${feePercent}%)</span>
             <span class="dez-tabular-num" style="color: #6B7280;">-${formatMoney(feeAmount)}</span>
           </div>
           <div style="height: 1px; background: #E5E7EB; margin: 8px 0;"></div>
@@ -102,7 +102,7 @@ export function renderProposalActionsPanel(
             <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 6px; padding: 14px; margin-bottom: 8px;">
               <div style="font-weight: 600; font-size: 13.5px; color: #065F46; margin-bottom: 4px;">Your proposal was accepted</div>
               <div style="font-size: 12px; color: #047857; line-height: 1.4;">
-                Next steps: Client funds the initial milestone into escrow. Once funded, you may upload deliverables in Active Projects.
+                Next steps: Client funds the initial milestone. Once funded, funds are held by our payment provider until you approve and you may upload deliverables in Active Projects.
               </div>
             </div>
             <a href="#my-work/projects" class="dez-btn-primary" style="width: 100%; height: 38px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-size: 13.5px;">

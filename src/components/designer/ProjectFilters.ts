@@ -3,7 +3,7 @@
  * Search, multi-criteria dropdowns, active filter chips, and clear all.
  */
 
-import type { ProjectFiltersState } from '../../services/projectsService';
+import { SERVICES_CATALOG, type ProjectFiltersState } from '../../services/projectsService';
 import { formatMoney } from '../../utils/formatters';
 
 export function renderProjectFilters(filters: ProjectFiltersState): string {
@@ -15,6 +15,10 @@ export function renderProjectFilters(filters: ProjectFiltersState): string {
     .map((c) => `<option value="${c}" ${filters.category === c ? 'selected' : ''}>${c === 'All' ? 'Category: All' : c}</option>`)
     .join('');
 
+  const serviceOptions = ['All', ...SERVICES_CATALOG]
+    .map((s) => `<option value="${s}" ${filters.service === s ? 'selected' : ''}>${s === 'All' ? 'Service: All' : s}</option>`)
+    .join('');
+
   const locationOptions = locations
     .map((l) => `<option value="${l}" ${filters.location === l ? 'selected' : ''}>${l === 'All' ? 'Location: All' : l}</option>`)
     .join('');
@@ -23,6 +27,8 @@ export function renderProjectFilters(filters: ProjectFiltersState): string {
   const activeChips: { key: keyof ProjectFiltersState; label: string }[] = [];
   if (filters.search) activeChips.push({ key: 'search', label: `Search: "${filters.search}"` });
   if (filters.category && filters.category !== 'All') activeChips.push({ key: 'category', label: `Category: ${filters.category}` });
+  if (filters.service && filters.service !== 'All') activeChips.push({ key: 'service', label: `Service: ${filters.service}` });
+  if (filters.licensureRequirement && filters.licensureRequirement !== 'All') activeChips.push({ key: 'licensureRequirement', label: `Licensure: ${filters.licensureRequirement}` });
   if (filters.location && filters.location !== 'All') activeChips.push({ key: 'location', label: `Location: ${filters.location}` });
   if (filters.paymentType && filters.paymentType !== 'All') activeChips.push({ key: 'paymentType', label: `Payment: ${filters.paymentType}` });
   if (filters.minBudget || filters.maxBudget) {
@@ -75,6 +81,19 @@ export function renderProjectFilters(filters: ProjectFiltersState): string {
           ${categoryOptions}
         </select>
 
+        <!-- Service Dropdown -->
+        <select class="dez-select-filter" id="dez-filter-service" aria-label="Service">
+          ${serviceOptions}
+        </select>
+
+        <!-- Licensure Requirement Dropdown -->
+        <select class="dez-select-filter" id="dez-filter-licensure" aria-label="Licensure">
+          <option value="All">Licensure: All</option>
+          <option value="licensed_professional_required" ${filters.licensureRequirement === 'licensed_professional_required' ? 'selected' : ''}>Licensed Pro</option>
+          <option value="stamping_required" ${filters.licensureRequirement === 'stamping_required' ? 'selected' : ''}>Stamp Required</option>
+          <option value="not_required" ${filters.licensureRequirement === 'not_required' ? 'selected' : ''}>Not Required</option>
+        </select>
+
         <!-- Location Dropdown -->
         <select class="dez-select-filter" id="dez-filter-location" aria-label="Location">
           ${locationOptions}
@@ -104,7 +123,32 @@ export function renderProjectFilters(filters: ProjectFiltersState): string {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="${filters.onlySaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           <span>Saved</span>
         </button>
+
+        <!-- Save Search Button -->
+        <button 
+          type="button" 
+          class="dez-btn-saved-filter" 
+          id="btn-save-project-search"
+          title="Save this search"
+          style="display: inline-flex; align-items: center; gap: 4px;"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+          <span>Save this search</span>
+        </button>
+
+        <!-- Manage Saved Searches Button -->
+        <button 
+          type="button" 
+          class="dez-btn-saved-filter" 
+          id="btn-open-saved-searches"
+          title="Saved Searches"
+        >
+          <span>Saved Searches</span>
+        </button>
       </div>
+
+      <!-- Saved Searches Dropdown Panel Mount -->
+      <div id="saved-searches-panel-mount" style="display: none; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px 18px; margin-top: 10px;"></div>
 
       ${chipsHtml}
     </div>

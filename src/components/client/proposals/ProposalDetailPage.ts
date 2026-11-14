@@ -169,6 +169,15 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
                 ${escapeHtml([p.designer.city, p.designer.state_region].filter(Boolean).join(', '))} • ${p.designer.years_experience} years experience • ${p.designer.rating_average > 0 ? `★ ${p.designer.rating_average} (${p.designer.rating_count} reviews)` : 'Member'}
               </div>
 
+              ${p.can_offer_regulated_services ? `
+                <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <span style="font-size: 11.5px; font-weight: 600; background: ${p.can_offer_regulated_services === 'licensed_in_project_state' ? '#ECFDF5' : '#EFF6FF'}; color: ${p.can_offer_regulated_services === 'licensed_in_project_state' ? '#065F46' : '#1E40AF'}; padding: 3px 9px; border-radius: 4px;">
+                    Licensure: ${p.can_offer_regulated_services === 'licensed_in_project_state' ? 'Licensed in Project State' : p.can_offer_regulated_services === 'will_partner_with_licensed_professional' ? 'Partnering with Licensed Pro' : p.can_offer_regulated_services === 'not_required_for_this_service' ? 'License Not Required' : 'Non-Regulated Only'}
+                  </span>
+                  ${p.service_area_states?.length ? `<span style="font-size: 11.5px; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 2px 8px; border-radius: 4px;">Service Area: ${p.service_area_states.join(', ')}</span>` : ''}
+                </div>
+              ` : ''}
+
               ${(p.designer as any).plan_key === 'free' ? `
                 <div style="font-size: 12px; color: #64748B; margin-top: 6px; font-style: italic;">
                   Basic account: portfolio not available
@@ -185,6 +194,26 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
             ${escapeHtml(p.cover_letter)}
           </div>
         </div>
+
+        ${p.project_understanding ? `
+          <!-- Project Understanding Card -->
+          <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 22px; background: #FFFFFF;">
+            <h3 style="font-size: 15px; font-weight: 600; color: #0F172A; margin: 0 0 8px;">Project Understanding</h3>
+            <p style="font-size: 13.5px; line-height: 1.6; color: #334155; margin: 0;">
+              ${escapeHtml(p.project_understanding)}
+            </p>
+          </div>
+        ` : ''}
+
+        ${(p.deliverables && p.deliverables.length > 0) ? `
+          <!-- Deliverables Card -->
+          <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 22px; background: #FFFFFF;">
+            <h3 style="font-size: 15px; font-weight: 600; color: #0F172A; margin: 0 0 10px;">Proposed Deliverables</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              ${p.deliverables.map((d) => `<span style="font-size: 12.5px; background: #F1F5F9; color: #1E293B; padding: 4px 10px; border-radius: 6px;">• ${escapeHtml(d)}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
 
         <!-- Milestone Schedule Table Card -->
         <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 22px; background: #FFFFFF;">

@@ -104,7 +104,7 @@ export function renderProjectRow(project: ActiveProject): string {
                   <strong class="dez-mfact-val">${project.nextDeadline} <span class="dez-mfact-rel">(${project.relativeDeadline})</span></strong>
                 </div>
                 <div class="dez-mfact-item">
-                  <span class="dez-mfact-label">In escrow</span>
+                  <span class="dez-mfact-label">Funded, held</span>
                   <strong class="dez-mfact-val dez-num-tabular">${escrowFormatted}</strong>
                 </div>
               </div>

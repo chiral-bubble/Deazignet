@@ -83,6 +83,8 @@ function renderMatrix(mount: HTMLElement, projectId: string, proposals: Detailed
   const revisionsDiffer = new Set(proposals.map((p) => p.included_revisions_per_phase)).size > 1;
   const reimbursablesDiffer = new Set(proposals.map((p) => `${p.reimbursable_expenses_type}_${p.reimbursable_cap}`)).size > 1;
   const addRateDiffers = new Set(proposals.map((p) => p.additional_services_rate)).size > 1;
+  const licensureDiffers = new Set(proposals.map((p) => p.can_offer_regulated_services || 'unspecified')).size > 1;
+  const statesDiffer = new Set(proposals.map((p) => (p.service_area_states || []).join(','))).size > 1;
 
   mount.innerHTML = `
     <div class="compare-matrix-table-wrap client-table-scroll-wrap" style="border: 1px solid #E5E7EB; border-radius: 8px; background: #FFFFFF; overflow-x: auto; width: 100%;">
@@ -183,6 +185,51 @@ function renderMatrix(mount: HTMLElement, projectId: string, proposals: Detailed
             ${proposals.map((p) => `
               <td style="padding: 14px 16px; font-variant-numeric: tabular-nums; color: #1E293B;">
                 ${p.additional_services_rate ? `${formatMoney(p.additional_services_rate)}/hr` : 'Standard rates'}
+              </td>
+            `).join('')}
+          </tr>
+
+          <!-- Licensure Disclosure Row -->
+          <tr style="border-bottom: 1px solid #E5E7EB; background: #FFFFFF;">
+            <td style="padding: 14px 16px; font-weight: 500; color: #334155; position: sticky; left: 0; background: #FFFFFF;">
+              Licensure Disclosure
+              ${licensureDiffers ? `<span style="font-size: 11px; color: #B45309; margin-left: 6px; font-weight: 500;">(Differs)</span>` : ''}
+            </td>
+            ${proposals.map((p) => `
+              <td style="padding: 14px 16px;">
+                <span style="display: inline-block; font-size: 12px; font-weight: 600; background: ${p.can_offer_regulated_services === 'licensed_in_project_state' ? '#ECFDF5' : '#EFF6FF'}; color: ${p.can_offer_regulated_services === 'licensed_in_project_state' ? '#065F46' : '#1E40AF'}; padding: 3px 8px; border-radius: 4px;">
+                  ${
+                    p.can_offer_regulated_services === 'licensed_in_project_state' ? 'Licensed in Project State' :
+                    p.can_offer_regulated_services === 'will_partner_with_licensed_professional' ? 'Partnering with Licensed Pro' :
+                    p.can_offer_regulated_services === 'not_required_for_this_service' ? 'License Not Required' :
+                    p.can_offer_regulated_services === 'cannot_offer_regulated_services' ? 'Non-Regulated Only' : 'Not Specified'
+                  }
+                </span>
+              </td>
+            `).join('')}
+          </tr>
+
+          <!-- Service Area States Row -->
+          <tr style="border-bottom: 1px solid #E5E7EB; background: #F8FAFC;">
+            <td style="padding: 14px 16px; font-weight: 500; color: #334155; position: sticky; left: 0; background: #F8FAFC;">
+              Service Area States
+              ${statesDiffer ? `<span style="font-size: 11px; color: #B45309; margin-left: 6px; font-weight: 500;">(Differs)</span>` : ''}
+            </td>
+            ${proposals.map((p) => `
+              <td style="padding: 14px 16px; color: #1E293B; font-size: 12.5px;">
+                ${(p.service_area_states && p.service_area_states.length > 0) ? p.service_area_states.join(', ') : 'All United States'}
+              </td>
+            `).join('')}
+          </tr>
+
+          <!-- Project Understanding Row -->
+          <tr style="border-bottom: 1px solid #E5E7EB; background: #FFFFFF;">
+            <td style="padding: 14px 16px; font-weight: 500; color: #334155; position: sticky; left: 0; background: #FFFFFF; vertical-align: top;">
+              Project Understanding
+            </td>
+            ${proposals.map((p) => `
+              <td style="padding: 14px 16px; vertical-align: top; font-size: 12.5px; color: #475569; line-height: 1.5;">
+                ${p.project_understanding ? escapeHtml(p.project_understanding) : 'Standard scope alignment'}
               </td>
             `).join('')}
           </tr>

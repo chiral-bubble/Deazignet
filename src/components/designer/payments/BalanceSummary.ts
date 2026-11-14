@@ -36,14 +36,14 @@ export function renderBalanceSummary(data: PaymentsOverviewData): string {
             <p class="dez-balance-hint">Waiting on client approval of submitted deliverables</p>
           </div>
 
-          <!-- In escrow -->
+          <!-- Funded, held -->
           <div class="dez-balance-block">
             <div class="dez-balance-header">
               <span class="dez-balance-indicator dez-indicator-amber" aria-hidden="true"></span>
-              <span class="dez-balance-label">In escrow</span>
+              <span class="dez-balance-label">Funded, held</span>
             </div>
             <div class="dez-balance-value dez-tabular-num">${formatMoney(balances.inEscrow)}</div>
-            <p class="dez-balance-hint">Client-funded milestone deposits not yet completed</p>
+            <p class="dez-balance-hint">Client-funded milestone deposits held by our payment provider until approved</p>
           </div>
 
           <!-- Total earned -->

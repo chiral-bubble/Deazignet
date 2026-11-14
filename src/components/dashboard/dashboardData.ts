@@ -54,7 +54,7 @@ export interface PaymentRecord {
   milestone: string;
   amount: number;
   date: string;
-  status: 'Released' | 'Held in Escrow' | 'Processing';
+  status: 'Released' | 'Funded, held' | 'Processing';
 }
 
 export const initialProjects: ProjectItem[] = [
@@ -194,7 +194,7 @@ export const recentActivities: ActivityEvent[] = [
   {
     id: 'act-1',
     type: 'payment',
-    title: 'Escrow Payment Released',
+    title: 'Milestone Payment Released',
     description: '$18,500 released for Milestone 1: Architectural Schematic Drawings.',
     timestamp: '2 hours ago',
     iconType: 'shieldCheck'
@@ -219,7 +219,7 @@ export const recentActivities: ActivityEvent[] = [
     id: 'act-4',
     type: 'contract',
     title: 'Contract Executed & Verified',
-    description: 'Boutique Hotel Atrium contract signed with Escrow verified.',
+    description: 'Boutique Hotel Atrium contract signed with milestone funding verified.',
     timestamp: '2 days ago',
     iconType: 'checkCircle'
   }
@@ -275,7 +275,7 @@ export const paymentHistoryData: PaymentRecord[] = [
     milestone: 'Design Exploration & 3D Concepts',
     amount: 25000,
     date: 'Oct 18, 2026',
-    status: 'Held in Escrow'
+    status: 'Funded, held'
   },
   {
     id: 'pay-3',
@@ -284,7 +284,7 @@ export const paymentHistoryData: PaymentRecord[] = [
     milestone: 'Structural Framing Calculations',
     amount: 12500,
     date: 'Oct 04, 2026',
-    status: 'Held in Escrow'
+    status: 'Funded, held'
   },
   {
     id: 'pay-4',

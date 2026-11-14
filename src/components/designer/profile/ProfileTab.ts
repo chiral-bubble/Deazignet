@@ -5,6 +5,7 @@
  */
 
 import type { DesignerProfile, ProfessionalType } from '../../../services/designerProfileService';
+import { SERVICES_CATALOG } from '../../../services/projectsService';
 
 const AVAILABLE_SPECIALIZATIONS = [
   'Residential',
@@ -20,7 +21,9 @@ const AVAILABLE_SPECIALIZATIONS = [
 ];
 
 export function renderProfileTab(profile: DesignerProfile): string {
+  const isFreePlan = !profile.currentPlanId || profile.currentPlanId === 'free';
   const selectedSpecs = new Set(profile.specializations || []);
+  const selectedServices = new Set(profile.servicesOffered || profile.services_offered || ['New construction', 'Residential design']);
   const aboutLength = (profile.about || '').length;
 
   return `
@@ -76,10 +79,14 @@ export function renderProfileTab(profile: DesignerProfile): string {
           <div class="dez-form-group">
             <label for="prof-type" class="dez-label">Primary profession <span class="dez-req">*</span></label>
             <select id="prof-type" name="professionalType" class="dez-select" required>
-              <option value="Architect" ${profile.professionalType === 'Architect' ? 'selected' : ''}>Architect</option>
-              <option value="Interior Designer" ${profile.professionalType === 'Interior Designer' ? 'selected' : ''}>Interior Designer</option>
-              <option value="Landscape Architect" ${profile.professionalType === 'Landscape Architect' ? 'selected' : ''}>Landscape Architect</option>
-              <option value="Engineer" ${profile.professionalType === 'Engineer' ? 'selected' : ''}>Engineer</option>
+              <option value="architect" ${profile.professionalType?.toLowerCase() === 'architect' ? 'selected' : ''}>Architect</option>
+              <option value="engineer" ${profile.professionalType?.toLowerCase() === 'engineer' ? 'selected' : ''}>Engineer</option>
+              <option value="interior_designer" ${profile.professionalType?.toLowerCase() === 'interior_designer' || profile.professionalType === 'Interior Designer' ? 'selected' : ''}>Interior Designer</option>
+              <option value="landscape_architect" ${profile.professionalType?.toLowerCase() === 'landscape_architect' || profile.professionalType === 'Landscape Architect' ? 'selected' : ''}>Landscape Architect</option>
+              <option value="bim_specialist" ${profile.professionalType === 'bim_specialist' ? 'selected' : ''}>BIM Specialist</option>
+              <option value="visualization_professional" ${profile.professionalType === 'visualization_professional' ? 'selected' : ''}>Visualization Professional</option>
+              <option value="drafter_cad" ${profile.professionalType === 'drafter_cad' ? 'selected' : ''}>CAD Drafter</option>
+              <option value="other_consultant" ${profile.professionalType === 'other_consultant' ? 'selected' : ''}>Other Consultant</option>
             </select>
           </div>
 
@@ -117,7 +124,7 @@ export function renderProfileTab(profile: DesignerProfile): string {
           <div class="dez-form-group">
             <label for="prof-phone" class="dez-label">Phone number <span class="dez-opt">(Optional, kept private)</span></label>
             <input type="tel" id="prof-phone" name="phone" class="dez-input" value="${profile.phone || ''}" placeholder="e.g. +41 44 123 4567" />
-            <span class="dez-field-hint">Never shared on your public profile. Used only for urgent escrow alerts.</span>
+            <span class="dez-field-hint">Never shared on your public profile. Used only for urgent payment alerts.</span>
           </div>
 
           <!-- Languages -->
@@ -166,6 +173,26 @@ export function renderProfileTab(profile: DesignerProfile): string {
           <div class="dez-field-error" id="err-prof-specs"></div>
         </div>
 
+        <!-- Services Offered (19 Catalog Services Multi-select) -->
+        <div class="dez-form-group" style="margin-top: 20px;">
+          <label class="dez-label">Services Offered <span class="dez-opt">(Select all services you provide)</span></label>
+          <div class="dez-spec-chips-wrap" id="services-container" style="display:flex; flex-wrap:wrap; gap:8px;">
+            ${SERVICES_CATALOG.map((svc) => {
+              const isSel = selectedServices.has(svc);
+              return `
+              <button 
+                type="button" 
+                class="dez-chip-select ${isSel ? 'is-selected' : ''}" 
+                data-service="${svc}"
+                style="${isSel ? 'background: #2F7BE5 !important; border-color: #2F7BE5 !important; color: #FFFFFF !important; font-weight: 600;' : 'background: #FFFFFF; border: 1px solid #E5E7EB; color: #4B5563; font-weight: 500;'}"
+              >
+                ${isSel ? '✓ ' : ''}${svc}
+              </button>
+            `;
+            }).join('')}
+          </div>
+        </div>
+
         <!-- Services & Starting Rate -->
         <div class="dez-bordered-box" style="margin-top: 24px;">
           <h3 class="dez-box-title">Commission Availability & Rates</h3>
@@ -212,6 +239,26 @@ export function renderProfileTab(profile: DesignerProfile): string {
             </div>
             <label class="dez-switch">
               <input type="checkbox" id="prof-show-in-search" name="showInDesignerSearch" ${profile.showInDesignerSearch !== false ? 'checked' : ''} />
+              <span class="dez-slider"></span>
+            </label>
+          </div>
+
+
+          <div class="dez-divider-line" style="margin: 16px 0;"></div>
+
+          <div class="dez-toggle-row">
+            <div>
+              <span class="dez-toggle-title">Accept direct project invitations</span>
+              <p class="dez-toggle-desc">Allow prospective clients to send you direct project invitations from Find Designers.</p>
+              ${isFreePlan ? `
+                <div style="font-size: 12px; color: #B45309; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 4px; padding: 6px 10px; margin-top: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                  <span>Direct invitations are available on Basic and Gold.</span>
+                  <a href="#designer-profile?tab=billing" style="color: #2F7BE5; text-decoration: underline; font-weight: 500;">Upgrade plan</a>
+                </div>
+              ` : ''}
+            </div>
+            <label class="dez-switch" style="${isFreePlan ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+              <input type="checkbox" id="prof-accepts-invitations" name="acceptsInvitations" ${!isFreePlan && profile.acceptsInvitations !== false ? 'checked' : ''} ${isFreePlan ? 'disabled' : ''} />
               <span class="dez-slider"></span>
             </label>
           </div>
@@ -319,6 +366,7 @@ export function initProfileTab(
   // Working state
   let currentAvatar = profile.avatarUrl;
   let selectedSpecializations = new Set(profile.specializations || []);
+  let selectedServices = new Set<string>(((profile as any).servicesOffered || (profile as any).services_offered || ['New construction', 'Residential design']) as string[]);
   let isDirty = false;
 
   const markDirty = () => {
@@ -364,6 +412,7 @@ export function initProfileTab(
   });
 
   const showInSearchToggle = root.querySelector('#prof-show-in-search') as HTMLInputElement;
+  const acceptsInvitationsToggle = root.querySelector('#prof-accepts-invitations') as HTMLInputElement;
   const hideRatePeersToggle = root.querySelector('#prof-hide-rate-peers') as HTMLInputElement;
   showInSearchToggle?.addEventListener('change', markDirty);
   hideRatePeersToggle?.addEventListener('change', markDirty);
@@ -406,6 +455,33 @@ export function initProfileTab(
         btn.style.setProperty('border', '1px solid #2F7BE5', 'important');
         btn.style.setProperty('color', '#FFFFFF', 'important');
         btn.style.fontWeight = '600';
+      }
+    });
+  });
+
+  // Services chips
+  const svcChips = root.querySelectorAll<HTMLButtonElement>('[data-service]');
+  svcChips.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const svc = btn.getAttribute('data-service');
+      if (!svc) return;
+      markDirty();
+      if (selectedServices.has(svc)) {
+        selectedServices.delete(svc);
+        btn.classList.remove('is-selected');
+        btn.style.setProperty('background', '#FFFFFF', 'important');
+        btn.style.setProperty('border', '1px solid #E5E7EB', 'important');
+        btn.style.setProperty('color', '#4B5563', 'important');
+        btn.style.fontWeight = '500';
+        btn.textContent = svc;
+      } else {
+        selectedServices.add(svc);
+        btn.classList.add('is-selected');
+        btn.style.setProperty('background', '#2F7BE5', 'important');
+        btn.style.setProperty('border', '1px solid #2F7BE5', 'important');
+        btn.style.setProperty('color', '#FFFFFF', 'important');
+        btn.style.fontWeight = '600';
+        btn.textContent = `✓ ${svc}`;
       }
     });
   });
@@ -613,11 +689,14 @@ export function initProfileTab(
       yearsOfExperience: parseInt(experienceInput.value, 10) || 0,
       about: aboutTextarea.value.trim(),
       specializations: Array.from(selectedSpecializations),
+      servicesOffered: Array.from(selectedServices),
+      services_offered: Array.from(selectedServices),
       hourlyRate: rateInput.value ? parseFloat(rateInput.value) : undefined,
       isAvailableForProjects: availableToggle.checked,
       availabilityNote: noteInput.value.trim(),
       showInDesignerSearch: showInSearchToggle ? showInSearchToggle.checked : true,
-      hideRateFromPeers: hideRatePeersToggle ? hideRatePeersToggle.checked : false
+      hideRateFromPeers: hideRatePeersToggle ? hideRatePeersToggle.checked : false,
+      acceptsInvitations: acceptsInvitationsToggle ? acceptsInvitationsToggle.checked : (profile.currentPlanId !== 'free')
     };
   };
 

@@ -80,7 +80,7 @@ export function renderDashboardPage(): string {
                   <div class="notif-item is-unread">
                     <span class="notif-type-dot notif-type-dot--amber"></span>
                     <div>
-                      <p><strong>Milestone 2 Escrow</strong> is ready for your structural verification.</p>
+                      <p><strong>Milestone 2 payment</strong> is ready for your structural verification.</p>
                       <small>2 hours ago</small>
                     </div>
                   </div>

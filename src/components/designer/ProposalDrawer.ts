@@ -94,24 +94,53 @@ export function initProposalDrawer(
 
   // Restore draft or initialize default values
   const draft = getProposalDraft(project.id);
+  // Extract prefilled deliverables from project milestones or deliverables_checklist
+  const defaultDeliverables: string[] = [];
+  if (project.deliverablesChecklist && project.deliverablesChecklist.length > 0) {
+    defaultDeliverables.push(...project.deliverablesChecklist);
+  } else if (project.deliverables_checklist && project.deliverables_checklist.length > 0) {
+    defaultDeliverables.push(...project.deliverables_checklist);
+  } else if (project.milestones && project.milestones.length > 0) {
+    project.milestones.forEach((m) => {
+      if (m.deliverables) defaultDeliverables.push(...m.deliverables);
+    });
+  }
+
   const formData: {
     coverLetter: string;
+    projectUnderstanding: string;
+    deliverables: string[];
+    schedule: Array<{ milestoneId: string; phaseName: string; deliveryDays: number; targetDate: string }>;
     proposedTotal: number;
     milestonePercentages: Record<string, number>;
     hourlyRate: number;
     estimatedHours: number;
     deliveryTime: string;
     portfolioItems: string[];
+    attachments: Array<{ name: string; url: string; size?: number; type?: string }>;
     clientQuestion: string;
+    canOfferRegulatedServices: 'licensed_in_project_state' | 'will_partner_with_licensed_professional' | 'not_required_for_this_service' | 'cannot_offer_regulated_services' | '';
+    serviceAreaStates: string[];
   } = {
     coverLetter: draft?.coverLetter || '',
+    projectUnderstanding: (draft as any)?.projectUnderstanding || (draft as any)?.project_understanding || '',
+    deliverables: (draft as any)?.deliverables || (defaultDeliverables.length > 0 ? defaultDeliverables : ['Full permit-ready drawing set', '3D volumetric renderings']),
+    schedule: (draft as any)?.schedule || (project.milestones || []).map((m, idx) => ({
+      milestoneId: m.id,
+      phaseName: m.name,
+      deliveryDays: (idx + 1) * 14,
+      targetDate: new Date(Date.now() + (idx + 1) * 14 * 86400000).toISOString().split('T')[0]
+    })),
     proposedTotal: draft?.proposedTotal || project.budget,
     milestonePercentages: draft?.milestonePercentages || {},
     hourlyRate: draft?.hourlyRate || project.hourlyRate || 85,
     estimatedHours: draft?.estimatedHours || project.estimatedHours || 120,
     deliveryTime: draft?.deliveryTime || project.timeline,
     portfolioItems: draft?.portfolioItems || [mockDesignerPortfolio[0].url],
-    clientQuestion: draft?.clientQuestion || ''
+    attachments: (draft as any)?.attachments || [],
+    clientQuestion: draft?.clientQuestion || '',
+    canOfferRegulatedServices: (draft as any)?.canOfferRegulatedServices || (draft as any)?.can_offer_regulated_services || 'licensed_in_project_state',
+    serviceAreaStates: (draft as any)?.serviceAreaStates || (draft as any)?.service_area_states || ['TX', 'CO', 'CA']
   };
 
   // Pre-fill milestone default percentages if empty
@@ -134,13 +163,19 @@ export function initProposalDrawer(
     isDirty = true;
     saveProposalDraft(project.id, {
       coverLetter: formData.coverLetter,
+      projectUnderstanding: formData.projectUnderstanding,
+      deliverables: formData.deliverables,
+      schedule: formData.schedule,
       proposedTotal: formData.proposedTotal,
       milestonePercentages: formData.milestonePercentages,
       hourlyRate: formData.hourlyRate,
       estimatedHours: formData.estimatedHours,
       deliveryTime: formData.deliveryTime,
       portfolioItems: formData.portfolioItems,
-      clientQuestion: formData.clientQuestion
+      attachments: formData.attachments,
+      clientQuestion: formData.clientQuestion,
+      canOfferRegulatedServices: formData.canOfferRegulatedServices,
+      serviceAreaStates: formData.serviceAreaStates
     });
   }
 
@@ -175,7 +210,7 @@ export function initProposalDrawer(
   function renderStep1() {
     if (!body) return;
 
-    const currentPlan = (sharedDataset?.planState?.currentPlanId as 'free' | 'basic' | 'upgraded') || getCurrentDesignerPlan();
+    const currentPlan = (sharedDataset?.planState?.currentPlanId as 'free' | 'basic' | 'gold' | 'upgraded') || getCurrentDesignerPlan();
     const scheduleDescription = getTieredScheduleDescription(currentPlan);
 
     let offerSectionHtml = '';
@@ -317,6 +352,40 @@ export function initProposalDrawer(
         </div>
       </div>
 
+      <!-- Project Understanding (up to 1,000 chars) -->
+      <div class="dez-form-group">
+        <label class="dez-form-label" for="dez-project-understanding">Project Understanding & Initial Observations</label>
+        <span class="dez-form-sublabel">Outline your technical interpretation of the site constraints, zoning, and client program requirements.</span>
+        <textarea 
+          id="dez-project-understanding" 
+          class="dez-textarea" 
+          maxlength="1000" 
+          placeholder="Demonstrate your comprehension of the project brief, key design challenges, and site context..."
+          style="min-height:90px;"
+        >${formData.projectUnderstanding}</textarea>
+        <div style="display:flex; justify-content:flex-end;">
+          <span class="dez-char-counter" id="dez-understanding-count">${formData.projectUnderstanding.length} / 1,000</span>
+        </div>
+      </div>
+
+      <!-- Deliverables List -->
+      <div class="dez-form-group">
+        <label class="dez-form-label">Proposed Deliverables</label>
+        <span class="dez-form-sublabel">Specific drawings and documentation packages included in this proposal.</span>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <input type="text" id="dez-new-deliverable-input" class="dez-input-search" placeholder="Add a deliverable (e.g. Permit set, Lighting schedules)..." style="flex:1;" />
+          <button type="button" id="dez-add-deliverable-btn" class="dez-btn-secondary" style="height:36px; padding:0 14px; font-size:12.5px;">Add</button>
+        </div>
+        <div id="dez-deliverables-pills" style="display:flex; flex-wrap:wrap; gap:6px;">
+          ${formData.deliverables.map((deliv, idx) => `
+            <span class="dez-plain-chip" style="background:#F1F5F9; color:#1E293B; display:inline-flex; align-items:center; gap:6px; padding:4px 10px;">
+              <span>• ${deliv}</span>
+              <button type="button" class="dez-remove-deliv-btn" data-deliv-idx="${idx}" style="background:none; border:none; color:#EF4444; cursor:pointer; font-size:11px;">✕</button>
+            </span>
+          `).join('')}
+        </div>
+      </div>
+
       <!-- Fee & Delivery -->
       ${offerSectionHtml}
 
@@ -442,6 +511,51 @@ export function initProposalDrawer(
         </div>
       </div>
 
+      <!-- Licensure Disclosure Section -->
+      <div class="dez-form-group" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; margin-top: 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="dez-form-label" style="margin:0; font-weight:600; color:#0F172A;">
+            Professional Licensure & Regulatory Disclosure
+            ${(project.licensureRequirement === 'licensed_professional_required' || project.licensureRequirement === 'stamping_required') ? '<span style="color:#2563EB; font-size:11.5px; font-weight:500;">(Requested by Client)</span>' : ''}
+          </label>
+        </div>
+        <span class="dez-form-sublabel" style="margin-bottom:10px;">
+          Indicate how your studio provides architectural / engineering services for this jurisdiction. This disclosure provides transparency and never blocks submission.
+        </span>
+
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:#1E293B; cursor:pointer;">
+            <input type="radio" name="licensure_option" value="licensed_in_project_state" ${formData.canOfferRegulatedServices === 'licensed_in_project_state' ? 'checked' : ''} style="accent-color:#2F7BE5; margin-top:2px;" />
+            <span><strong>Licensed in Project State:</strong> I / my practice hold active licensure or registration in the jurisdiction of this project.</span>
+          </label>
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:#1E293B; cursor:pointer;">
+            <input type="radio" name="licensure_option" value="will_partner_with_licensed_professional" ${formData.canOfferRegulatedServices === 'will_partner_with_licensed_professional' ? 'checked' : ''} style="accent-color:#2F7BE5; margin-top:2px;" />
+            <span><strong>Partnering with Licensed Professional:</strong> I will coordinate with a locally registered Architect / Engineer of Record for statutory stamps.</span>
+          </label>
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:#1E293B; cursor:pointer;">
+            <input type="radio" name="licensure_option" value="not_required_for_this_service" ${formData.canOfferRegulatedServices === 'not_required_for_this_service' ? 'checked' : ''} style="accent-color:#2F7BE5; margin-top:2px;" />
+            <span><strong>Licensure Not Required:</strong> The specific design scope (e.g. concept, interior, 3D visualization) does not require a municipal stamp.</span>
+          </label>
+          <label style="display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:#1E293B; cursor:pointer;">
+            <input type="radio" name="licensure_option" value="cannot_offer_regulated_services" ${formData.canOfferRegulatedServices === 'cannot_offer_regulated_services' ? 'checked' : ''} style="accent-color:#2F7BE5; margin-top:2px;" />
+            <span><strong>Non-Regulated Services Only:</strong> I do not offer regulated / stamped architectural or engineering services.</span>
+          </label>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; color:#475569; margin-bottom:4px;">Licensed / Service Area States</label>
+          <input 
+            type="text" 
+            id="dez-service-states-input" 
+            class="dez-input-search" 
+            placeholder="e.g. TX, CO, CA" 
+            value="${formData.serviceAreaStates.join(', ')}"
+            style="width:100%; max-width:320px; font-size:12.5px;"
+          />
+          <span style="font-size:11px; color:#64748B; display:block; margin-top:2px;">Enter 2-letter state codes where you provide services or hold active licenses.</span>
+        </div>
+      </div>
+
       <div class="dez-form-group" style="margin-top:12px;">
         <label class="dez-form-label" for="dez-client-question">Optional Question for the Client</label>
         <span class="dez-form-sublabel">Ask any clarifying questions regarding soil conditions, permits, or aesthetic references.</span>
@@ -485,6 +599,24 @@ export function initProposalDrawer(
       formData.clientQuestion = qInput.value;
       autosave();
     });
+
+    // Licensure options
+    body.querySelectorAll('input[name="licensure_option"]').forEach((r) => {
+      r.addEventListener('change', () => {
+        formData.canOfferRegulatedServices = (r as HTMLInputElement).value as any;
+        autosave();
+      });
+    });
+
+    // Service Area States input
+    const statesInput = body.querySelector('#dez-service-states-input') as HTMLInputElement | null;
+    statesInput?.addEventListener('input', () => {
+      formData.serviceAreaStates = statesInput.value
+        .split(',')
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean);
+      autosave();
+    });
   }
 
   // -----------------------------------------------------------
@@ -493,7 +625,7 @@ export function initProposalDrawer(
   function renderStep3() {
     if (!body) return;
 
-    const currentPlan = (sharedDataset?.planState?.currentPlanId as 'free' | 'basic' | 'upgraded') || getCurrentDesignerPlan();
+    const currentPlan = (sharedDataset?.planState?.currentPlanId as 'free' | 'basic' | 'gold' | 'upgraded') || getCurrentDesignerPlan();
     const amountCents = Math.round(formData.proposedTotal * 100);
     const feeCalc = calculatePlatformFeeFallback(currentPlan, amountCents);
     const scheduleDescription = getTieredScheduleDescription(currentPlan);
@@ -508,6 +640,25 @@ export function initProposalDrawer(
           <div>Proposed Total Price: <strong style="color:var(--dez-text-primary);">${formatUSD(formData.proposedTotal)}</strong></div>
           <div>Engagement Mode: <strong>${project.paymentType}</strong></div>
           <div>Estimated Delivery: <strong>${formData.deliveryTime}</strong></div>
+          ${formData.projectUnderstanding ? `<div style="margin-top:6px; font-size:12.5px; color:#475569;"><strong>Understanding:</strong> ${formData.projectUnderstanding}</div>` : ''}
+          ${formData.deliverables.length > 0 ? `<div style="margin-top:6px; font-size:12.5px; color:#475569;"><strong>Deliverables:</strong> ${formData.deliverables.join(' • ')}</div>` : ''}
+        </div>
+      </div>
+
+      <!-- Licensure Disclosure Review Box -->
+      <div class="dez-review-box">
+        <div class="dez-review-section-header">
+          <span>Licensure Disclosure</span>
+          <span class="dez-edit-step-link" id="dez-edit-step-2-lic">Edit</span>
+        </div>
+        <div style="font-size:13px; color:#334155;">
+          <div><strong>Status:</strong> ${
+            formData.canOfferRegulatedServices === 'licensed_in_project_state' ? 'Licensed in Project State' :
+            formData.canOfferRegulatedServices === 'will_partner_with_licensed_professional' ? 'Partnering with Licensed Professional' :
+            formData.canOfferRegulatedServices === 'not_required_for_this_service' ? 'Licensure Not Required for this Scope' :
+            formData.canOfferRegulatedServices === 'cannot_offer_regulated_services' ? 'Non-Regulated Services Only' : 'Not Specified'
+          }</div>
+          ${formData.serviceAreaStates.length > 0 ? `<div style="margin-top:4px; font-size:12px; color:#64748B;">Service Area States: ${formData.serviceAreaStates.join(', ')}</div>` : ''}
         </div>
       </div>
 
@@ -546,7 +697,7 @@ export function initProposalDrawer(
           <strong style="color: #0F172A;">Tiered fee schedule:</strong> ${scheduleDescription}
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size: 13px;">
-          <span style="color: #475569;">Client Total Escrow Deposit:</span>
+          <span style="color: #475569;">Client Total Funded Deposit:</span>
           <strong style="color: #0F172A;">${formatUSD(formData.proposedTotal)}</strong>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size: 13px; color: #64748B;">
@@ -560,7 +711,7 @@ export function initProposalDrawer(
       </div>
 
       <p style="font-size:12.5px; color:var(--dez-text-muted); line-height:1.45;">
-        The client will review your proposal. If they are interested, they will message you through Dezignet Escrow Messenger to begin milestone discussions.
+        The client will review your proposal. If they are interested, they will message you through Dezignet Messenger to begin milestone discussions.
       </p>
 
       <div id="dez-step-error-msg" style="color:var(--dez-status-red-text); font-size:13px; display:none;"></div>
@@ -575,6 +726,10 @@ export function initProposalDrawer(
       renderCurrentStep();
     });
     body.querySelector('#dez-edit-step-2')?.addEventListener('click', () => {
+      currentStep = 2;
+      renderCurrentStep();
+    });
+    body.querySelector('#dez-edit-step-2-lic')?.addEventListener('click', () => {
       currentStep = 2;
       renderCurrentStep();
     });
@@ -642,6 +797,15 @@ export function initProposalDrawer(
     const payload: ProposalSubmission = {
       projectId: project.id,
       coverLetter: formData.coverLetter,
+      projectUnderstanding: formData.projectUnderstanding,
+      project_understanding: formData.projectUnderstanding,
+      deliverables: formData.deliverables,
+      schedule: formData.schedule,
+      attachments: formData.attachments,
+      canOfferRegulatedServices: formData.canOfferRegulatedServices || undefined,
+      can_offer_regulated_services: formData.canOfferRegulatedServices || undefined,
+      serviceAreaStates: formData.serviceAreaStates,
+      service_area_states: formData.serviceAreaStates,
       proposedTotal: formData.proposedTotal,
       paymentType: project.paymentType,
       milestoneOffers,
@@ -663,7 +827,13 @@ export function initProposalDrawer(
       nextBtn.textContent = 'Retry Submission';
       const errorMsg = body?.querySelector('#dez-step-error-msg') as HTMLElement | null;
       if (errorMsg) {
-        errorMsg.textContent = res.error || 'Failed to submit proposal. Please retry.';
+        if (res.error === 'daily_cap_reached') {
+          errorMsg.textContent = 'You have reached your daily proposal submission cap of 25 under our fair use policy. Please resume submitting proposals tomorrow.';
+        } else if (res.error === 'limit_reached') {
+          errorMsg.textContent = 'You have reached your monthly proposal submissions limit. Please upgrade your plan to submit more proposals.';
+        } else {
+          errorMsg.textContent = res.message || res.error || 'Failed to submit proposal. Please retry.';
+        }
         errorMsg.style.display = 'block';
       }
     }

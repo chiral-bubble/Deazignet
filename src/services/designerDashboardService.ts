@@ -38,7 +38,7 @@ export interface ActiveProject {
   clientName: string;
   clientCompany: string;
   clientLocation: string;
-  paymentType: 'Milestone' | 'Hourly';
+  paymentType: 'Milestone' | 'Hourly' | 'Fixed Fee';
   status: 'awaiting_deliverable' | 'in_review' | 'approved_released' | 'active_hourly';
   statusLabel: string;
   category: string;
@@ -112,7 +112,7 @@ const FULL_NOTIFICATIONS: DesignerNotification[] = [
   {
     id: 'notif-1',
     type: 'payment',
-    title: 'Escrow payment released ($15,000)',
+    title: 'Milestone payment released ($15,000)',
     detail: 'Milestone 1 for Modern Cantilevered Residence has been cleared to your available balance.',
     relativeTime: '2 hours ago',
     isUnread: true

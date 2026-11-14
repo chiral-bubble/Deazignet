@@ -705,6 +705,14 @@ export function initProjectProposalsTab(
               <div style="font-size: 12.5px; color: #334155; margin-top: 8px; line-height: 1.4;">
                 ${escapeHtml(p.cover_letter_preview)}...
               </div>
+              ${p.can_offer_regulated_services ? `
+                <div style="margin-top: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                  <span style="font-size: 11px; font-weight: 500; background: ${p.can_offer_regulated_services === 'licensed_in_project_state' ? '#ECFDF5' : '#EFF6FF'}; color: ${p.can_offer_regulated_services === 'licensed_in_project_state' ? '#065F46' : '#1E40AF'}; padding: 2px 7px; border-radius: 4px;">
+                    ${p.can_offer_regulated_services === 'licensed_in_project_state' ? 'Licensed in State' : p.can_offer_regulated_services === 'will_partner_with_licensed_professional' ? 'Partnering with Licensed Pro' : p.can_offer_regulated_services === 'not_required_for_this_service' ? 'License Not Required' : 'Non-Regulated Only'}
+                  </span>
+                  ${p.service_area_states?.length ? `<span style="font-size: 11px; color: #64748B; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1px 6px; border-radius: 4px;">States: ${p.service_area_states.join(', ')}</span>` : ''}
+                </div>
+              ` : ''}
             </div>
           </div>
         </td>

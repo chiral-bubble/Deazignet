@@ -113,7 +113,7 @@ export function renderContractsTab(): string {
     <div class="contract-card">
       <div class="contract-card-header">
         <span class="contract-number">${c.contractNumber}</span>
-        <span class="contract-badge contract-badge--${c.escrowStatus.toLowerCase()}">${c.escrowStatus} in Escrow</span>
+        <span class="contract-badge contract-badge--${c.escrowStatus.toLowerCase()}">${c.escrowStatus} Funded</span>
       </div>
       <h3 class="contract-title">${c.projectTitle}</h3>
       <div class="contract-client"><small>CLIENT</small> <strong>${c.client}</strong></div>
@@ -133,7 +133,7 @@ export function renderContractsTab(): string {
       <div class="contracts-header-row">
         <div>
           <h2>Architectural Contracts & Agreements</h2>
-          <p>Binding service contracts, escrow funding bonds, and copyright clauses.</p>
+          <p>Binding service contracts, milestone funding agreements, and copyright clauses.</p>
         </div>
         <button type="button" class="btn-dash-primary">
           ${dashIcons.plus}
@@ -171,11 +171,11 @@ export function renderPaymentHistoryTab(): string {
     <div class="dash-tab-content dash-payments" id="tab-paymentHistory">
       <div class="payments-header-row">
         <div>
-          <h2>Financial Ledger & Escrow Releases</h2>
+          <h2>Financial Ledger & Payout Releases</h2>
           <p>Transparent real-time auditing of milestone disbursements and deposits.</p>
         </div>
         <div class="escrow-balance-card">
-          <small>CURRENT ESCROW PROTECTION</small>
+          <small>CURRENT PROTECTED FUNDS</small>
           <strong>$37,500.00</strong>
         </div>
       </div>
@@ -189,7 +189,7 @@ export function renderPaymentHistoryTab(): string {
               <th>MILESTONE</th>
               <th>DATE</th>
               <th>AMOUNT</th>
-              <th>ESCROW STATUS</th>
+              <th>FUNDING STATUS</th>
               <th>ACTION</th>
             </tr>
           </thead>
@@ -206,7 +206,7 @@ export function renderBillingTab(): string {
   return `
     <div class="dash-tab-content dash-billing" id="tab-billing">
       <div class="billing-header">
-        <h2>Billing, Payouts & Escrow</h2>
+        <h2>Billing, Payouts & Protected Funds</h2>
         <p>Manage payment methods, verified bank payout accounts, and tax invoices.</p>
       </div>
 
@@ -234,8 +234,8 @@ export function renderBillingTab(): string {
           <div class="escrow-shield-banner">
             <span class="escrow-banner-icon">${dashIcons.shieldCheck}</span>
             <div>
-              <h4>Dezignet Escrow Vault</h4>
-              <p>Funds are secured in segregated tier-1 escrow accounts until both client and architect sign off on deliverables.</p>
+              <h4>Dezignet Payment Protection Vault</h4>
+              <p>Funds are held by our payment provider until you approve deliverables.</p>
             </div>
           </div>
           <div class="escrow-stats-box">
@@ -244,7 +244,7 @@ export function renderBillingTab(): string {
               <strong>$90,950.00</strong>
             </div>
             <div class="escrow-stat-row">
-              <span>Currently in Escrow:</span>
+              <span>Currently Funded & Held:</span>
               <strong style="color:#2F7BE5">$37,500.00</strong>
             </div>
           </div>

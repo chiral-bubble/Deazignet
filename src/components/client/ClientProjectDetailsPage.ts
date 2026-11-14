@@ -187,7 +187,7 @@ function renderProjectView(
                 </span>
               </div>
               <div>
-                <span style="font-size: 12px; color: #6B7280; display: block;">In Escrow</span>
+                <span style="font-size: 12px; color: #6B7280; display: block;">Funded, held</span>
                 <span style="font-size: 18px; font-weight: 700; color: #2F7BE5; font-variant-numeric: tabular-nums;">
                   ${formatMoney(inEscrow)}
                 </span>
@@ -703,11 +703,11 @@ function renderProjectView(
 
         // In production, payments are on hold
         if (import.meta.env.PROD && !USE_MOCKS.active_work) {
-          alert('Milestone Escrow Funding: Available soon.\nIn production, funds will be placed securely in escrow before design commencement.');
+          alert('Milestone Funding: Available soon.\nIn production, funds are held by our payment provider until you approve.');
           return;
         }
 
-        if (confirm(`Fund this milestone with ${formatMoney(Number(amount))}? Funds will be placed in secure escrow.`)) {
+        if (confirm(`Fund this milestone with ${formatMoney(Number(amount))}? Funds are held by our payment provider until you approve.`)) {
           try {
             await devFundMilestone(mId);
             renderClientProjectDetailsPage(container, project.id, 'milestones');
@@ -736,7 +736,7 @@ function renderProjectView(
             <strong>${escapeHtml(milestoneName)}</strong> • ${formatMoney(amount)}
           </div>
           <p style="font-size: 13px; color: #6B7280; line-height: 1.5; margin: 0 0 16px;">
-            By approving, you confirm these deliverables satisfy the agreed scope. A standard 5-day security hold applies before escrow funds are released to the designer.
+            By approving, you confirm these deliverables satisfy the agreed scope. A standard 5-day security hold applies before funds are released to the designer.
           </p>
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
             <button id="modal-cancel-approve" style="background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: #4B5563;">Cancel</button>
@@ -822,7 +822,7 @@ function renderProjectView(
         <div style="background: #FFFFFF; border-radius: 8px; width: 100%; max-width: 480px; padding: 24px;">
           <h3 style="font-size: 16px; font-weight: 600; color: #DC2626; margin: 0 0 6px;">Report a Problem</h3>
           <p style="font-size: 12.5px; color: #6B7280; margin: 0 0 14px;">
-            During the 5-day hold period, you may raise a dispute if deliverables materially deviate from contract terms. Escrow funds will remain on hold until resolution.
+            During the 5-day hold period, you may raise a dispute if deliverables materially deviate from contract terms. Funds will remain on hold until resolution.
           </p>
           <input type="text" id="modal-dispute-reason" placeholder="Reason (e.g. Unresolved revision requests)" style="width: 100%; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 10px; font-size: 13px; box-sizing: border-box; margin-bottom: 12px;" />
           <textarea id="modal-dispute-details" rows="3" placeholder="Provide full context for mediation..." style="width: 100%; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; font-size: 13px; font-family: inherit; box-sizing: border-box; margin-bottom: 16px; outline: none;"></textarea>

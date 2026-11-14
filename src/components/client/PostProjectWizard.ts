@@ -10,6 +10,7 @@
  */
 
 import {
+  SERVICES_CATALOG,
   getCategories,
   getPhaseTemplates,
   createDraftProject,
@@ -223,6 +224,11 @@ function initWizardState(
     site_notes: existingDraft?.site_notes || '',
     access_instructions: existingDraft?.access_instructions || '',
     design_budget: existingDraft?.design_budget || 0,
+    budget_min: (existingDraft as any)?.budget_min || undefined,
+    requested_services: (existingDraft as any)?.requested_services?.length ? (existingDraft as any).requested_services : ['New construction'],
+    licensure_requirement: (existingDraft as any)?.licensure_requirement || 'not_sure',
+    visibility: (existingDraft as any)?.visibility || 'public',
+    deliverables_checklist: (existingDraft as any)?.deliverables_checklist || [],
     construction_cost_estimate: existingDraft?.construction_cost_estimate || undefined,
     proposal_deadline: existingDraft?.proposal_deadline || '',
     deadline: existingDraft?.deadline || '',
@@ -301,9 +307,13 @@ function initWizardState(
 
     const availableDisciplines = [
       { key: 'architect', label: 'Architect' },
+      { key: 'engineer', label: 'Engineer' },
       { key: 'interior_designer', label: 'Interior Designer' },
       { key: 'landscape_architect', label: 'Landscape Architect' },
-      { key: 'engineer', label: 'Structural / MEP Engineer' }
+      { key: 'bim_specialist', label: 'BIM Specialist' },
+      { key: 'visualization_professional', label: 'Visualization Professional' },
+      { key: 'drafter_cad', label: 'CAD Drafter' },
+      { key: 'other_consultant', label: 'Other Consultant' }
     ];
 
     return `
@@ -364,6 +374,28 @@ function initWizardState(
             }).join('')}
           </div>
           <div id="discipline-error" style="display: none; font-size: 12px; color: #DC2626; margin-top: 6px;">Please select at least one professional discipline.</div>
+        </div>
+
+        <!-- Requested Services (Catalog Multi-Select Chips, >= 1 required) -->
+        <div>
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Requested Services *</label>
+          <p style="font-size: 12px; color: #6B7280; margin: 0 0 10px;">Select at least one specific architectural/engineering service required from the services catalog.</p>
+          <div id="services-chips-group" style="display: flex; flex-wrap: wrap; gap: 8px;">
+            ${SERVICES_CATALOG.map((svc) => {
+              const isSelected = (state.requested_services || []).includes(svc);
+              return `
+                <button
+                  type="button"
+                  class="btn-service-chip"
+                  data-service="${escapeHtml(svc)}"
+                  style="border: 1px solid ${isSelected ? '#2F7BE5' : '#E5E7EB'}; background: ${isSelected ? '#EFF6FF' : '#FFFFFF'}; color: ${isSelected ? '#1D4ED8' : '#374151'}; font-weight: ${isSelected ? '600' : '500'}; font-size: 12.5px; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 150ms ease;"
+                >
+                  ${isSelected ? '✓ ' : ''}${escapeHtml(svc)}
+                </button>
+              `;
+            }).join('')}
+          </div>
+          <div id="service-error" style="display: none; font-size: 12px; color: #DC2626; margin-top: 6px;">Please select at least one service from the services catalog.</div>
         </div>
 
         <!-- Description -->
@@ -596,6 +628,24 @@ function initWizardState(
           </div>
         </div>
 
+        <!-- Deliverables Checklist (Optional Text List) -->
+        <div>
+          <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Deliverables Checklist (Optional)</label>
+          <p style="font-size: 12px; color: #6B7280; margin: 0 0 10px;">List key architectural drawings or documents you expect to receive (e.g. Permit set, 3D renderings, Lighting plan).</p>
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <input type="text" id="inp-new-deliverable" placeholder="Type a deliverable item and click Add..." style="flex: 1; height: 38px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; box-sizing: border-box;" />
+            <button type="button" id="btn-add-deliverable" style="height: 38px; padding: 0 16px; background: #2F7BE5; color: #FFFFFF; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Add</button>
+          </div>
+          <div id="deliverables-checklist-items" style="display: flex; flex-direction: column; gap: 6px;">
+            ${(state.deliverables_checklist || []).map((item, idx) => `
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px 12px; font-size: 13px;">
+                <span style="color: #1E293B;">• ${escapeHtml(item)}</span>
+                <button type="button" class="btn-remove-deliverable" data-index="${idx}" style="background: none; border: none; color: #EF4444; font-size: 13px; cursor: pointer;">✕</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
         <!-- Project Reference Files Uploader -->
         <div>
           <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Reference Documents & Site Photos</label>
@@ -677,9 +727,9 @@ function initWizardState(
           <p style="font-size: 13px; color: #6B7280; margin: 0;">Define your design fees and expected target dates.</p>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
           <div>
-            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Design Budget (USD) *</label>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Design Budget (Max / Target USD) *</label>
             <input
               type="number"
               id="f-design-budget"
@@ -688,7 +738,20 @@ function initWizardState(
               min="100"
               style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 14px; font-variant-numeric: tabular-nums; box-sizing: border-box;"
             />
-            <span style="font-size: 12px; color: #6B7280; display: block; margin-top: 4px;">What you plan to pay designers for design services. Proposals are compared against this amount.</span>
+            <span style="font-size: 12px; color: #6B7280; display: block; margin-top: 4px;">Maximum design budget. Proposals compare against this maximum.</span>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Minimum Budget (Optional USD)</label>
+            <input
+              type="number"
+              id="f-budget-min"
+              value="${state.budget_min || ''}"
+              placeholder="e.g. 10000"
+              min="0"
+              style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 14px; font-variant-numeric: tabular-nums; box-sizing: border-box;"
+            />
+            <span style="font-size: 12px; color: #6B7280; display: block; margin-top: 4px;">Displayed to designers as a range "$X to $Y".</span>
           </div>
 
           <div>
@@ -701,6 +764,29 @@ function initWizardState(
               style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 14px; font-variant-numeric: tabular-nums; box-sizing: border-box;"
             />
             <span style="font-size: 12px; color: #6B7280; display: block; margin-top: 4px;">Shown to designers for building scope context.</span>
+          </div>
+        </div>
+
+        <!-- Licensure Requirement & Visibility -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Licensure Requirement</label>
+            <select id="f-licensure-requirement" style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; background: #FFFFFF; box-sizing: border-box;">
+              <option value="not_sure" ${state.licensure_requirement === 'not_sure' ? 'selected' : ''}>Not sure / To be advised by designer</option>
+              <option value="licensed_professional_required" ${state.licensure_requirement === 'licensed_professional_required' ? 'selected' : ''}>Licensed professional required</option>
+              <option value="stamping_required" ${state.licensure_requirement === 'stamping_required' ? 'selected' : ''}>Official architectural/engineering stamp required</option>
+              <option value="not_required" ${state.licensure_requirement === 'not_required' ? 'selected' : ''}>Not required for this project</option>
+            </select>
+            <span style="font-size: 12px; color: #6B7280; display: block; margin-top: 4px;">If you know, tell designers whether a licensed professional or a stamp is required for this project.</span>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">Project Visibility</label>
+            <select id="f-visibility" style="width: 100%; height: 40px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 12px; font-size: 13px; background: #FFFFFF; box-sizing: border-box;">
+              <option value="public" ${state.visibility === 'public' ? 'selected' : ''}>Public — Listed on the marketplace feed for all designers</option>
+              <option value="invitation_only" ${state.visibility === 'invitation_only' ? 'selected' : ''}>Invitation Only — Hidden from marketplace; invite designers directly</option>
+            </select>
+            <span style="font-size: 12px; color: #6B7280; display: block; margin-top: 4px;">Invitation-only projects can only receive proposals from designers you invite.</span>
           </div>
         </div>
 
@@ -742,7 +828,25 @@ function initWizardState(
 
   function bindStep3Events() {
     const budgetInput = document.getElementById('f-design-budget') as HTMLInputElement;
+    const budgetMinInput = document.getElementById('f-budget-min') as HTMLInputElement;
+    const licensureSelect = document.getElementById('f-licensure-requirement') as HTMLSelectElement;
+    const visibilitySelect = document.getElementById('f-visibility') as HTMLSelectElement;
     const costInput = document.getElementById('f-construction-cost') as HTMLInputElement;
+
+    budgetMinInput?.addEventListener('input', () => {
+      state.budget_min = parseFloat(budgetMinInput.value) || undefined;
+      triggerAutosave();
+    });
+
+    licensureSelect?.addEventListener('change', () => {
+      state.licensure_requirement = licensureSelect.value as any;
+      triggerAutosave();
+    });
+
+    visibilitySelect?.addEventListener('change', () => {
+      state.visibility = visibilitySelect.value as any;
+      triggerAutosave();
+    });
     const propDeadlineInput = document.getElementById('f-proposal-deadline') as HTMLInputElement;
     const projDeadlineInput = document.getElementById('f-project-deadline') as HTMLInputElement;
 
@@ -799,35 +903,68 @@ function initWizardState(
       <div style="display: flex; flex-direction: column; gap: 24px;">
         <div>
           <h2 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 6px;">Payment Structure & Scope</h2>
-          <p style="font-size: 13px; color: #6B7280; margin: 0;">Choose milestone phases with escrow releases, or an hourly billing model.</p>
+          <p style="font-size: 13px; color: #6B7280; margin: 0;">Choose milestone phases with scheduled releases, or an hourly billing model.</p>
         </div>
 
-        <!-- Payment Type Cards -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <!-- Payment Type Cards (Milestone, Fixed Fee, Hourly) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
           <div
             id="type-milestone-card"
-            style="border: 1px solid ${isMilestone ? '#2F7BE5' : '#E5E7EB'}; background: ${isMilestone ? '#EFF6FF' : '#FFFFFF'}; border-radius: 8px; padding: 18px; cursor: pointer; transition: all 150ms;"
+            style="border: 1px solid ${state.payment_type === 'milestone' ? '#2F7BE5' : '#E5E7EB'}; background: ${state.payment_type === 'milestone' ? '#EFF6FF' : '#FFFFFF'}; border-radius: 8px; padding: 16px; cursor: pointer; transition: all 150ms;"
           >
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-weight: 600; font-size: 14px; color: #111827;">Milestone-Based</span>
-              <input type="radio" name="payment_type" value="milestone" ${isMilestone ? 'checked' : ''} style="accent-color: #2F7BE5;" />
+              <span style="font-weight: 600; font-size: 13.5px; color: #111827;">Milestone-Based</span>
+              <input type="radio" name="payment_type" value="milestone" ${state.payment_type === 'milestone' ? 'checked' : ''} style="accent-color: #2F7BE5;" />
             </div>
-            <p style="font-size: 12px; color: #4B5563; margin: 0;">Phased architectural deliverables. Funds held in escrow until you approve each milestone.</p>
+            <p style="font-size: 12px; color: #4B5563; margin: 0;">Phased deliverables across custom or standard architectural phases.</p>
+          </div>
+
+          <div
+            id="type-fixed-card"
+            style="border: 1px solid ${state.payment_type === 'fixed_fee' ? '#2F7BE5' : '#E5E7EB'}; background: ${state.payment_type === 'fixed_fee' ? '#EFF6FF' : '#FFFFFF'}; border-radius: 8px; padding: 16px; cursor: pointer; transition: all 150ms;"
+          >
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span style="font-weight: 600; font-size: 13.5px; color: #111827;">Fixed Fee (Single)</span>
+              <input type="radio" name="payment_type" value="fixed_fee" ${state.payment_type === 'fixed_fee' ? 'checked' : ''} style="accent-color: #2F7BE5;" />
+            </div>
+            <p style="font-size: 12px; color: #4B5563; margin: 0;">Single-payment engagement: one deliverable list and one milestone at 100%.</p>
           </div>
 
           <div
             id="type-hourly-card"
-            style="border: 1px solid ${!isMilestone ? '#2F7BE5' : '#E5E7EB'}; background: ${!isMilestone ? '#EFF6FF' : '#FFFFFF'}; border-radius: 8px; padding: 18px; cursor: pointer; transition: all 150ms;"
+            style="border: 1px solid ${state.payment_type === 'hourly' ? '#2F7BE5' : '#E5E7EB'}; background: ${state.payment_type === 'hourly' ? '#EFF6FF' : '#FFFFFF'}; border-radius: 8px; padding: 16px; cursor: pointer; transition: all 150ms;"
           >
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-weight: 600; font-size: 14px; color: #111827;">Hourly Rate Cap</span>
-              <input type="radio" name="payment_type" value="hourly" ${!isMilestone ? 'checked' : ''} style="accent-color: #2F7BE5;" />
+              <span style="font-weight: 600; font-size: 13.5px; color: #111827;">Hourly Rate Cap</span>
+              <input type="radio" name="payment_type" value="hourly" ${state.payment_type === 'hourly' ? 'checked' : ''} style="accent-color: #2F7BE5;" />
             </div>
-            <p style="font-size: 12px; color: #4B5563; margin: 0;">Weekly timesheet logs tracked against a strictly enforced maximum hourly rate cap.</p>
+            <p style="font-size: 12px; color: #4B5563; margin: 0;">Weekly timesheet logs tracked against a maximum hourly rate cap.</p>
           </div>
         </div>
 
-        ${isMilestone ? `
+        ${state.payment_type === 'fixed_fee' ? `
+          <!-- Fixed Fee Single Milestone Box -->
+          <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 22px; background: #FFFFFF;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div>
+                <h3 style="font-size: 15px; font-weight: 600; color: #111827; margin: 0 0 2px;">Fixed Fee Single Milestone (100%)</h3>
+                <p style="font-size: 12.5px; color: #6B7280; margin: 0;">Funds will be released upon full review and approval of the complete project delivery.</p>
+              </div>
+              <span style="font-size: 16px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums;">
+                ${formatMoney(state.design_budget || 0)} (100%)
+              </span>
+            </div>
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 14px; font-size: 13px;">
+              <strong>Agreed Deliverables:</strong>
+              ${(state.deliverables_checklist && state.deliverables_checklist.length > 0)
+                ? `<ul style="margin: 6px 0 0 0; padding-left: 20px; color: #475569;">
+                    ${state.deliverables_checklist.map((d) => `<li>${escapeHtml(d)}</li>`).join('')}
+                  </ul>`
+                : `<p style="margin: 6px 0 0 0; color: #64748B;">Complete architectural project package as specified in the project description.</p>`
+              }
+            </div>
+          </div>
+        ` : isMilestone ? `
           <!-- Milestone Schedule Container -->
           <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; background: #FFFFFF;">
             
@@ -1043,7 +1180,7 @@ function initWizardState(
             <div style="margin-top: 20px; background: #F7F7F8; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px;">
               <div style="font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 8px;">How payments work</div>
               <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #4B5563; line-height: 1.6;">
-                <li>Funds for each milestone are held securely in escrow before design work commences.</li>
+                <li>Funds for each milestone are held by our payment provider until you approve before design work commences.</li>
                 <li>Funds are released to the designer only after you inspect and approve the completed milestone deliverables.</li>
                 <li>Submissions not reviewed within 14 days are approved automatically to ensure fair designer compensation.</li>
                 <li>Released payments undergo a 5-day security clearance period.</li>
@@ -1441,7 +1578,7 @@ function initWizardState(
               </div>
               <div>
                 <span style="color: #6B7280; display: block; font-size: 11px;">Payment Model</span>
-                <span style="font-weight: 600; color: #111827;">${state.payment_type === 'milestone' ? 'Milestone Escrow' : 'Hourly Cap'}</span>
+                <span style="font-weight: 600; color: #111827;">${state.payment_type === 'milestone' ? 'Milestone Funding' : 'Hourly Cap'}</span>
               </div>
             </div>
 
@@ -1462,8 +1599,11 @@ function initWizardState(
               <div style="font-size: 12.5px; color: #4B5563; margin-bottom: 6px;">
                 <strong>Category:</strong> ${escapeHtml(state.category)} ${state.subcategory ? `• ${escapeHtml(state.subcategory)}` : ''}
               </div>
-              <div style="font-size: 12.5px; color: #4B5563; margin-bottom: 8px;">
+              <div style="font-size: 12.5px; color: #4B5563; margin-bottom: 6px;">
                 <strong>Professional Needed:</strong> ${escapeHtml(disciplinesList || 'Architect')}
+              </div>
+              <div style="font-size: 12.5px; color: #4B5563; margin-bottom: 8px;">
+                <strong>Requested Services:</strong> ${(state.requested_services || []).map(s => `<span style="display:inline-block; font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:1px 6px; border-radius:4px; margin-right:4px; margin-top:2px;">${escapeHtml(s)}</span>`).join('')}
               </div>
               <p style="margin: 0; font-size: 12.5px; color: #6B7280; line-height: 1.5;">${escapeHtml(state.description)}</p>
             </div>
@@ -1479,6 +1619,10 @@ function initWizardState(
                 <div><strong>Building & Land:</strong> ${state.building_status} • ${state.site_status}</div>
                 ${state.area_sqft ? `<div><strong>Area:</strong> ${state.area_sqft.toLocaleString()} ${state.area_unit}</div>` : ''}
                 ${state.street ? `<div><strong>Private Street:</strong> ${escapeHtml(state.street)} (Secured)</div>` : ''}
+                ${(state.deliverables_checklist && state.deliverables_checklist.length > 0) ? `
+                  <div style="margin-top: 6px;"><strong>Deliverables Checklist:</strong>
+                    <div style="margin-top: 2px; color: #64748B;">${state.deliverables_checklist.map(d => `• ${escapeHtml(d)}`).join(' ')}</div>
+                  </div>` : ''}
               </div>
             </div>
 
@@ -1489,7 +1633,9 @@ function initWizardState(
                 <button type="button" class="btn-jump-step" data-step="3" style="background: none; border: none; color: #2F7BE5; font-size: 12px; font-weight: 500; cursor: pointer;">Edit</button>
               </div>
               <div style="font-size: 12.5px; color: #4B5563; line-height: 1.6;">
-                <div><strong>Design Budget:</strong> ${formatMoney(state.design_budget || 0)}</div>
+                <div><strong>Design Budget:</strong> ${state.budget_min ? `${formatMoney(state.budget_min)} to ${formatMoney(state.design_budget || 0)}` : formatMoney(state.design_budget || 0)}</div>
+                <div><strong>Licensure Requirement:</strong> ${state.licensure_requirement === 'licensed_professional_required' ? 'Licensed Professional Required' : state.licensure_requirement === 'stamping_required' ? 'Official Stamp Required' : state.licensure_requirement === 'not_required' ? 'Not Required' : 'Not Sure / To Be Advised'}</div>
+                <div><strong>Visibility:</strong> ${state.visibility === 'invitation_only' ? 'Invitation Only' : 'Public Marketplace'}</div>
                 ${state.construction_cost_estimate ? `<div><strong>Estimated Construction Cost:</strong> ${formatMoney(state.construction_cost_estimate)}</div>` : ''}
                 <div><strong>Proposal Submission Deadline:</strong> ${state.proposal_deadline}</div>
                 ${state.deadline ? `<div><strong>Target Completion Date:</strong> ${state.deadline}</div>` : ''}
@@ -1502,7 +1648,11 @@ function initWizardState(
                 <span style="font-size: 13px; font-weight: 600; color: #111827;">4. Payment Structure & Scope</span>
                 <button type="button" class="btn-jump-step" data-step="4" style="background: none; border: none; color: #2F7BE5; font-size: 12px; font-weight: 500; cursor: pointer;">Edit</button>
               </div>
-              ${state.payment_type === 'milestone' ? `
+              ${state.payment_type === 'fixed_fee' ? `
+                <div style="font-size: 12.5px; color: #4B5563;">
+                  <strong>Payment Structure:</strong> Fixed Fee (Single Milestone 100% — ${formatMoney(state.design_budget || 0)})
+                </div>
+              ` : state.payment_type === 'milestone' ? `
                 <div style="font-size: 12.5px; color: #4B5563; margin-bottom: 8px;">
                   <strong>Milestone Phases (${checkedPhases.length}):</strong>
                 </div>
@@ -1522,6 +1672,14 @@ function initWizardState(
             </div>
           </div>
         `}
+
+        <!-- Plain Eligibility & Governance Banner -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px; margin-bottom: 18px;">
+          <div style="font-size: 12.5px; font-weight: 600; color: #1E293B; margin-bottom: 4px;">Platform Eligibility & Governance</div>
+          <p style="font-size: 12px; color: #64748B; margin: 0; line-height: 1.5;">
+            All projects must comply with Dezignet platform terms. Dezignet does not permit prohibited project categories (such as unpermitted hazardous structures) and requires honest licensure disclosures. Projects are verified prior to escrow release.
+          </p>
+        </div>
 
         <!-- Confirmation & Actions -->
         <div style="border-top: 1px solid #E5E7EB; padding-top: 20px;">
@@ -1584,20 +1742,40 @@ function initWizardState(
       }
 
       try {
+        // Prohibited categories check
+        const prohibitedCategories = ['Hazardous Material Facilities', 'Unpermitted Weapons Storage'];
+        if (prohibitedCategories.includes(state.category)) {
+          alert(`The category "${state.category}" is prohibited on Dezignet under platform safety governance.`);
+          if (publishBtn) { publishBtn.disabled = false; publishBtn.textContent = 'Post Project Now'; }
+          return;
+        }
+
         // Save latest state first
         const payloadToSave: Partial<ProjectDraftPayload> = {
           ...state,
-          phases: state.phasesList
-            .filter((p) => p.is_included)
-            .map((p, idx) => ({
-              id: p.id,
-              sort_order: idx + 1,
-              name: p.name,
-              description: p.description,
-              deliverables: p.deliverables,
-              billing_trigger: p.billing_trigger,
-              fee_percent: p.fee_percent
-            }))
+          phases: state.payment_type === 'fixed_fee'
+            ? [{
+                id: 'ms-fixed-1',
+                sort_order: 1,
+                name: 'Complete Project Delivery',
+                description: 'Full delivery of all agreed project documents and architectural drawings.',
+                deliverables: (state.deliverables_checklist && state.deliverables_checklist.length > 0)
+                  ? state.deliverables_checklist
+                  : ['Complete architectural design package'],
+                billing_trigger: 'Client review, completion, and sign-off of final deliverables',
+                fee_percent: 100
+              }]
+            : state.phasesList
+                .filter((p) => p.is_included)
+                .map((p, idx) => ({
+                  id: p.id,
+                  sort_order: idx + 1,
+                  name: p.name,
+                  description: p.description,
+                  deliverables: p.deliverables,
+                  billing_trigger: p.billing_trigger,
+                  fee_percent: p.fee_percent
+                }))
         };
         await autosaveDraft(currentDraftId, payloadToSave, 5);
 

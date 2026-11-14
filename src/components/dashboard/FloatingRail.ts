@@ -147,7 +147,7 @@ export function renderFloatingRail(activeTab: NavTabId = 'dashboard'): string {
         </button>
         <button type="button" class="mobile-sheet-link" data-nav-id="billing">
           ${dashIcons.billing}
-          <span>Billing & Escrow</span>
+          <span>Billing & Payouts</span>
         </button>
         <button type="button" class="mobile-sheet-link" data-nav-id="settings">
           ${dashIcons.settings}

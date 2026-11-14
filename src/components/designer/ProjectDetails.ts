@@ -8,10 +8,13 @@ import { formatDate } from '../../services/usMarketService';
 import { formatMoney } from '../../utils/formatters';
 
 export function renderProjectDetails(project: Project, profileComplete: boolean = true): string {
-  const isMilestone = project.paymentType === 'Milestone';
-  const budgetFormatted = isMilestone
-    ? formatMoney(project.budget)
-    : `${formatMoney(project.hourlyRate || 0)}/hr (Est. ${formatMoney(project.budget)})`;
+  const isMilestone = project.paymentType === 'Milestone' || project.paymentType === 'Fixed Fee';
+  const budgetMin = project.budgetMin || project.budget_min;
+  const budgetFormatted = budgetMin
+    ? `$${Number(budgetMin).toLocaleString()} to ${formatMoney(project.budget)}`
+    : isMilestone
+      ? formatMoney(project.budget)
+      : `${formatMoney(project.hourlyRate || 0)}/hr (Est. ${formatMoney(project.budget)})`;
 
   // Reference images markup
   const refImagesHtml = project.referenceImages && project.referenceImages.length > 0
@@ -225,6 +228,18 @@ export function renderProjectDetails(project: Project, profileComplete: boolean 
               <div class="dez-key-fact-row">
                 <span class="dez-key-fact-label">Location</span>
                 <span class="dez-key-fact-val">${project.location}</span>
+              </div>
+              <div class="dez-key-fact-row">
+                <span class="dez-key-fact-label">Requested Services</span>
+                <span class="dez-key-fact-val">${(project.requestedServices || project.requested_services || ['New construction']).join(', ')}</span>
+              </div>
+              <div class="dez-key-fact-row">
+                <span class="dez-key-fact-label">Licensure Requirement</span>
+                <span class="dez-key-fact-val">${
+                  (project.licensureRequirement || project.licensure_requirement) === 'licensed_professional_required' ? 'Licensed Professional Required' :
+                  (project.licensureRequirement || project.licensure_requirement) === 'stamping_required' ? 'Official Stamp Required' :
+                  (project.licensureRequirement || project.licensure_requirement) === 'not_required' ? 'Not Required' : 'Not Sure / To Be Advised'
+                }</span>
               </div>
             </div>
           </div>

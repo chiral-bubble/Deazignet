@@ -621,8 +621,8 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
                   <div>
                     <label style="display: block; font-size: 12px; font-weight: 500; color: #475569; margin-bottom: 4px;">Proposal Limit / mo</label>
                     <select class="select-proposal-limit" style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 8px; font-size: 13px; background: #FFFFFF;">
-                      <option value="5" ${p.monthly_proposal_limit === 5 ? 'selected' : ''}>5 proposals (Free)</option>
-                      <option value="10" ${p.monthly_proposal_limit === 10 ? 'selected' : ''}>10 proposals (Basic)</option>
+                      <option value="3" ${p.monthly_proposal_limit === 3 ? 'selected' : ''}>3 proposals (Free)</option>
+                      <option value="15" ${p.monthly_proposal_limit === 15 ? 'selected' : ''}>15 proposals (Basic)</option>
                       <option value="null" ${p.monthly_proposal_limit === null ? 'selected' : ''}>Unlimited (null)</option>
                       <option value="custom" ${p.monthly_proposal_limit !== 5 && p.monthly_proposal_limit !== 10 && p.monthly_proposal_limit !== null ? 'selected' : ''}>Custom limit...</option>
                     </select>
@@ -656,8 +656,8 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
                       <span>direct_invitations (Direct client invites)</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                      <input type="checkbox" class="cb-member_badge" ${p.member_badge ? 'checked' : ''} />
-                      <span>member_badge (Pro member badge)</span>
+                      <input type="checkbox" class="cb-search_priority" ${p.search_priority ? 'checked' : ''} />
+                      <span>search_priority (Priority matching boost)</span>
                     </label>
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                       <input type="checkbox" class="cb-studio_insights" ${p.studio_insights ? 'checked' : ''} />
@@ -703,7 +703,7 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
             <label style="display: block; font-size: 12.5px; font-weight: 500; color: #475569; margin-bottom: 6px;">Fee Basis</label>
             <select id="fee-calc-basis" style="width: 100%; border: 1px solid #E5E7EB; border-radius: 6px; padding: 8px 12px; font-size: 13px; background: #FFFFFF; color: #0F172A;">
               <option value="per_milestone" ${settings.fee_basis === 'per_milestone' ? 'selected' : ''}>per_milestone (evaluated separately on each milestone)</option>
-              <option value="cumulative" ${settings.fee_basis === 'cumulative' ? 'selected' : ''}>cumulative (evaluated against project cumulative total)</option>
+              <option value="cumulative_project" ${settings.fee_basis === 'cumulative_project' || settings.fee_basis === 'cumulative' ? 'selected' : ''}>cumulative_project (evaluated against project cumulative total)</option>
             </select>
           </div>
         </div>
@@ -839,8 +839,8 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
       feedback.style.display = 'none';
 
       let limitVal: number | null = null;
-      if (limitSelect.value === '5') limitVal = 5;
-      else if (limitSelect.value === '10') limitVal = 10;
+      if (limitSelect.value === '3') limitVal = 3;
+      else if (limitSelect.value === '15') limitVal = 15;
       else if (limitSelect.value === 'null') limitVal = null;
       else {
         const parsed = parseInt(customLimitInput.value, 10);
@@ -856,7 +856,7 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
         public_profile: card.querySelector<HTMLInputElement>('.cb-public_profile')?.checked ?? false,
         portfolio_enabled: card.querySelector<HTMLInputElement>('.cb-portfolio_enabled')?.checked ?? false,
         direct_invitations: card.querySelector<HTMLInputElement>('.cb-direct_invitations')?.checked ?? false,
-        member_badge: card.querySelector<HTMLInputElement>('.cb-member_badge')?.checked ?? false,
+        search_priority: card.querySelector<HTMLInputElement>('.cb-search_priority')?.checked ?? false,
         studio_insights: card.querySelector<HTMLInputElement>('.cb-studio_insights')?.checked ?? false,
         studio_url: card.querySelector<HTMLInputElement>('.cb-studio_url')?.checked ?? false
       };
@@ -900,7 +900,8 @@ async function loadPlansAndFeesTab(container: HTMLElement): Promise<void> {
 
   // Bind Fee Tiers Editor Handlers
   container.querySelectorAll<HTMLDivElement>('.tier-editor-box').forEach(box => {
-    const planKey = box.getAttribute('data-plan-key') as 'free' | 'basic' | 'upgraded';
+    const rawKey = box.getAttribute('data-plan-key');
+    const planKey = (rawKey === 'gold' ? 'upgraded' : rawKey) as 'free' | 'basic' | 'upgraded';
     const tbody = box.querySelector<HTMLTableSectionElement>('.tier-rows-tbody')!;
     const btnAdd = box.querySelector<HTMLButtonElement>('.btn-add-tier-row')!;
     const btnSave = box.querySelector<HTMLButtonElement>('.btn-save-plan-tiers')!;
@@ -1114,8 +1115,8 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
                   <input type="number" id="mb-basic" value="${settings.matching_plan_boost.basic}" min="0" max="50" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <label style="color: #334155;">Upgraded plan boost:</label>
-                  <input type="number" id="mb-upgraded" value="${settings.matching_plan_boost.upgraded}" min="0" max="50" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
+                  <label style="color: #334155;">Gold plan boost:</label>
+                  <input type="number" id="mb-gold" value="${settings.matching_plan_boost.gold ?? settings.matching_plan_boost.upgraded ?? 15}" min="0" max="50" style="width: 70px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px; text-align: right;" />
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 8px;">
                   <label style="color: #334155;">New designer boost (<90d):</label>
@@ -1125,10 +1126,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
 
               <div style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Engine Settings & Display Mode</div>
               <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <label style="color: #334155;">Member badge label:</label>
-                  <input type="text" id="mb-member-badge-label" value="${settings.member_badge_label || 'Pro member'}" style="width: 140px; border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 8px; font-size: 13px;" />
-                </div>
+                <div style="font-size: 12px; color: #64748B; font-style: italic;">Paid member badges removed in favor of plain Promoted markers on Gold.</div>
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                   <input type="checkbox" id="mb-verification-enabled" ${settings.credential_verification_enabled ? 'checked' : ''} />
                   <span>Enable Credential Verification (credential_verification_enabled)</span>
@@ -1214,10 +1212,10 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
         matching_plan_boost: {
           free: parseInt((container.querySelector('#mb-free') as HTMLInputElement).value, 10) || 0,
           basic: parseInt((container.querySelector('#mb-basic') as HTMLInputElement).value, 10) || 0,
-          upgraded: parseInt((container.querySelector('#mb-upgraded') as HTMLInputElement).value, 10) || 0
+          gold: parseInt((container.querySelector('#mb-gold') as HTMLInputElement).value, 10) || 15
         },
         matching_new_designer_boost: parseInt((container.querySelector('#mb-new-designer') as HTMLInputElement).value, 10) || 0,
-        member_badge_label: (container.querySelector('#mb-member-badge-label') as HTMLInputElement)?.value || 'Pro member',
+        member_badge_label: '',
         credential_verification_enabled: (container.querySelector('#mb-verification-enabled') as HTMLInputElement)?.checked || false,
         insurance_section_enabled: (container.querySelector('#mb-insurance-enabled') as HTMLInputElement).checked,
         priority_label_mode: (container.querySelector('#mb-priority-label-mode') as HTMLSelectElement).value as any
@@ -1301,7 +1299,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
                         <div>
                           <div style="font-weight: 600; color: #0F172A; font-size: 13px;">
                             ${escapeHtml(cand.full_name)}
-                            ${cand.has_member_badge ? '<span style="color: #475569; font-size: 11px; margin-left: 4px; font-weight: 600;">[Pro member]</span>' : ''}
+                            ${cand.is_promoted ? '<span style="color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; font-size: 10px; margin-left: 4px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Promoted</span>' : ''}
                           </div>
                           <div style="font-size: 11.5px; color: #64748B;">
                             ${escapeHtml(cand.title || cand.discipline)} ${cand.studio_name ? '• ' + escapeHtml(cand.studio_name) : ''}
@@ -1313,7 +1311,7 @@ async function loadMatchingTab(container: HTMLElement): Promise<void> {
                       </div>
                     </td>
                     <td style="padding: 12px 14px;">
-                      <span style="display: inline-block; background: ${cand.plan_key === 'upgraded' ? '#EFF6FF' : cand.plan_key === 'basic' ? '#F0FDF4' : '#F1F5F9'}; color: ${cand.plan_key === 'upgraded' ? '#2F7BE5' : cand.plan_key === 'basic' ? '#16A34A' : '#475569'}; border: 1px solid ${cand.plan_key === 'upgraded' ? '#BFDBFE' : cand.plan_key === 'basic' ? '#BBF7D0' : '#E2E8F0'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                      <span style="display: inline-block; background: ${(cand.plan_key === 'gold' || cand.plan_key === 'upgraded') ? '#EFF6FF' : cand.plan_key === 'basic' ? '#F0FDF4' : '#F1F5F9'}; color: ${(cand.plan_key === 'gold' || cand.plan_key === 'upgraded') ? '#2F7BE5' : cand.plan_key === 'basic' ? '#16A34A' : '#475569'}; border: 1px solid ${(cand.plan_key === 'gold' || cand.plan_key === 'upgraded') ? '#BFDBFE' : cand.plan_key === 'basic' ? '#BBF7D0' : '#E2E8F0'}; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
                         ${cand.plan_key}
                       </span>
                       <div style="font-size: 11px; color: #64748B; margin-top: 3px;">

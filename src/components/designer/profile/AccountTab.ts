@@ -157,7 +157,7 @@ export function renderAccountTab(profile: DesignerProfile): string {
 
             <div class="dez-toggle-row">
               <div>
-                <span class="dez-toggle-title">Escrow releases & payout settlements</span>
+                <span class="dez-toggle-title">Milestone releases & payout settlements</span>
                 <p class="dez-toggle-desc">Alert when funds clear to your available balance or settle to your bank.</p>
               </div>
               <label class="dez-switch">
@@ -209,7 +209,7 @@ export function renderAccountTab(profile: DesignerProfile): string {
         <p class="dez-card-subtext">Permanently close your designer studio profile. All data and portfolio records will be removed.</p>
 
         <div style="margin-top: 14px; padding: 14px; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; font-size: 13px; color: #7F1D1D;">
-          <strong>Warning:</strong> Account deletion cannot be undone. If you have active projects or pending escrow balances, your account cannot be deleted until milestones are settled.
+          <strong>Warning:</strong> Account deletion cannot be undone. If you have active projects or pending funded balances, your account cannot be deleted until milestones are settled.
         </div>
 
         <form id="form-account-delete" style="margin-top: 16px;">

@@ -396,7 +396,7 @@ async function main() {
           document.title = 'Dezignet | Find Designers';
           renderFindDesignersPage(clientContainer);
         } else if (pathname === '/payments') {
-          document.title = 'Dezignet | Payments & Escrow';
+          document.title = 'Dezignet | Payments & Funded Milestones';
           renderClientPaymentsPage(clientContainer);
         } else if (pathname === '/settings') {
           document.title = 'Dezignet | Account Settings';

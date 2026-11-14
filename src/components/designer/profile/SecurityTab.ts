@@ -159,7 +159,7 @@ export function renderSecurityTab(
                   <line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
                 <div style="font-size:13px; color:#92400E; line-height:1.45;">
-                  <strong>Action Blocked:</strong> You currently have active commissions or escrow balances on Dezignet. You must complete or cancel all active projects and withdraw remaining funds before deleting your account.
+                  <strong>Action Blocked:</strong> You currently have active commissions or funded balances on Dezignet. You must complete or cancel all active projects and withdraw remaining funds before deleting your account.
                 </div>
               </div>
             `

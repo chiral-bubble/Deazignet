@@ -261,24 +261,34 @@ import { getProjects, getProject, type Project } from './projectsService';
 export interface AdminMatchingSettings {
   matching_weights: {
     specialization_match: number;
+    services_overlap?: number;
     subcategory_portfolio: number;
     same_city: number;
     same_state: number;
+    verified?: number;
     rating: number;
     completed_projects: number;
   };
   matching_plan_boost: {
     free: number;
     basic: number;
-    upgraded: number;
+    gold?: number;
+    upgraded?: number;
   };
   matching_new_designer_boost: number;
   insurance_section_enabled: boolean;
-  member_badge_label: string;
   credential_verification_enabled: boolean;
+  member_badge_label?: string;
   priority_label_mode: 'label' | 'hidden';
   fee_tier_mode: 'whole_amount' | 'marginal';
-  fee_basis: 'per_milestone' | 'cumulative';
+  fee_basis: 'per_milestone' | 'cumulative' | 'cumulative_project';
+  payments_terminology_approved: boolean;
+  plan_fee_discount_enabled: boolean;
+  fee_deducted_from_payout: boolean;
+  processing_fee_bearer: 'undecided' | 'platform' | 'designer' | 'client';
+  reimbursables_excluded_from_commission: boolean;
+  third_party_consultant_passthrough_excluded: boolean;
+  subscription_affects_commission: boolean;
 }
 
 export interface AdminSuggestedDesigner {
@@ -296,8 +306,9 @@ export interface AdminSuggestedDesigner {
   rating_count: number;
   completed_projects_count: number;
   is_verified: boolean;
-  has_member_badge: boolean;
-  plan_key: 'free' | 'basic' | 'upgraded';
+  is_promoted: boolean;
+  has_member_badge?: boolean;
+  plan_key: 'free' | 'basic' | 'gold' | 'upgraded';
   match_score: number;
   plan_boost: number;
   reasons: Array<{ type: string; text: string }>;
@@ -322,25 +333,33 @@ const mockAuditLogs: AdminAuditLogItem[] = [
 // In-memory matching and fee calculation settings
 let mockMatchingSettings: AdminMatchingSettings = {
   matching_weights: {
-    specialization_match: 40,
-    subcategory_portfolio: 20,
+    specialization_match: 30,
+    services_overlap: 20,
+    subcategory_portfolio: 10,
     same_city: 15,
     same_state: 10,
+    verified: 10,
     rating: 10,
     completed_projects: 5
   },
   matching_plan_boost: {
     free: 0,
-    basic: 5,
-    upgraded: 15
+    basic: 0,
+    gold: 15
   },
   matching_new_designer_boost: 5,
   insurance_section_enabled: false,
-  member_badge_label: 'Pro member',
-  credential_verification_enabled: false,
+  credential_verification_enabled: true,
   priority_label_mode: 'label',
-  fee_tier_mode: 'whole_amount',
-  fee_basis: 'per_milestone'
+  fee_tier_mode: 'marginal',
+  fee_basis: 'cumulative_project',
+  payments_terminology_approved: false,
+  plan_fee_discount_enabled: false,
+  fee_deducted_from_payout: true,
+  processing_fee_bearer: 'undecided',
+  reimbursables_excluded_from_commission: true,
+  third_party_consultant_passthrough_excluded: true,
+  subscription_affects_commission: false
 };
 
 /**
@@ -551,7 +570,14 @@ export async function adminGetMatchingSettings(): Promise<AdminMatchingSettings>
           'credential_verification_enabled',
           'priority_label_mode',
           'fee_tier_mode',
-          'fee_basis'
+          'fee_basis',
+          'payments_terminology_approved',
+          'plan_fee_discount_enabled',
+          'fee_deducted_from_payout',
+          'processing_fee_bearer',
+          'reimbursables_excluded_from_commission',
+          'third_party_consultant_passthrough_excluded',
+          'subscription_affects_commission'
         ]);
 
       if (!error && data && data.length > 0) {
@@ -575,6 +601,20 @@ export async function adminGetMatchingSettings(): Promise<AdminMatchingSettings>
               mockMatchingSettings.fee_tier_mode = item.value as any;
             } else if (item.key === 'fee_basis') {
               mockMatchingSettings.fee_basis = item.value as any;
+            } else if (item.key === 'payments_terminology_approved') {
+              mockMatchingSettings.payments_terminology_approved = item.value === 'true' || item.value === true;
+            } else if (item.key === 'plan_fee_discount_enabled') {
+              mockMatchingSettings.plan_fee_discount_enabled = item.value === 'true' || item.value === true;
+            } else if (item.key === 'fee_deducted_from_payout') {
+              mockMatchingSettings.fee_deducted_from_payout = item.value !== 'false' && item.value !== false;
+            } else if (item.key === 'processing_fee_bearer') {
+              mockMatchingSettings.processing_fee_bearer = item.value as any;
+            } else if (item.key === 'reimbursables_excluded_from_commission') {
+              mockMatchingSettings.reimbursables_excluded_from_commission = item.value !== 'false' && item.value !== false;
+            } else if (item.key === 'third_party_consultant_passthrough_excluded') {
+              mockMatchingSettings.third_party_consultant_passthrough_excluded = item.value !== 'false' && item.value !== false;
+            } else if (item.key === 'subscription_affects_commission') {
+              mockMatchingSettings.subscription_affects_commission = item.value === 'true' || item.value === true;
             }
           } catch {}
         });
@@ -626,6 +666,27 @@ export async function adminUpdateMatchingSettings(
       if (settings.fee_basis) {
         await adminUpdateAppSetting('fee_basis', settings.fee_basis);
       }
+      if (settings.payments_terminology_approved !== undefined) {
+        await adminUpdateAppSetting('payments_terminology_approved', String(settings.payments_terminology_approved));
+      }
+      if (settings.plan_fee_discount_enabled !== undefined) {
+        await adminUpdateAppSetting('plan_fee_discount_enabled', String(settings.plan_fee_discount_enabled));
+      }
+      if (settings.fee_deducted_from_payout !== undefined) {
+        await adminUpdateAppSetting('fee_deducted_from_payout', String(settings.fee_deducted_from_payout));
+      }
+      if (settings.processing_fee_bearer) {
+        await adminUpdateAppSetting('processing_fee_bearer', settings.processing_fee_bearer);
+      }
+      if (settings.reimbursables_excluded_from_commission !== undefined) {
+        await adminUpdateAppSetting('reimbursables_excluded_from_commission', String(settings.reimbursables_excluded_from_commission));
+      }
+      if (settings.third_party_consultant_passthrough_excluded !== undefined) {
+        await adminUpdateAppSetting('third_party_consultant_passthrough_excluded', String(settings.third_party_consultant_passthrough_excluded));
+      }
+      if (settings.subscription_affects_commission !== undefined) {
+        await adminUpdateAppSetting('subscription_affects_commission', String(settings.subscription_affects_commission));
+      }
     } catch (e) {
       console.warn('DB settings update failed, falling back:', e);
     }
@@ -661,8 +722,9 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
 
       if (!error && Array.isArray(data) && data.length > 0) {
         return data.map((item: any) => {
-          const planKey = (item.plan_key || 'free') as 'free' | 'basic' | 'upgraded';
-          const boost = planBoosts[planKey] || 0;
+          const rawPlan = item.plan_key || 'free';
+          const planKey = (rawPlan === 'upgraded' ? 'gold' : rawPlan) as 'free' | 'basic' | 'gold';
+          const boost = planBoosts[planKey] || (planKey === 'gold' ? (planBoosts.upgraded || 15) : 0);
           return {
             designer_id: item.designer_id,
             full_name: item.full_name,
@@ -678,7 +740,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
             rating_count: item.rating_count || 0,
             completed_projects_count: item.completed_projects_count || 0,
             is_verified: Boolean(item.is_verified),
-            has_member_badge: item.has_member_badge ?? (planKey !== 'free'),
+            is_promoted: planKey === 'gold',
             plan_key: planKey,
             match_score: item.match_score || 0,
             plan_boost: boost,
@@ -705,10 +767,18 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
 
   const allDesigners = getAllMockDesigners();
 
-  const scoredList: AdminSuggestedDesigner[] = allDesigners
+  // ONLY designers who can be invited (Basic and Gold)
+  const candidatePool = allDesigners.filter(d => {
+    const rawPlan = d.currentPlanId || 'free';
+    const planKey = rawPlan === 'upgraded' ? 'gold' : rawPlan;
+    return planKey === 'basic' || planKey === 'gold';
+  });
+
+  const scoredList: AdminSuggestedDesigner[] = candidatePool
     .map(d => {
-      const planKey = (d.currentPlanId || 'free') as 'free' | 'basic' | 'upgraded';
-      const planBoost = planBoosts[planKey] || 0;
+      const rawPlan = d.currentPlanId || 'free';
+      const planKey = (rawPlan === 'upgraded' ? 'gold' : rawPlan) as 'free' | 'basic' | 'gold';
+      const planBoost = planKey === 'gold' ? (planBoosts.gold ?? planBoosts.upgraded ?? 15) : 0;
 
       const matchesCategory = d.specializations.some(s =>
         s.toLowerCase().includes(projectCategory.toLowerCase()) ||
@@ -727,7 +797,11 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
       const sameState = Boolean(projectState && d.location.state?.toLowerCase() === projectState.toLowerCase());
       const stateScore = sameState && !sameCity ? weights.same_state : 0;
 
-      const isMember = planKey === 'basic' || planKey === 'upgraded';
+      // Verification score (+10) based on verified credentials
+      const hasVerifiedCred = Boolean(
+        d.credentials && d.credentials.some(c => c.status === 'verified')
+      );
+      const verifiedScore = hasVerifiedCred ? (weights.verified || 10) : 0;
 
       const ratingScore = d.stats.reviewCount >= 3
         ? Math.round((d.stats.averageRating / 5.0) * weights.rating)
@@ -743,6 +817,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
         subcatScore +
         cityScore +
         stateScore +
+        verifiedScore +
         ratingScore +
         completedScore +
         newBoostScore +
@@ -760,11 +835,14 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
       } else if (sameState) {
         reasons.push({ type: 'location', text: `Located in same state (${d.location.state}) (+${stateScore})` });
       }
+      if (hasVerifiedCred) {
+        reasons.push({ type: 'verified', text: `Verified professional credentials (+${verifiedScore})` });
+      }
       if (ratingScore > 0) {
         reasons.push({ type: 'rating', text: `${d.stats.averageRating} avg rating (${d.stats.reviewCount} reviews) (+${ratingScore})` });
       }
       if (planBoost > 0) {
-        reasons.push({ type: 'plan_boost', text: `${planKey.toUpperCase()} plan priority boost (+${planBoost})` });
+        reasons.push({ type: 'plan_boost', text: `Promoted Gold placement (+${planBoost})` });
       }
       if (newBoostScore > 0) {
         reasons.push({ type: 'new_designer', text: `New talent boost (+${newBoostScore})` });
@@ -784,8 +862,8 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
         rating_average: d.stats.averageRating,
         rating_count: d.stats.reviewCount,
         completed_projects_count: d.stats.projectsCompleted,
-        is_verified: isMember,
-        has_member_badge: isMember,
+        is_verified: hasVerifiedCred,
+        is_promoted: planKey === 'gold',
         plan_key: planKey,
         match_score: totalScore,
         plan_boost: planBoost,
@@ -794,6 +872,7 @@ export async function adminTestSuggestions(projectId: string): Promise<AdminSugg
           specialization: specScore,
           portfolio: subcatScore,
           location: cityScore + stateScore,
+          verified: verifiedScore,
           rating: ratingScore,
           completed: completedScore,
           new_designer: newBoostScore,

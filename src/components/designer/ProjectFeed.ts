@@ -6,6 +6,7 @@
 import { toggleSaveProject, type Project, type ProjectFiltersState } from '../../services/projectsService';
 import { renderProjectFilters } from './ProjectFilters';
 import { renderProjectListItem } from './ProjectListItem';
+import { getSavedSearches, saveSearch, deleteSavedSearch } from '../../services/savedSearchesService';
 
 export function renderProjectFeed(
   projects: Project[],
@@ -135,6 +136,18 @@ export function initProjectFeed(
     onFiltersChange({ ...currentFilters, category: catSelect.value });
   });
 
+  // Service select
+  const svcSelect = container.querySelector('#dez-filter-service') as HTMLSelectElement | null;
+  svcSelect?.addEventListener('change', () => {
+    onFiltersChange({ ...currentFilters, service: svcSelect.value === 'All' ? undefined : svcSelect.value });
+  });
+
+  // Licensure select
+  const licSelect = container.querySelector('#dez-filter-licensure') as HTMLSelectElement | null;
+  licSelect?.addEventListener('change', () => {
+    onFiltersChange({ ...currentFilters, licensureRequirement: licSelect.value === 'All' ? undefined : licSelect.value });
+  });
+
   // Location select
   const locSelect = container.querySelector('#dez-filter-location') as HTMLSelectElement | null;
   locSelect?.addEventListener('change', () => {
@@ -200,6 +213,89 @@ export function initProjectFeed(
       }
       onFiltersChange(updated);
     });
+  });
+
+  // Save this search button
+  const saveSearchBtn = container.querySelector('#btn-save-project-search');
+  saveSearchBtn?.addEventListener('click', async () => {
+    const name = window.prompt('Name this search:', currentFilters.search || currentFilters.category || currentFilters.service || 'My Project Search');
+    if (!name?.trim()) return;
+    try {
+      await saveSearch(name.trim(), 'projects', currentFilters);
+      alert(`Search "${name.trim()}" saved! You can access your saved searches from the filter bar.`);
+    } catch (err: any) {
+      alert(`Could not save search: ${err?.message || 'Maximum 10 saved searches reached.'}`);
+    }
+  });
+
+  // Open saved searches panel
+  const openSavedSearchesBtn = container.querySelector('#btn-open-saved-searches');
+  const panelMount = container.querySelector('#saved-searches-panel-mount') as HTMLElement | null;
+  openSavedSearchesBtn?.addEventListener('click', async () => {
+    if (!panelMount) return;
+    if (panelMount.style.display !== 'none') {
+      panelMount.style.display = 'none';
+      return;
+    }
+    panelMount.style.display = 'block';
+    panelMount.innerHTML = '<div style="font-size:12px; color:#6B7280;">Loading saved searches...</div>';
+    try {
+      const searches = await getSavedSearches('projects');
+      if (searches.length === 0) {
+        panelMount.innerHTML = `
+          <div style="font-size: 13px; color: #6B7280; display: flex; justify-content: space-between; align-items: center;">
+            <span>No saved searches yet. Click "Save this search" to bookmark your current criteria (up to 10).</span>
+            <button type="button" id="btn-close-saved-panel" style="background: none; border: none; font-size: 13px; color: #4B5563; cursor: pointer;">✕</button>
+          </div>
+        `;
+      } else {
+        panelMount.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <strong style="font-size: 13px; color: #111827;">Saved Searches (${searches.length}/10 max)</strong>
+            <button type="button" id="btn-close-saved-panel" style="background: none; border: none; font-size: 13px; color: #4B5563; cursor: pointer;">✕</button>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${searches.map((s) => `
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 12.5px;">
+                <button type="button" class="btn-load-saved-search" data-id="${s.id}" style="background: none; border: none; color: #2563EB; font-weight: 600; cursor: pointer; text-align: left; padding: 0;">
+                  ${s.name}
+                </button>
+                <button type="button" class="btn-delete-saved-search" data-id="${s.id}" style="background: none; border: none; color: #EF4444; font-size: 12px; cursor: pointer;">
+                  Delete
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        panelMount.querySelectorAll('.btn-load-saved-search').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = (btn as HTMLElement).dataset.id;
+            const target = searches.find((x) => x.id === id);
+            if (target && target.params) {
+              panelMount.style.display = 'none';
+              onFiltersChange(target.params as ProjectFiltersState);
+            }
+          });
+        });
+
+        panelMount.querySelectorAll('.btn-delete-saved-search').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const id = (btn as HTMLElement).dataset.id;
+            if (id) {
+              await deleteSavedSearch(id);
+              openSavedSearchesBtn.dispatchEvent(new Event('click'));
+            }
+          });
+        });
+      }
+
+      panelMount.querySelector('#btn-close-saved-panel')?.addEventListener('click', () => {
+        panelMount.style.display = 'none';
+      });
+    } catch {
+      panelMount.innerHTML = '<div style="font-size:12px; color:#EF4444;">Failed to load saved searches.</div>';
+    }
   });
 
   // Clear all button

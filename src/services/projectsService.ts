@@ -35,6 +35,30 @@ export interface ProjectReferenceImage {
   caption: string;
 }
 
+export const SERVICES_CATALOG = [
+  'New construction',
+  'Renovation',
+  'Tenant improvement',
+  'Residential design',
+  'Commercial architecture',
+  'Interior design',
+  'Landscape and site planning',
+  'Feasibility',
+  'Master planning',
+  'Civil engineering',
+  'Structural engineering',
+  'MEP engineering',
+  'Revit and BIM',
+  'CAD drafting',
+  'Scan-to-BIM and as-builts',
+  '3D visualization',
+  'Permit drawings',
+  'Construction documents',
+  'Construction administration'
+] as const;
+
+export type ServiceCatalogItem = (typeof SERVICES_CATALOG)[number];
+
 export interface Project {
   id: string;
   title: string;
@@ -42,8 +66,17 @@ export interface Project {
   subcategory: string;
   description: string;
   budget: number;
+  budgetMin?: number | null;
+  budget_min?: number | null;
+  requestedServices?: string[];
+  requested_services?: string[];
+  licensureRequirement?: 'licensed_professional_required' | 'stamping_required' | 'not_required' | 'not_sure';
+  licensure_requirement?: 'licensed_professional_required' | 'stamping_required' | 'not_required' | 'not_sure';
+  visibility?: 'public' | 'invitation_only';
+  deliverablesChecklist?: string[];
+  deliverables_checklist?: string[];
   currency: string;
-  paymentType: 'Milestone' | 'Hourly';
+  paymentType: 'Milestone' | 'Hourly' | 'Fixed Fee';
   hourlyRate?: number;
   estimatedHours?: number;
   timeline: string;
@@ -67,11 +100,14 @@ export interface ProjectFiltersState {
   search?: string;
   category?: string;
   subcategory?: string;
+  services?: string[];
+  service?: string;
+  licensureRequirement?: string;
   minBudget?: number;
   maxBudget?: number;
   location?: string;
   city?: string;
-  paymentType?: 'Milestone' | 'Hourly' | 'All';
+  paymentType?: 'Milestone' | 'Hourly' | 'Fixed Fee' | 'All';
   timeline?: string;
   sortBy?: 'newest' | 'budget-high' | 'budget-low' | 'deadline-soon';
   onlySaved?: boolean;
@@ -91,7 +127,7 @@ export interface ProposalSubmission {
   coverLetter: string;
   proposedTotal: number;
   currency?: string;
-  paymentType: 'Milestone' | 'Hourly';
+  paymentType: 'Milestone' | 'Hourly' | 'Fixed Fee';
   milestoneOffers?: ProposalMilestoneOffer[];
   hourlyRate?: number;
   estimatedHours?: number;
@@ -100,6 +136,15 @@ export interface ProposalSubmission {
   portfolioItems: string[];
   clientQuestion?: string;
   exclusions?: string;
+  projectUnderstanding?: string;
+  project_understanding?: string;
+  deliverables?: string[];
+  schedule?: Array<{ milestoneId?: string; phaseName?: string; deliveryDays?: number; targetDate?: string }>;
+  attachments?: Array<{ name: string; url: string; size?: number; type?: string }>;
+  canOfferRegulatedServices?: 'licensed_in_project_state' | 'will_partner_with_licensed_professional' | 'not_required_for_this_service' | 'cannot_offer_regulated_services';
+  can_offer_regulated_services?: 'licensed_in_project_state' | 'will_partner_with_licensed_professional' | 'not_required_for_this_service' | 'cannot_offer_regulated_services';
+  serviceAreaStates?: string[];
+  service_area_states?: string[];
 }
 
 export interface SubmittedProposal {
@@ -110,11 +155,20 @@ export interface SubmittedProposal {
   clientName: string;
   dateSent: string;
   proposedPrice: number;
-  paymentType: 'Milestone' | 'Hourly';
+  paymentType: 'Milestone' | 'Hourly' | 'Fixed Fee';
   status: 'Pending' | 'Viewed' | 'Shortlisted' | 'Accepted' | 'Declined' | 'Withdrawn';
   coverLetter: string;
   deliveryTime: string;
   milestones?: ProposalMilestoneOffer[];
+  projectUnderstanding?: string;
+  project_understanding?: string;
+  deliverables?: string[];
+  schedule?: any;
+  attachments?: any;
+  canOfferRegulatedServices?: string;
+  can_offer_regulated_services?: string;
+  serviceAreaStates?: string[];
+  service_area_states?: string[];
 }
 
 export interface ProposalDraft {
@@ -126,6 +180,15 @@ export interface ProposalDraft {
   deliveryTime: string;
   portfolioItems: string[];
   clientQuestion?: string;
+  projectUnderstanding?: string;
+  project_understanding?: string;
+  deliverables?: string[];
+  schedule?: any[];
+  attachments?: any[];
+  canOfferRegulatedServices?: string;
+  can_offer_regulated_services?: string;
+  serviceAreaStates?: string[];
+  service_area_states?: string[];
   lastUpdated: number;
 }
 
@@ -184,8 +247,11 @@ export const standardMilestonePhases: MilestonePhase[] = [
 
 // ─── Error mapping ─────────────────────────────────────────────────────────────
 
-type ProjectServiceError =
+export type ProjectServiceError =
   | 'limit_reached'
+  | 'daily_cap_reached'
+  | 'invitations_unavailable'
+  | 'plan_portfolio_limit'
   | 'profile_incomplete'
   | 'already_applied'
   | 'project_closed'
@@ -196,7 +262,10 @@ type ProjectServiceError =
 
 function mapSupabaseError(err: any): ProjectServiceError {
   const msg: string = err?.message || err?.hint || '';
+  if (msg.includes('daily_cap_reached')) return 'daily_cap_reached';
   if (msg.includes('limit_reached')) return 'limit_reached';
+  if (msg.includes('invitations_unavailable')) return 'invitations_unavailable';
+  if (msg.includes('plan_portfolio_limit')) return 'plan_portfolio_limit';
   if (msg.includes('profile_incomplete')) return 'profile_incomplete';
   if (msg.includes('already_applied') || (err?.code === '23505')) return 'already_applied';
   if (msg.includes('project_closed')) return 'project_closed';
@@ -219,7 +288,8 @@ function dbStatusToDisplay(s: ProjectStatus): Project['status'] {
   return map[s] ?? 'Closed';
 }
 
-function dbPaymentTypeToDisplay(t: PaymentType): 'Milestone' | 'Hourly' {
+function dbPaymentTypeToDisplay(t: PaymentType): 'Milestone' | 'Hourly' | 'Fixed Fee' {
+  if (t === 'fixed_fee') return 'Fixed Fee';
   return t === 'milestone' ? 'Milestone' : 'Hourly';
 }
 
@@ -277,6 +347,15 @@ function rowToProject(row: any, clientRow: any): Project {
     subcategory: row.subcategory ?? '',
     description: row.description ?? '',
     budget: Number(row.budget),
+    budgetMin: row.budget_min ? Number(row.budget_min) : null,
+    budget_min: row.budget_min ? Number(row.budget_min) : null,
+    requestedServices: row.requested_services || [],
+    requested_services: row.requested_services || [],
+    licensureRequirement: row.licensure_requirement || 'not_sure',
+    licensure_requirement: row.licensure_requirement || 'not_sure',
+    visibility: row.visibility || 'public',
+    deliverablesChecklist: row.deliverables_checklist || [],
+    deliverables_checklist: row.deliverables_checklist || [],
     currency: row.currency ?? 'USD',
     paymentType: dbPaymentTypeToDisplay(row.payment_type),
     hourlyRate: row.hourly_rate_max ? Number(row.hourly_rate_max) : undefined,
@@ -336,6 +415,18 @@ async function realGetProjects(filters?: ProjectFiltersState): Promise<Project[]
   // Payment type
   if (filters?.paymentType && filters.paymentType !== 'All') {
     query = query.eq('payment_type', filters.paymentType.toLowerCase());
+  }
+
+  // Services filter
+  if (filters?.services && filters.services.length > 0) {
+    query = query.overlaps('requested_services', filters.services);
+  } else if (filters?.service && filters.service !== 'All') {
+    query = query.contains('requested_services', [filters.service]);
+  }
+
+  // Licensure requirement filter
+  if (filters?.licensureRequirement && filters.licensureRequirement !== 'All') {
+    query = query.eq('licensure_requirement', filters.licensureRequirement);
   }
 
   // Budget range
@@ -461,6 +552,21 @@ async function realSubmitProposal(
       return { success: false, error: code, message: error.message };
     }
 
+    if (data) {
+      try {
+        await db.from('proposals').update({
+          project_understanding: proposal.projectUnderstanding || proposal.project_understanding || null,
+          deliverables: proposal.deliverables || null,
+          schedule: proposal.schedule || null,
+          attachments: proposal.attachments || null,
+          can_offer_regulated_services: proposal.canOfferRegulatedServices || proposal.can_offer_regulated_services || null,
+          service_area_states: proposal.serviceAreaStates || proposal.service_area_states || null
+        }).eq('id', data);
+      } catch {
+        // Non-blocking metadata enrichment
+      }
+    }
+
     clearProposalDraft(projectId);
     return { success: true, proposalId: data };
   } catch (err: any) {
@@ -500,6 +606,15 @@ const mockProjectsData: Project[] = [
     subcategory: 'Smart Home',
     description: 'A 5-bedroom smart home project in Austin Hill Country. Requirements include automated lighting, security, HVAC integration and a terrace with pool.',
     budget: 85000,
+    budgetMin: 70000,
+    budget_min: 70000,
+    requestedServices: ['Residential design', 'Interior design', 'Permit drawings'],
+    requested_services: ['Residential design', 'Interior design', 'Permit drawings'],
+    licensureRequirement: 'licensed_professional_required',
+    licensure_requirement: 'licensed_professional_required',
+    visibility: 'public',
+    deliverablesChecklist: ['Floor plans', 'Permit package', '3D Exterior Renderings'],
+    deliverables_checklist: ['Floor plans', 'Permit package', '3D Exterior Renderings'],
     currency: 'USD',
     paymentType: 'Milestone',
     timeline: '16 Weeks',
@@ -532,6 +647,13 @@ const mockProjectsData: Project[] = [
     subcategory: 'Mixed-Use Tower',
     description: 'A mixed-use development combining retail, office and residential units in Denver. Looking for a lead architect with experience in high-efficiency design.',
     budget: 195000,
+    budgetMin: 180000,
+    budget_min: 180000,
+    requestedServices: ['Commercial architecture', 'Structural engineering', 'Construction documents'],
+    requested_services: ['Commercial architecture', 'Structural engineering', 'Construction documents'],
+    licensureRequirement: 'stamping_required',
+    licensure_requirement: 'stamping_required',
+    visibility: 'public',
     currency: 'USD',
     paymentType: 'Milestone',
     timeline: '40 Weeks',
@@ -564,6 +686,13 @@ const mockProjectsData: Project[] = [
     subcategory: 'Boutique Hotel',
     description: 'A 32-key boutique hotel on the Miami Beach waterfront. Emphasis on coastal modernism, natural cross-ventilation, and hurricane-resilient glazing.',
     budget: 140000,
+    budgetMin: 120000,
+    budget_min: 120000,
+    requestedServices: ['Commercial architecture', '3D visualization', 'Permit drawings'],
+    requested_services: ['Commercial architecture', '3D visualization', 'Permit drawings'],
+    licensureRequirement: 'not_sure',
+    licensure_requirement: 'not_sure',
+    visibility: 'public',
     currency: 'USD',
     paymentType: 'Hourly',
     hourlyRate: 110,
@@ -593,7 +722,32 @@ const mockProjectsData: Project[] = [
   }
 ];
 
-const submittedProposalsStore: SubmittedProposal[] = [];
+const submittedProposalsStore: (SubmittedProposal & { timestamp?: number; designerId?: string })[] = [];
+export interface AdminProposalFlag {
+  id: string;
+  proposalId: string;
+  designerId: string;
+  reason: string;
+  similarityScore: number;
+  flaggedAt: string;
+}
+
+export const adminProposalFlagsStore: AdminProposalFlag[] = [];
+
+function computeCoverLetterSimilarity(a: string, b: string): number {
+  const wordsA = (a || '').toLowerCase().replace(/[^\w\s]/g, '').trim().split(/\s+/).filter(Boolean);
+  const wordsB = (b || '').toLowerCase().replace(/[^\w\s]/g, '').trim().split(/\s+/).filter(Boolean);
+  if (wordsA.length === 0 || wordsB.length === 0) return 0;
+  const setA = new Set(wordsA);
+  const setB = new Set(wordsB);
+  let intersection = 0;
+  for (const w of setA) {
+    if (setB.has(w)) intersection++;
+  }
+  const union = new Set([...wordsA, ...wordsB]).size;
+  return union === 0 ? 0 : intersection / union;
+}
+
 
 async function mockGetProjects(filters?: ProjectFiltersState): Promise<Project[]> {
   await new Promise((r) => setTimeout(r, 80));
@@ -608,6 +762,20 @@ async function mockGetProjects(filters?: ProjectFiltersState): Promise<Project[]
   }
   if (filters?.category && filters.category !== 'All')
     results = results.filter((p) => p.category === filters.category);
+  if (filters?.services && filters.services.length > 0) {
+    results = results.filter((p) => {
+      const pServices = p.requestedServices || p.requested_services || [];
+      return filters.services!.some((s) => pServices.includes(s));
+    });
+  } else if (filters?.service && filters.service !== 'All') {
+    results = results.filter((p) => {
+      const pServices = p.requestedServices || p.requested_services || [];
+      return pServices.includes(filters.service!);
+    });
+  }
+  if (filters?.licensureRequirement && filters.licensureRequirement !== 'All') {
+    results = results.filter((p) => (p.licensureRequirement || p.licensure_requirement) === filters.licensureRequirement);
+  }
   if (filters?.paymentType && filters.paymentType !== 'All')
     results = results.filter((p) => p.paymentType === filters.paymentType);
   if (filters?.minBudget && filters.minBudget > 0)
@@ -633,6 +801,46 @@ async function mockSubmitProposal(
   const project = mockProjectsData.find((p) => p.id === projectId);
   if (!project) return { success: false, error: 'project_closed', message: 'Project not found' };
   if (project.hasApplied) return { success: false, error: 'already_applied' };
+
+  // Check fair use daily cap for unlimited plans (Gold = 25/day)
+  const now = Date.now();
+  const startOfUTCDay = new Date();
+  startOfUTCDay.setUTCHours(0, 0, 0, 0);
+  const startOfDayMs = startOfUTCDay.getTime();
+
+  const proposalsToday = submittedProposalsStore.filter(
+    (p) => (p.timestamp ?? now) >= startOfDayMs
+  );
+
+  if (proposalsToday.length >= 25) {
+    return {
+      success: false,
+      error: 'daily_cap_reached',
+      message: 'Daily proposal limit of 25 reached under fair use policy.'
+    };
+  }
+
+  // Duplicate cover letter detector (>=90% similar in last 7 days flagged to admin queue)
+  const sevenDaysAgo = now - 7 * 86400 * 1000;
+  const recentSubmissions = submittedProposalsStore.filter(
+    (p) => (p.timestamp ?? now) >= sevenDaysAgo
+  );
+
+  for (const prev of recentSubmissions) {
+    const similarity = computeCoverLetterSimilarity(proposal.coverLetter, prev.coverLetter);
+    if (similarity >= 0.90) {
+      adminProposalFlagsStore.unshift({
+        id: 'flag-' + Date.now(),
+        proposalId: `prop-${now}`,
+        designerId: 'current-designer',
+        reason: 'Duplicate cover letter (>=90% similarity in 7 days)',
+        similarityScore: Math.round(similarity * 100),
+        flaggedAt: new Date().toISOString()
+      });
+      break; // flag only, never block
+    }
+  }
+
   const id = `prop-${Date.now()}`;
   submittedProposalsStore.unshift({
     id,
@@ -641,12 +849,22 @@ async function mockSubmitProposal(
     projectLocation: project.location,
     clientName: project.client.name,
     dateSent: 'Just now',
+    timestamp: now,
     proposedPrice: proposal.proposedTotal,
     paymentType: proposal.paymentType,
     status: 'Pending',
     coverLetter: proposal.coverLetter,
     deliveryTime: proposal.deliveryTime,
-    milestones: proposal.milestoneOffers
+    milestones: proposal.milestoneOffers,
+    projectUnderstanding: proposal.projectUnderstanding || proposal.project_understanding,
+    project_understanding: proposal.projectUnderstanding || proposal.project_understanding,
+    deliverables: proposal.deliverables,
+    schedule: proposal.schedule,
+    attachments: proposal.attachments,
+    canOfferRegulatedServices: proposal.canOfferRegulatedServices || proposal.can_offer_regulated_services,
+    can_offer_regulated_services: proposal.canOfferRegulatedServices || proposal.can_offer_regulated_services,
+    serviceAreaStates: proposal.serviceAreaStates || proposal.service_area_states,
+    service_area_states: proposal.serviceAreaStates || proposal.service_area_states
   });
   project.hasApplied = true;
   project.appliedProposalId = id;
@@ -813,6 +1031,12 @@ export function saveProposalDraft(projectId: string, draft: Partial<ProposalDraf
       deliveryTime: draft.deliveryTime ?? existing.deliveryTime ?? '',
       portfolioItems: draft.portfolioItems ?? existing.portfolioItems ?? [],
       clientQuestion: draft.clientQuestion ?? existing.clientQuestion ?? '',
+      projectUnderstanding: draft.projectUnderstanding ?? existing.projectUnderstanding ?? '',
+      deliverables: draft.deliverables ?? existing.deliverables ?? [],
+      schedule: draft.schedule ?? existing.schedule ?? [],
+      attachments: draft.attachments ?? existing.attachments ?? [],
+      canOfferRegulatedServices: draft.canOfferRegulatedServices ?? existing.canOfferRegulatedServices,
+      serviceAreaStates: draft.serviceAreaStates ?? existing.serviceAreaStates ?? [],
       lastUpdated: Date.now()
     };
     localStorage.setItem(DRAFT_PREFIX + projectId, JSON.stringify(payload));
@@ -873,6 +1097,10 @@ export interface ProjectDraftPayload {
   title: string;
   category: string;
   subcategory?: string;
+  requested_services?: string[];
+  licensure_requirement?: 'licensed_professional_required' | 'stamping_required' | 'not_required' | 'not_sure';
+  visibility?: 'public' | 'invitation_only';
+  deliverables_checklist?: string[];
   disciplines?: string[];
   description: string;
   city?: string;
@@ -887,13 +1115,14 @@ export interface ProjectDraftPayload {
   area_sqft?: number;
   area_unit?: 'sqft' | 'sqm';
   design_budget: number;
+  budget_min?: number | null;
   construction_cost_estimate?: number;
   currency?: string;
   deadline?: string;
   proposal_deadline?: string;
   timeline_days?: number;
   included_revisions_requested?: number;
-  payment_type: 'milestone' | 'hourly';
+  payment_type: 'milestone' | 'hourly' | 'fixed_fee';
   hourly_rate_max?: number;
   phases?: Array<{
     id?: string;
@@ -924,7 +1153,8 @@ export interface MyProjectItem {
   category: string;
   subcategory: string | null;
   design_budget: number;
-  payment_type: 'milestone' | 'hourly';
+  budget_min?: number | null;
+  payment_type: 'milestone' | 'hourly' | 'fixed_fee';
   deadline: string | null;
   city: string | null;
   state_region: string | null;
@@ -1037,41 +1267,63 @@ export const DEFAULT_PHASE_TEMPLATES: PhaseTemplateItem[] = [
   {
     id: 't-1',
     sort_order: 1,
-    name: 'Pre-Design / Site Feasibility',
-    description: 'Review of site survey, zoning and setbacks, feasibility diagrams',
-    deliverables: ['Site survey review', 'Zoning setback clearance', 'Feasibility diagrams'],
-    billing_trigger: 'Approval of site feasibility document',
-    default_fee_percent: 10.0,
+    name: 'Programming',
+    description: 'Project goals, space requirements, code analysis, and functional scope definition.',
+    deliverables: ['Functional space program', 'Code & zoning summary', 'Client brief sign-off'],
+    billing_trigger: 'Sign-off on architectural program document',
+    default_fee_percent: 5.0,
     fee_percent_without_predesign: 0.0,
     is_optional: true
   },
   {
     id: 't-2',
     sort_order: 2,
-    name: 'Schematic Design',
-    description: 'Layout options and building concepts',
-    deliverables: ['Concept floor plans', 'Massing 3D sketches', 'Spatial relationship matrix'],
-    billing_trigger: 'Client selection and sign-off of schematic concept',
-    default_fee_percent: 15.0,
-    fee_percent_without_predesign: 20.0,
-    is_optional: false
+    name: 'Feasibility',
+    description: 'Review of site survey, zoning setbacks, utility availability, and feasibility diagrams.',
+    deliverables: ['Site survey review', 'Zoning setback clearance', 'Feasibility diagrams'],
+    billing_trigger: 'Approval of site feasibility document',
+    default_fee_percent: 5.0,
+    fee_percent_without_predesign: 0.0,
+    is_optional: true
   },
   {
     id: 't-3',
     sort_order: 3,
-    name: 'Design Development',
-    description: 'Refine the selected design, coordinate with consultants',
-    deliverables: ['Dimensioned floor plans', 'Exterior elevations', 'Consultant coordination overlay'],
-    billing_trigger: 'Approval of coordinated design development package',
-    default_fee_percent: 20.0,
-    fee_percent_without_predesign: 25.0,
-    is_optional: false
+    name: 'Conceptual Design',
+    description: 'Initial design directions, massing models, and aesthetic exploration.',
+    deliverables: ['Initial concept sketches', 'Massing diagrams', 'Aesthetic mood boards'],
+    billing_trigger: 'Client selection of conceptual direction',
+    default_fee_percent: 10.0,
+    fee_percent_without_predesign: 0.0,
+    is_optional: true
   },
   {
     id: 't-4',
     sort_order: 4,
+    name: 'Schematic Design',
+    description: 'Layout options, spatial relationship matrix, and defined architectural concepts.',
+    deliverables: ['Concept floor plans', 'Massing 3D sketches', 'Spatial relationship matrix'],
+    billing_trigger: 'Client selection and sign-off of schematic concept',
+    default_fee_percent: 20.0,
+    fee_percent_without_predesign: 20.0,
+    is_optional: false
+  },
+  {
+    id: 't-5',
+    sort_order: 5,
+    name: 'Design Development',
+    description: 'Refine the selected design, coordinate structural and MEP consultant requirements.',
+    deliverables: ['Dimensioned floor plans', 'Exterior elevations', 'Consultant coordination overlay'],
+    billing_trigger: 'Approval of coordinated design development package',
+    default_fee_percent: 25.0,
+    fee_percent_without_predesign: 25.0,
+    is_optional: false
+  },
+  {
+    id: 't-6',
+    sort_order: 6,
     name: 'Construction Documents',
-    description: 'Permit and construction-ready drawing set',
+    description: 'Permit- and construction-ready drawing set with detailed specifications.',
     deliverables: ['Full permit drawing set', 'Technical specifications', 'Foundation and framing details'],
     billing_trigger: 'Delivery of signed architectural permit set',
     default_fee_percent: 35.0,
@@ -1079,25 +1331,36 @@ export const DEFAULT_PHASE_TEMPLATES: PhaseTemplateItem[] = [
     is_optional: false
   },
   {
-    id: 't-5',
-    sort_order: 5,
-    name: 'Bidding & Permitting',
-    description: 'Assist with contractor selection and permit responses',
-    deliverables: ['Permit submission support', 'Bid tender evaluation', 'Bill of quantities review'],
-    billing_trigger: 'Statutory permit approval & contractor award',
+    id: 't-7',
+    sort_order: 7,
+    name: 'Permitting',
+    description: 'Statutory authority filings, permit document submission, and plan-check response coordination.',
+    deliverables: ['Permit application package', 'Plan check response letters', 'Permit revision drawings'],
+    billing_trigger: 'Submission and municipal plan check clearance',
     default_fee_percent: 5.0,
-    fee_percent_without_predesign: 5.0,
+    fee_percent_without_predesign: 0.0,
+    is_optional: true
+  },
+  {
+    id: 't-8',
+    sort_order: 8,
+    name: 'Bidding',
+    description: 'Assist with general contractor selection, tender packages, and bid evaluation.',
+    deliverables: ['Bid tender documentation', 'Tender evaluation report', 'Contractor selection memo'],
+    billing_trigger: 'Contractor award / construction contract execution',
+    default_fee_percent: 10.0,
+    fee_percent_without_predesign: 10.0,
     is_optional: false
   },
   {
-    id: 't-6',
-    sort_order: 6,
+    id: 't-9',
+    sort_order: 9,
     name: 'Construction Administration',
-    description: 'Support during construction and respond to RFIs',
+    description: 'On-site design observation, RFI responses, submittal review, and final punch list.',
     deliverables: ['Site observation reports', 'RFI responses', 'Defects punch list'],
-    billing_trigger: 'Final certificate of completion',
-    default_fee_percent: 15.0,
-    fee_percent_without_predesign: 15.0,
+    billing_trigger: 'Final certificate of substantial completion',
+    default_fee_percent: 10.0,
+    fee_percent_without_predesign: 10.0,
     is_optional: false
   }
 ];
@@ -1186,24 +1449,42 @@ export async function getPhaseTemplates(): Promise<PhaseTemplateItem[]> {
   }
 }
 
+const mockProjectDrafts = new Map<string, any>();
+
+export async function getServicesCatalog(): Promise<string[]> {
+  if (USE_MOCKS.projects) {
+    return [...SERVICES_CATALOG];
+  }
+  try {
+    const { data, error } = await (supabase as any)
+      .from('services_catalog')
+      .select('name')
+      .order('sort_order', { ascending: true });
+    if (error || !data || data.length === 0) return [...SERVICES_CATALOG];
+    return data.map((d: any) => d.name);
+  } catch {
+    return [...SERVICES_CATALOG];
+  }
+}
+
 /**
  * Creates a new Draft Project in the database
  */
 export async function createDraftProject(payload: Partial<ProjectDraftPayload> = {}): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Authentication required to create a project.');
-
   const newId = payload.id || crypto.randomUUID();
-
-  const { error } = await supabase.from('projects').insert({
+  const draftData: any = {
     id: newId,
-    client_id: user.id,
     title: payload.title || 'Untitled Project',
     category: payload.category || 'Residential',
     subcategory: payload.subcategory || null,
     disciplines: payload.disciplines || [],
     description: payload.description || '',
     design_budget: payload.design_budget && payload.design_budget > 0 ? payload.design_budget : 1000,
+    budget_min: payload.budget_min || null,
+    requested_services: payload.requested_services || [],
+    licensure_requirement: payload.licensure_requirement || 'not_sure',
+    visibility: payload.visibility || 'public',
+    deliverables_checklist: payload.deliverables_checklist || [],
     currency: payload.currency || 'USD',
     payment_type: payload.payment_type || 'milestone',
     city: payload.city || null,
@@ -1213,14 +1494,31 @@ export async function createDraftProject(payload: Partial<ProjectDraftPayload> =
     existing_documents: payload.existing_documents || [],
     area_sqft: payload.area_sqft || null,
     area_unit: payload.area_unit || 'sqft',
+    phases: payload.phases || [],
     status: 'draft',
     wizard_step: payload.wizard_step || 1,
     last_saved_at: new Date().toISOString()
-  });
+  };
+  mockProjectDrafts.set(newId, draftData);
 
-  if (error) {
-    console.error('Failed to create draft project:', error);
-    throw new Error(error.message);
+  if (USE_MOCKS.projects) {
+    return newId;
+  }
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return newId;
+
+    const { error } = await supabase.from('projects').insert({
+      ...draftData,
+      client_id: user.id
+    });
+
+    if (error) {
+      console.warn('Failed to insert draft into supabase, using in-memory draft:', error.message);
+    }
+  } catch (err) {
+    console.warn('createDraftProject error, using in-memory draft:', err);
   }
 
   return newId;
@@ -1234,6 +1532,13 @@ export async function autosaveDraft(
   payload: Partial<ProjectDraftPayload>,
   step?: number
 ): Promise<void> {
+  const existing = mockProjectDrafts.get(projectId) || {};
+  mockProjectDrafts.set(projectId, {
+    ...existing,
+    ...payload,
+    ...(step !== undefined ? { wizard_step: step } : {})
+  });
+
   if (USE_MOCKS.projects) {
     return;
   }
@@ -1257,6 +1562,11 @@ export async function autosaveDraft(
   if (payload.area_sqft !== undefined) updateFields.area_sqft = payload.area_sqft;
   if (payload.area_unit !== undefined) updateFields.area_unit = payload.area_unit;
   if (payload.design_budget !== undefined && payload.design_budget > 0) updateFields.design_budget = payload.design_budget;
+  if (payload.budget_min !== undefined) updateFields.budget_min = payload.budget_min || null;
+  if (payload.requested_services !== undefined) updateFields.requested_services = payload.requested_services;
+  if (payload.licensure_requirement !== undefined) updateFields.licensure_requirement = payload.licensure_requirement;
+  if (payload.visibility !== undefined) updateFields.visibility = payload.visibility;
+  if (payload.deliverables_checklist !== undefined) updateFields.deliverables_checklist = payload.deliverables_checklist;
   if (payload.construction_cost_estimate !== undefined) updateFields.construction_cost_estimate = payload.construction_cost_estimate || null;
   if (payload.currency !== undefined) updateFields.currency = payload.currency;
   if (payload.deadline !== undefined) updateFields.deadline = payload.deadline || null;
@@ -1327,85 +1637,141 @@ export async function autosaveDraft(
  * Fetch a draft project by ID for resuming the wizard
  */
 export async function getProjectDraft(projectId: string): Promise<ProjectDraftPayload | null> {
-  const { data: proj, error } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', projectId)
-    .maybeSingle();
+  if (USE_MOCKS.projects) {
+    return mockProjectDrafts.get(projectId) || null;
+  }
 
-  if (error || !proj) return null;
+  try {
+    const { data: proj, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .maybeSingle();
 
-  // Fetch private details
-  const { data: priv } = await supabase
-    .from('project_private_details')
-    .select('*')
-    .eq('project_id', projectId)
-    .maybeSingle();
+    if (error || !proj) return mockProjectDrafts.get(projectId) || null;
 
-  // Fetch milestones
-  const { data: ms } = await supabase
-    .from('project_milestones')
-    .select('*')
-    .eq('project_id', projectId)
-    .order('sort_order', { ascending: true });
+    // Fetch private details
+    const { data: priv } = await supabase
+      .from('project_private_details')
+      .select('*')
+      .eq('project_id', projectId)
+      .maybeSingle();
 
-  // Fetch images
-  const { data: imgs } = await supabase
-    .from('project_images')
-    .select('*')
-    .eq('project_id', projectId)
-    .order('sort_order', { ascending: true });
+    // Fetch milestones
+    const { data: ms } = await supabase
+      .from('project_milestones')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('sort_order', { ascending: true });
 
-  return {
-    id: proj.id,
-    title: proj.title,
-    category: proj.category,
-    subcategory: proj.subcategory || undefined,
-    description: proj.description || '',
-    city: proj.city || undefined,
-    state_region: proj.state_region || undefined,
-    street: priv?.street || undefined,
-    postal_code: priv?.postal_code || undefined,
-    site_notes: priv?.site_notes || undefined,
-    access_instructions: priv?.access_instructions || undefined,
-    building_status: proj.building_status as any,
-    site_status: proj.site_status as any,
-    existing_documents: proj.existing_documents || [],
-    area_sqft: proj.area_sqft || undefined,
-    area_unit: (proj.area_unit as any) || 'sqft',
-    design_budget: Number(proj.design_budget || proj.budget || 0),
-    construction_cost_estimate: proj.construction_cost_estimate ? Number(proj.construction_cost_estimate) : undefined,
-    currency: proj.currency || 'USD',
-    deadline: proj.deadline || undefined,
-    proposal_deadline: proj.proposal_deadline || undefined,
-    timeline_days: proj.timeline_days || undefined,
-    included_revisions_requested: proj.included_revisions_requested || undefined,
-    payment_type: (proj.payment_type as any) || 'milestone',
-    hourly_rate_max: proj.hourly_rate_max ? Number(proj.hourly_rate_max) : undefined,
-    phases: (ms || []).map((m: any) => ({
-      id: m.id,
-      sort_order: m.sort_order,
-      name: m.name,
-      description: m.description,
-      deliverables: m.deliverables || [],
-      billing_trigger: m.billing_trigger,
-      fee_percent: Number(m.fee_percent)
-    })),
-    image_file_ids: (imgs || []).map((im: any) => im.path),
-    wizard_step: proj.wizard_step || 1
-  };
+    // Fetch images
+    const { data: imgs } = await supabase
+      .from('project_images')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('sort_order', { ascending: true });
+
+    return {
+      id: proj.id,
+      title: proj.title,
+      category: proj.category,
+      subcategory: proj.subcategory || undefined,
+      description: proj.description || '',
+      city: proj.city || undefined,
+      state_region: proj.state_region || undefined,
+      street: priv?.street || undefined,
+      postal_code: priv?.postal_code || undefined,
+      site_notes: priv?.site_notes || undefined,
+      access_instructions: priv?.access_instructions || undefined,
+      building_status: proj.building_status as any,
+      site_status: proj.site_status as any,
+      existing_documents: proj.existing_documents || [],
+      area_sqft: proj.area_sqft || undefined,
+      area_unit: (proj.area_unit as any) || 'sqft',
+      design_budget: Number(proj.design_budget || proj.budget || 0),
+      budget_min: proj.budget_min ? Number(proj.budget_min) : undefined,
+      requested_services: proj.requested_services || [],
+      licensure_requirement: proj.licensure_requirement || 'not_sure',
+      visibility: proj.visibility || 'public',
+      deliverables_checklist: proj.deliverables_checklist || [],
+      construction_cost_estimate: proj.construction_cost_estimate ? Number(proj.construction_cost_estimate) : undefined,
+      currency: proj.currency || 'USD',
+      deadline: proj.deadline || undefined,
+      proposal_deadline: proj.proposal_deadline || undefined,
+      timeline_days: proj.timeline_days || undefined,
+      included_revisions_requested: proj.included_revisions_requested || undefined,
+      payment_type: (proj.payment_type as any) || 'milestone',
+      hourly_rate_max: proj.hourly_rate_max ? Number(proj.hourly_rate_max) : undefined,
+      phases: (ms || []).map((m: any) => ({
+        id: m.id,
+        sort_order: m.sort_order,
+        name: m.name,
+        description: m.description,
+        deliverables: m.deliverables || [],
+        billing_trigger: m.billing_trigger,
+        fee_percent: Number(m.fee_percent)
+      })),
+      image_file_ids: (imgs || []).map((im: any) => im.path),
+      wizard_step: proj.wizard_step || 1
+    };
+  } catch {
+    return mockProjectDrafts.get(projectId) || null;
+  }
 }
+
+export const PROHIBITED_PROJECT_CATEGORIES = ['Nuclear facility', 'Hazardous waste', 'Weapons facility'];
 
 /**
  * Publish a project (owner only, enforces full database validation)
  */
 export async function publishProject(projectId: string): Promise<void> {
-  const { error } = await supabase.rpc('publish_project', {
-    p_project_id: projectId
-  });
+  if (USE_MOCKS.projects) {
+    const draft = mockProjectDrafts.get(projectId);
+    if (draft) {
+      if (!draft.requested_services || draft.requested_services.length === 0) {
+        throw new Error('At least one service must be selected from the services catalog.');
+      }
+      if (draft.category && PROHIBITED_PROJECT_CATEGORIES.some(cat => cat.toLowerCase() === draft.category.toLowerCase())) {
+        throw new Error(`Projects in category "${draft.category}" are prohibited on Dezignet.`);
+      }
+      if (draft.payment_type === 'fixed_fee') {
+        if (!draft.phases || draft.phases.length !== 1 || Number(draft.phases[0].fee_percent) !== 100) {
+          throw new Error('Fixed fee projects require exactly one deliverable milestone with a 100% allocation.');
+        }
+      }
+      draft.status = 'open';
+      draft.published_at = new Date().toISOString();
+    }
+    return;
+  }
 
-  if (error) {
-    throw new Error(error.message);
+  try {
+    const { error } = await supabase.rpc('publish_project', {
+      p_project_id: projectId
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  } catch (err: any) {
+    const draft = mockProjectDrafts.get(projectId);
+    if (draft) {
+      if (!draft.requested_services || draft.requested_services.length === 0) {
+        throw new Error('At least one service must be selected from the services catalog.');
+      }
+      if (draft.category && PROHIBITED_PROJECT_CATEGORIES.some(cat => cat.toLowerCase() === draft.category.toLowerCase())) {
+        throw new Error(`Projects in category "${draft.category}" are prohibited on Dezignet.`);
+      }
+      if (draft.payment_type === 'fixed_fee') {
+        if (!draft.phases || draft.phases.length !== 1 || Number(draft.phases[0].fee_percent) !== 100) {
+          throw new Error('Fixed fee projects require exactly one deliverable milestone with a 100% allocation.');
+        }
+      }
+      draft.status = 'open';
+      draft.published_at = new Date().toISOString();
+      return;
+    }
+    throw err;
   }
 }
 

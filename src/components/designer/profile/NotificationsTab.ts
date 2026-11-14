@@ -60,7 +60,7 @@ export function renderNotificationsTab(settings: DesignerNotificationSettings): 
 
           <div class="dez-toggle-row">
             <div>
-              <div class="dez-toggle-title">Escrow payment releases</div>
+              <div class="dez-toggle-title">Milestone payment releases</div>
               <div class="dez-toggle-desc">Confirmed fund disbursements to your available balance.</div>
             </div>
             <label class="dez-switch">
@@ -123,7 +123,7 @@ export function renderNotificationsTab(settings: DesignerNotificationSettings): 
 
           <div class="dez-toggle-row">
             <div>
-              <div class="dez-toggle-title">Escrow releases & earnings ready for withdrawal</div>
+              <div class="dez-toggle-title">Payment releases & earnings ready for withdrawal</div>
               <div class="dez-toggle-desc">Immediate alerts when earnings are credited.</div>
             </div>
             <label class="dez-switch">

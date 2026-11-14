@@ -86,7 +86,7 @@ let notificationsStore: NotificationItem[] = [
   {
     id: 'notif-6',
     type: 'milestone_funded',
-    title: 'Milestone deposit funded into escrow: $18,500.00',
+    title: 'Milestone deposit funded: $18,500.00',
     detail: 'Katherine Sterling funded Phase 2 for Modern Cantilevered Residence.',
     timestamp: '4 days ago',
     dateGroup: 'This week',
@@ -418,7 +418,7 @@ export function simulateNotification(typeKey: NotificationTypeKey): Notification
     },
     milestone_funded: {
       title: 'Milestone funded: $15,000.00',
-      detail: 'Alpine Heritage Group placed Milestone 2 funds into escrow.',
+      detail: 'Alpine Heritage Group funded Milestone 2.',
       payload: { projectId: 'proj-lake-zurich-spa', amount: 15000 }
     },
     deliverable_approved: {
@@ -487,8 +487,8 @@ export function simulateNotification(typeKey: NotificationTypeKey): Notification
       payload: { projectId: 'proj-1' }
     },
     plan_renewal: {
-      title: 'Dezignet Upgraded subscription renewed',
-      detail: 'Annual billing of $479.90 was processed on Visa ••••4242.',
+      title: 'Dezignet Gold subscription renewed',
+      detail: 'Annual billing of $490.00 was processed on Visa ••••4242.',
       payload: {}
     },
     system_announcement: {

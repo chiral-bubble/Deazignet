@@ -7,13 +7,16 @@ import type { Project } from '../../services/projectsService';
 import { formatMoney } from '../../utils/formatters';
 
 export function renderProjectListItem(project: Project, viewMode: 'list' | 'grid' = 'list'): string {
-  const isMilestone = project.paymentType === 'Milestone';
-  const paymentBadge = isMilestone ? 'Milestone' : 'Hourly';
+  const isMilestone = project.paymentType === 'Milestone' || project.paymentType === 'Fixed Fee';
+  const paymentBadge = project.paymentType;
   
-  // Format budget
-  const budgetFormatted = isMilestone
-    ? formatMoney(project.budget)
-    : `${formatMoney(project.hourlyRate || 0)}/hr (Est. ${formatMoney(project.budget)})`;
+  // Format budget range
+  const budgetMin = project.budgetMin || project.budget_min;
+  const budgetFormatted = budgetMin
+    ? `$${Number(budgetMin).toLocaleString()} to ${formatMoney(project.budget)}`
+    : isMilestone
+      ? formatMoney(project.budget)
+      : `${formatMoney(project.hourlyRate || 0)}/hr (Est. ${formatMoney(project.budget)})`;
 
   // Status or proposal badge
   let statusChipHtml = '';
@@ -22,6 +25,21 @@ export function renderProjectListItem(project: Project, viewMode: 'list' | 'grid
   } else if (project.status === 'Closed') {
     statusChipHtml = `<span class="dez-closed-chip">Closed</span>`;
   }
+
+  // Licensure requirement chip
+  const licReq = project.licensureRequirement || project.licensure_requirement;
+  let licChipHtml = '';
+  if (licReq === 'licensed_professional_required') {
+    licChipHtml = `<span class="dez-plain-chip" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-weight: 600;">Licensed Pro Required</span>`;
+  } else if (licReq === 'stamping_required') {
+    licChipHtml = `<span class="dez-plain-chip" style="background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; font-weight: 600;">Stamp Required</span>`;
+  }
+
+  // Requested services chips
+  const requestedServices = project.requestedServices || project.requested_services || [];
+  const servicesChipsHtml = requestedServices.slice(0, 3).map((s) => `
+    <span class="dez-plain-chip" style="background: #EFF6FF; color: #1D4ED8; font-size: 11px;">${s}</span>
+  `).join('') + (requestedServices.length > 3 ? `<span class="dez-plain-chip" style="font-size: 11px;">+${requestedServices.length - 3} more</span>` : '');
 
   // Bookmark icon
   const bookmarkIcon = project.isSaved
@@ -39,9 +57,11 @@ export function renderProjectListItem(project: Project, viewMode: 'list' | 'grid
       <div class="dez-row-top">
         <div class="dez-row-title-area">
           <h3 class="dez-project-title">${project.title}</h3>
-          <div class="dez-row-chips">
+          <div class="dez-row-chips" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
             <span class="dez-plain-chip">${project.category}</span>
-            <span class="dez-plain-chip">${project.subcategory}</span>
+            ${project.subcategory ? `<span class="dez-plain-chip">${project.subcategory}</span>` : ''}
+            ${licChipHtml}
+            ${servicesChipsHtml}
             ${statusChipHtml}
           </div>
         </div>

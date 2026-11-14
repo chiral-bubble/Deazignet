@@ -159,7 +159,7 @@ export async function initProposalDetail(
     await acceptProposalDev(proposalId);
     callbacks.onShowToast(
       'Proposal Accepted (Dev Test)',
-      'Created active project, added milestone escrow to Payments, and generated notifications.',
+      'Created active project, added funded milestone to Payments, and generated notifications.',
       'success'
     );
     // Reload view

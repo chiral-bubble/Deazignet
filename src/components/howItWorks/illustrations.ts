@@ -165,7 +165,7 @@ export function renderStep3Illustration(): string {
             </svg>
           </div>
           <div class="mini-ui__escrow-text">
-            <strong>Payment Secured</strong> — Funds protected in Escrow
+            <strong>Payment Secured</strong> — Funds held until you approve
           </div>
         </div>
       </div>

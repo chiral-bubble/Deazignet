@@ -65,14 +65,14 @@ export function renderDevProfileToolbar(): string {
         <div class="dez-dev-group">
           <span class="dez-dev-group-label">Plan:</span>
           <div class="dez-dev-seg-group">
-            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'free' ? 'is-active' : ''}" data-set-plan="free" title="Free Plan (5 proposals/mo, 10% fee)">
+            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'free' ? 'is-active' : ''}" data-set-plan="free" title="Free Plan (3 proposals/mo)">
               Free
             </button>
-            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'basic' ? 'is-active' : ''}" data-set-plan="basic" title="Basic Plan (10 proposals/mo, 5% fee)">
+            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'basic' ? 'is-active' : ''}" data-set-plan="basic" title="Basic Plan (15 proposals/mo)">
               Basic
             </button>
-            <button type="button" class="dez-dev-seg-btn ${currentPlan === 'upgraded' ? 'is-active' : ''}" data-set-plan="upgraded" title="Upgraded Plan (Unlimited, 4% fee)">
-              Upgraded
+            <button type="button" class="dez-dev-seg-btn ${(currentPlan === 'gold' || currentPlan === 'upgraded') ? 'is-active' : ''}" data-set-plan="gold" title="Gold Plan (Unlimited proposals & projects)">
+              Gold
             </button>
           </div>
         </div>
@@ -162,7 +162,7 @@ export function initDevProfileToolbar(
   // Set designer plan buttons
   root.querySelectorAll<HTMLButtonElement>('[data-set-plan]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      const planKey = btn.getAttribute('data-set-plan') as 'free' | 'basic' | 'upgraded';
+      const planKey = (btn.getAttribute('data-set-plan') === 'upgraded' ? 'gold' : btn.getAttribute('data-set-plan')) as 'free' | 'basic' | 'gold';
       if (planKey) {
         const activeId = getActiveLoggedUserId();
         await devSwitchDesignerPlan(activeId, planKey);

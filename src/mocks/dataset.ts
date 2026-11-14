@@ -102,7 +102,7 @@ export interface SharedProposal {
   projectTitle: string;
   clientName: string;
   clientLocation: string;
-  paymentType: 'Milestone' | 'Hourly';
+  paymentType: 'Milestone' | 'Hourly' | 'Fixed Fee';
   proposedPrice: number;
   clientBudget: number;
   deliveryTime: string;
@@ -121,6 +121,15 @@ export interface SharedProposal {
   editCount: number;
   hasClientMessaged: boolean;
   conversationId?: string;
+  projectUnderstanding?: string;
+  project_understanding?: string;
+  deliverables?: string[];
+  schedule?: Array<{ milestoneId?: string; phaseName?: string; deliveryDays?: number; targetDate?: string }>;
+  attachments?: Array<{ name: string; url: string; size?: number; type?: string }>;
+  canOfferRegulatedServices?: string;
+  can_offer_regulated_services?: string;
+  serviceAreaStates?: string[];
+  service_area_states?: string[];
 }
 
 export interface SharedActiveProject {
@@ -131,7 +140,7 @@ export interface SharedActiveProject {
   clientName: string;
   clientCompany?: string;
   clientLocation: string;
-  paymentType: 'Milestone' | 'Hourly';
+  paymentType: 'Milestone' | 'Hourly' | 'Fixed Fee';
   status: 'awaiting_deliverable' | 'in_review' | 'approved_released' | 'active_hourly';
   statusLabel: string;
   category: string;
@@ -178,6 +187,8 @@ export interface SharedTransaction {
   statusNote?: string;
   payoutAccountMasked?: string;
   timeline: Array<{ event: string; timestamp: string }>;
+  fee_schedule_snapshot?: any;
+  fee_schedule_version?: string;
 }
 
 export interface SharedPayoutAccount {
@@ -256,7 +267,7 @@ export interface SharedNotification {
 }
 
 export interface SharedPlanState {
-  currentPlanId: 'free' | 'basic' | 'upgraded';
+  currentPlanId: 'free' | 'basic' | 'gold' | 'upgraded';
   billingCycle: 'monthly' | 'yearly';
   renewsAt: string;
   paymentMethod: {
@@ -862,9 +873,10 @@ export class DezignetSharedDataset {
       netAmount: 12187.5,
       status: 'Held',
       statusNote: 'Held while client reviews working drawings and CAD schedules.',
+      fee_schedule_version: '2026.11-progressive',
       timeline: [
         { event: 'Deliverables submitted by designer', timestamp: daysAgo(1) + ' 14:20' },
-        { event: 'Escrow lock placed for client review', timestamp: daysAgo(1) + ' 14:22' }
+        { event: 'Milestone funds held for client review', timestamp: daysAgo(1) + ' 14:22' }
       ]
     },
     {
@@ -880,6 +892,7 @@ export class DezignetSharedDataset {
       feeAmount: 64.75,
       netAmount: 2525.25,
       status: 'Completed',
+      fee_schedule_version: '2026.11-progressive',
       timeline: [
         { event: 'Weekly time log submitted', timestamp: daysAgo(7) + ' 18:00' },
         { event: 'Client payment processed & funds credited', timestamp: daysAgo(6) + ' 09:15' }
@@ -899,6 +912,7 @@ export class DezignetSharedDataset {
       feeAmount: 375.0,
       netAmount: 14625.0,
       status: 'Completed',
+      fee_schedule_version: '2026.11-progressive',
       timeline: [
         { event: 'Schematics submitted', timestamp: daysAgo(16) + ' 11:00' },
         { event: 'Client approval confirmed', timestamp: daysAgo(14) + ' 16:45' },
@@ -916,6 +930,7 @@ export class DezignetSharedDataset {
       feeAmount: 0.0,
       netAmount: -10000.0,
       status: 'Completed',
+      fee_schedule_version: '2026.11-progressive',
       payoutAccountMasked: 'JPMorgan Chase ••••4821',
       timeline: [
         { event: 'Withdrawal requested by designer', timestamp: daysAgo(20) + ' 10:12' },
@@ -926,13 +941,14 @@ export class DezignetSharedDataset {
       id: 'tx-5',
       referenceId: 'DEZ-TX-81090',
       date: daysAgo(27),
-      description: 'Dezignet Upgraded Subscription (Annual)',
+      description: 'Dezignet Gold Subscription (Annual)',
       type: 'Plan charge',
       grossAmount: -479.9,
       feePercentage: 0,
       feeAmount: 0.0,
       netAmount: -479.9,
       status: 'Completed',
+      fee_schedule_version: '2026.11-progressive',
       timeline: [
         { event: 'Annual plan subscription billed to Visa ••••4242', timestamp: daysAgo(27) + ' 00:01' }
       ]
@@ -941,7 +957,7 @@ export class DezignetSharedDataset {
       id: 'tx-6',
       referenceId: 'DEZ-TX-79880',
       date: daysAgo(35),
-      description: 'Project deposit funded into escrow',
+      description: 'Project deposit funded',
       projectId: 'proj-1',
       projectName: 'Modern Cantilevered Residence, Zurich',
       type: 'Milestone released',
@@ -950,9 +966,10 @@ export class DezignetSharedDataset {
       feeAmount: 750.0,
       netAmount: 29250.0,
       status: 'Pending',
-      statusNote: 'Held in escrow pending project milestone completion.',
+      statusNote: 'Funds are held by our payment provider until you approve project milestone completion.',
+      fee_schedule_version: '2026.11-progressive',
       timeline: [
-        { event: 'Client escrow funded', timestamp: daysAgo(35) + ' 13:20' }
+        { event: 'Client milestone funded', timestamp: daysAgo(35) + ' 13:20' }
       ]
     }
   ];
@@ -1000,7 +1017,7 @@ export class DezignetSharedDataset {
   ];
 
   public planState: SharedPlanState = {
-    currentPlanId: 'upgraded',
+    currentPlanId: 'gold',
     billingCycle: 'yearly',
     renewsAt: daysFromNow(338),
     paymentMethod: {
@@ -1062,7 +1079,7 @@ export class DezignetSharedDataset {
           senderId: 'system',
           senderName: 'Dezignet System',
           isSelf: false,
-          text: 'Milestone 2 deliverable submitted & escrow held for client review',
+          text: 'Milestone 2 deliverable submitted & funds held for client review',
           timestamp: '02:22 PM',
           dateString: daysAgo(1),
           status: 'Read',
@@ -1074,7 +1091,7 @@ export class DezignetSharedDataset {
           senderId: 'client-1',
           senderName: 'Dr. Tariq Al-Mansoor',
           isSelf: false,
-          text: 'The structural engineer has approved the revised cantilever reinforcement schedule. We will release the milestone escrow tomorrow morning.',
+          text: 'The structural engineer has approved the revised cantilever reinforcement schedule. We will release the milestone payment tomorrow morning.',
           timestamp: '10:42 AM',
           dateString: 'Today',
           status: 'Delivered',
@@ -1178,7 +1195,7 @@ export class DezignetSharedDataset {
     },
     {
       id: 'notif-3',
-      title: 'Escrow payment credited: $2,525.25',
+      title: 'Milestone payment credited: $2,525.25',
       detail: 'Hourly invoice paid for Fintech Headquarters Workspace Architecture.',
       timestamp: daysAgo(6),
       type: 'payment',
@@ -1216,7 +1233,7 @@ export class DezignetSharedDataset {
       this.balances.inEscrow = 32000.0;
       this.balances.totalEarned = 148200.0;
       this.planState.proposalsUsedThisMonth = 5;
-      this.planState.currentPlanId = 'upgraded';
+      this.planState.currentPlanId = 'gold';
     }
   }
 
@@ -1290,9 +1307,9 @@ export class DezignetSharedDataset {
     prop.timeline.push({ stage: 'Accepted', date: 'Today', completed: true });
 
     // Update or create active project
-    let active = this.activeProjects.find((a) => a.projectId === prop.projectId);
+    let active: SharedActiveProject | undefined = this.activeProjects.find((a) => a.projectId === prop.projectId);
     if (!active) {
-      active = {
+      const newActive: SharedActiveProject = {
         id: `act-${Date.now()}`,
         projectId: prop.projectId,
         title: prop.projectTitle,
@@ -1309,7 +1326,8 @@ export class DezignetSharedDataset {
         completedMilestonesCount: 0,
         totalMilestonesCount: prop.phases.length
       };
-      this.activeProjects.unshift(active);
+      this.activeProjects.unshift(newActive);
+      active = newActive;
     }
 
     // Add Escrow balance
@@ -1319,7 +1337,7 @@ export class DezignetSharedDataset {
     this.notifications.unshift({
       id: `notif-${Date.now()}`,
       title: `Proposal Accepted: "${prop.projectTitle}"`,
-      detail: `${prop.clientName} accepted your proposal. Client has funded the initial milestone into escrow.`,
+      detail: `${prop.clientName} accepted your proposal. Client has funded the initial milestone.`,
       timestamp: 'Just now',
       type: 'proposal',
       isUnread: true,
@@ -1341,9 +1359,7 @@ export class DezignetSharedDataset {
     prop.withdrawnReason = reason || 'Withdrawn by designer';
     prop.timeline.push({ stage: 'Withdrawn', date: 'Today', completed: true });
 
-    if (this.planState.proposalsUsedThisMonth > 0) {
-      this.planState.proposalsUsedThisMonth--;
-    }
+    // Note: withdrawn does not restore proposal credit per policy
 
     return true;
   }

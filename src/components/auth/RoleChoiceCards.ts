@@ -35,7 +35,7 @@ export function renderRoleChoiceCards(selectedRole: 'client' | 'designer' | null
           <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #64748B; line-height: 1.6;">
             <li>Post your project for free</li>
             <li>Compare proposals from verified designers</li>
-            <li>Pay safely with milestone-based escrow</li>
+            <li>Pay safely with protected milestone funding</li>
           </ul>
         </div>
 
