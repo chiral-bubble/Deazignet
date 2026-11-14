@@ -72,9 +72,12 @@ export interface DesignerReview {
   clientName: string;
   clientCompany?: string;
   rating: number; // 1-5
+  ratings?: Record<string, number>;
   reviewText: string;
   projectName: string;
   date: string;
+  reply?: string | null;
+  replied_at?: string | null;
 }
 
 export interface PayoutAccount {

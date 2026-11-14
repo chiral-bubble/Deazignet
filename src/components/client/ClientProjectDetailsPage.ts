@@ -26,7 +26,8 @@ import {
   getMilestoneVersions,
   type EngagementDetail
 } from '../../services/activeWorkService';
-import { createReview, type ReviewItem } from '../../services/reviewsService';
+import { getEngagementReviewStatus, type ReviewItem } from '../../services/reviewsService';
+import { openReviewModal, openReportReviewModal } from '../common/ReviewModal';
 import { supabase, USE_MOCKS } from '../../lib/supabase';
 import { renderClientShell, initClientShell } from './ClientLayout';
 
@@ -73,16 +74,9 @@ export async function renderClientProjectDetailsPage(
       if (engData?.id) {
         engagement = await getEngagement(engData.id);
 
-        // Fetch review if engagement is completed or active
-        const { data: revData } = await supabase
-          .from('reviews')
-          .select('*')
-          .eq('engagement_id', engData.id)
-          .maybeSingle();
-
-        if (revData) {
-          existingReview = revData as ReviewItem;
-        }
+        // Fetch two-way review status for engagement
+        const revStatus = await getEngagementReviewStatus(engData.id);
+        existingReview = revStatus.userReview;
       }
     } catch (e) {
       console.warn('Could not load engagement/review for project:', e);
@@ -388,15 +382,26 @@ function renderProjectView(
         ${isCompleted ? `
           <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
             <div>
-              <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 600; color: #166534;">Project Completed</h3>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #166534;">Project Completed</h3>
+                <span style="font-size: 11px; font-weight: 600; background: #DCFCE7; color: #15803D; padding: 2px 8px; border-radius: 12px;">All Milestones Approved</span>
+              </div>
               <p style="margin: 0; font-size: 13px; color: #15803D;">
-                All milestones have been successfully completed and approved.
+                ${existingReview?.status === 'pending'
+                  ? 'Your review has been submitted and is currently pending reveal under the double-blind 14-day window.'
+                  : existingReview?.status === 'visible'
+                  ? 'Reviews for this engagement have been published and are publicly visible.'
+                  : 'Double-blind 14-day review window is open. Feedback remains private until both parties submit.'}
               </p>
             </div>
-            <div>
-              ${existingReview ? `
+            <div style="display: flex; gap: 8px; align-items: center;">
+              ${existingReview?.status === 'pending' ? `
+                <button id="btn-edit-review" style="background: #FFFFFF; border: 1px solid #BBF7D0; color: #166534; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                  Edit Review (Pending)
+                </button>
+              ` : existingReview?.status === 'visible' ? `
                 <div style="display: inline-flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #BBF7D0; padding: 6px 14px; border-radius: 6px; font-size: 13px; color: #166534; font-weight: 500;">
-                  ★ Reviewed (${existingReview.rating}/5)
+                  ★ Published (${existingReview.rating}/5)
                 </div>
               ` : `
                 <button id="btn-leave-review" style="background: #059669; color: #FFFFFF; border: none; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 6px; cursor: pointer;">
@@ -407,30 +412,51 @@ function renderProjectView(
           </div>
         ` : ''}
 
-        <!-- Existing Client Review Display -->
+        <!-- Existing Review Display -->
         ${existingReview ? `
           <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <div style="font-weight: 600; font-size: 14px; color: #111827;">Your Review</div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="font-weight: 600; font-size: 14px; color: #111827;">Your Review</div>
+                <span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; background: ${existingReview.status === 'visible' ? '#DCFCE7' : '#FEF3C7'}; color: ${existingReview.status === 'visible' ? '#15803D' : '#92400E'};">
+                  ${existingReview.status === 'visible' ? 'Published' : 'Pending Reveal (Double-Blind)'}
+                </span>
+              </div>
               <div style="color: #D97706; font-size: 14px; font-weight: 600;">
                 ${'★'.repeat(existingReview.rating)}${'☆'.repeat(5 - existingReview.rating)}
                 <span style="color: #4B5563; font-size: 12.5px; margin-left: 6px;">(${existingReview.rating}.0)</span>
               </div>
             </div>
             <p style="font-size: 13px; line-height: 1.5; color: #374151; margin: 0 0 12px; white-space: pre-wrap;">${escapeHtml(existingReview.comment)}</p>
-            <div style="display: flex; gap: 16px; font-size: 12px; color: #6B7280; border-top: 1px solid #F3F4F6; padding-top: 10px;">
-              <span>Communication: <strong>${existingReview.communication_rating || '—'}/5</strong></span>
-              <span>Quality: <strong>${existingReview.quality_rating || '—'}/5</strong></span>
-              <span>Timeliness: <strong>${existingReview.timeliness_rating || '—'}/5</strong></span>
-              <span>Would Hire Again: <strong>${existingReview.would_hire_again ? 'Yes' : 'No'}</strong></span>
-            </div>
-
-            ${existingReview.designer_reply ? `
-              <div style="margin-top: 14px; padding: 12px 16px; background: #F7F7F8; border-left: 3px solid #2F7BE5; border-radius: 0 6px 6px 0;">
-                <div style="font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 4px;">Designer Reply:</div>
-                <div style="font-size: 13px; color: #4B5563; line-height: 1.5;">${escapeHtml(existingReview.designer_reply)}</div>
+            
+            ${existingReview.ratings ? `
+              <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: #6B7280; border-top: 1px solid #F3F4F6; padding-top: 10px; margin-bottom: 12px;">
+                ${(existingReview.ratings as any).communication ? `<span>Communication: <strong>${(existingReview.ratings as any).communication}/5</strong></span>` : ''}
+                ${(existingReview.ratings as any).quality_of_work ? `<span>Quality: <strong>${(existingReview.ratings as any).quality_of_work}/5</strong></span>` : ''}
+                ${(existingReview.ratings as any).timeliness ? `<span>Timeliness: <strong>${(existingReview.ratings as any).timeliness}/5</strong></span>` : ''}
+                ${(existingReview.ratings as any).professionalism ? `<span>Professionalism: <strong>${(existingReview.ratings as any).professionalism}/5</strong></span>` : ''}
+                <span>Would Work Again: <strong>${existingReview.would_work_again ? 'Yes' : 'No'}</strong></span>
               </div>
             ` : ''}
+
+            ${existingReview.reply || existingReview.designer_reply ? `
+              <div style="margin-top: 14px; padding: 12px 16px; background: #F7F7F8; border-left: 3px solid #2F7BE5; border-radius: 0 6px 6px 0;">
+                <div style="font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 4px;">Designer Reply:</div>
+                <div style="font-size: 13px; color: #4B5563; line-height: 1.5;">${escapeHtml(existingReview.reply || existingReview.designer_reply || '')}</div>
+              </div>
+            ` : ''}
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; border-top: 1px solid #F3F4F6; padding-top: 10px;">
+              ${existingReview.status === 'pending' ? `
+                <button id="btn-edit-pending-review" style="background: transparent; border: 1px solid #D1D5DB; font-size: 12px; font-weight: 500; color: #374151; padding: 5px 12px; border-radius: 4px; cursor: pointer;">
+                  ✏️ Edit Review
+                </button>
+              ` : `
+                <button id="btn-report-review" data-review-id="${existingReview.id}" style="background: transparent; border: none; font-size: 12px; color: #9CA3AF; cursor: pointer; text-decoration: underline;">
+                  Report review
+                </button>
+              `}
+            </div>
           </div>
         ` : ''}
 
@@ -722,6 +748,16 @@ function renderProjectView(
     document.getElementById('btn-leave-review')?.addEventListener('click', () => {
       showLeaveReviewModal();
     });
+    document.getElementById('btn-edit-review')?.addEventListener('click', () => {
+      showLeaveReviewModal();
+    });
+    document.getElementById('btn-edit-pending-review')?.addEventListener('click', () => {
+      showLeaveReviewModal();
+    });
+    document.getElementById('btn-report-review')?.addEventListener('click', (e) => {
+      const revId = (e.currentTarget as HTMLElement).getAttribute('data-review-id') || existingReview?.id;
+      if (revId) openReportReviewModal({ reviewId: revId });
+    });
   }
 
   function showApproveDialog(milestoneId: string, milestoneName: string, amount: number) {
@@ -855,150 +891,14 @@ function renderProjectView(
 
   function showLeaveReviewModal() {
     if (!engagement) return;
-    const host = document.getElementById('project-modals-host');
-    if (!host) return;
-
-    let selectedRating = 5;
-
-    const ratingDescriptions = ['1 - Poor', '2 - Fair', '3 - Good', '4 - Very good', '5 - Excellent'];
-
-    host.innerHTML = `
-      <div style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; z-index: 100;">
-        <div style="background: #FFFFFF; border-radius: 8px; width: 100%; max-width: 520px; padding: 24px; max-height: 90vh; overflow-y: auto;">
-          <h3 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 6px;">Leave a Review</h3>
-          <p style="font-size: 13px; color: #6B7280; margin: 0 0 20px;">Share your experience working with your designer.</p>
-
-          <!-- Overall Rating -->
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 6px;">Overall Rating</label>
-            <div id="star-rating-box" style="display: flex; gap: 8px; align-items: center;">
-              ${[1, 2, 3, 4, 5].map(star => `
-                <button type="button" class="star-btn" data-val="${star}" style="background: transparent; border: none; font-size: 24px; color: #D97706; cursor: pointer; padding: 0;">★</button>
-              `).join('')}
-              <span id="star-desc-text" style="font-size: 13px; color: #4B5563; margin-left: 10px;">5 - Excellent</span>
-            </div>
-          </div>
-
-          <!-- Sub-ratings -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; font-size: 12.5px;">
-            <div>
-              <label style="display: block; color: #4B5563; margin-bottom: 4px;">Communication</label>
-              <select id="sel-rating-comm" style="width: 100%; height: 34px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 8px;">
-                <option value="5" selected>5 - Excellent</option>
-                <option value="4">4 - Very Good</option>
-                <option value="3">3 - Good</option>
-                <option value="2">2 - Fair</option>
-                <option value="1">1 - Poor</option>
-              </select>
-            </div>
-            <div>
-              <label style="display: block; color: #4B5563; margin-bottom: 4px;">Quality of Work</label>
-              <select id="sel-rating-quality" style="width: 100%; height: 34px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 8px;">
-                <option value="5" selected>5 - Excellent</option>
-                <option value="4">4 - Very Good</option>
-                <option value="3">3 - Good</option>
-                <option value="2">2 - Fair</option>
-                <option value="1">1 - Poor</option>
-              </select>
-            </div>
-            <div>
-              <label style="display: block; color: #4B5563; margin-bottom: 4px;">Schedule Adherence</label>
-              <select id="sel-rating-timeliness" style="width: 100%; height: 34px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 8px;">
-                <option value="5" selected>5 - Excellent</option>
-                <option value="4">4 - Very Good</option>
-                <option value="3">3 - Good</option>
-                <option value="2">2 - Fair</option>
-                <option value="1">1 - Poor</option>
-              </select>
-            </div>
-            <div>
-              <label style="display: block; color: #4B5563; margin-bottom: 4px;">Would hire again?</label>
-              <select id="sel-hire-again" style="width: 100%; height: 34px; border: 1px solid #E5E7EB; border-radius: 6px; padding: 0 8px;">
-                <option value="true" selected>Yes, definitely</option>
-                <option value="false">No</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Review Comment -->
-          <div style="margin-bottom: 16px;">
-            <label style="display: block; font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 6px;">Your Written Feedback</label>
-            <textarea id="modal-review-comment" rows="4" placeholder="Describe the architectural design quality, responsiveness, and experience..." style="width: 100%; border: 1px solid #E5E7EB; border-radius: 6px; padding: 10px; font-size: 13px; font-family: inherit; box-sizing: border-box; outline: none; margin-bottom: 4px;"></textarea>
-            <div id="review-char-count" style="font-size: 11px; color: #9CA3AF; text-align: right;">0 / 30 min (max 2000)</div>
-          </div>
-
-          <!-- Confirmation Checkbox -->
-          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #4B5563; margin-bottom: 20px; cursor: pointer;">
-            <input type="checkbox" id="chk-review-confirm" style="margin-top: 2px;" />
-            <span>I confirm this review is based on genuine work completed under this contract.</span>
-          </label>
-
-          <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button id="modal-cancel-review" style="background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 13px; font-weight: 500; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: #4B5563;">Cancel</button>
-            <button id="modal-submit-review" disabled style="background: #059669; color: #FFFFFF; border: none; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 6px; cursor: not-allowed; opacity: 0.6;">Submit Review</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const starBtns = host.querySelectorAll('.star-btn');
-    const starDesc = document.getElementById('star-desc-text') as HTMLElement;
-    const txtComment = document.getElementById('modal-review-comment') as HTMLTextAreaElement;
-    const chkConfirm = document.getElementById('chk-review-confirm') as HTMLInputElement;
-    const btnSubmit = document.getElementById('modal-submit-review') as HTMLButtonElement;
-    const charCount = document.getElementById('review-char-count') as HTMLElement;
-
-    function updateStars(val: number) {
-      selectedRating = val;
-      starBtns.forEach((b) => {
-        const bVal = Number((b as HTMLElement).dataset.val);
-        b.textContent = bVal <= val ? '★' : '☆';
-      });
-      if (starDesc) starDesc.textContent = ratingDescriptions[val - 1] || `${val} stars`;
-      validateForm();
-    }
-
-    starBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        updateStars(Number((btn as HTMLElement).dataset.val));
-      });
-    });
-
-    function validateForm() {
-      const len = txtComment?.value.trim().length || 0;
-      if (charCount) charCount.textContent = `${len} / 30 min (max 2000)`;
-      const isValid = len >= 30 && len <= 2000 && chkConfirm?.checked;
-      btnSubmit.disabled = !isValid;
-      btnSubmit.style.cursor = isValid ? 'pointer' : 'not-allowed';
-      btnSubmit.style.opacity = isValid ? '1' : '0.6';
-    }
-
-    txtComment?.addEventListener('input', validateForm);
-    chkConfirm?.addEventListener('change', validateForm);
-
-    document.getElementById('modal-cancel-review')?.addEventListener('click', () => { host.innerHTML = ''; });
-    btnSubmit?.addEventListener('click', async () => {
-      try {
-        const commRating = Number((document.getElementById('sel-rating-comm') as HTMLSelectElement).value);
-        const qualRating = Number((document.getElementById('sel-rating-quality') as HTMLSelectElement).value);
-        const timeRating = Number((document.getElementById('sel-rating-timeliness') as HTMLSelectElement).value);
-        const hireAgain = (document.getElementById('sel-hire-again') as HTMLSelectElement).value === 'true';
-
-        await createReview({
-          engagementId: engagement!.id,
-          rating: selectedRating,
-          comment: txtComment.value.trim(),
-          wouldHireAgain: hireAgain,
-          communicationRating: commRating,
-          qualityRating: qualRating,
-          timelinessRating: timeRating
-        });
-
-        host.innerHTML = '';
-        alert('Thank you! Your review has been submitted.');
+    openReviewModal({
+      engagementId: engagement.id,
+      role: 'client',
+      counterpartName: 'Designer',
+      projectTitle: project.title,
+      existingReview,
+      onSubmitted: () => {
         renderClientProjectDetailsPage(container, project.id, 'milestones');
-      } catch (err: any) {
-        alert(err?.message || 'Failed to submit review.');
       }
     });
   }

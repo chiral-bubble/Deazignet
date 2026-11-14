@@ -1677,7 +1677,7 @@ function initWizardState(
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 18px; margin-bottom: 18px;">
           <div style="font-size: 12.5px; font-weight: 600; color: #1E293B; margin-bottom: 4px;">Platform Eligibility & Governance</div>
           <p style="font-size: 12px; color: #64748B; margin: 0; line-height: 1.5;">
-            All projects must comply with Dezignet platform terms. Dezignet does not permit prohibited project categories (such as unpermitted hazardous structures) and requires honest licensure disclosures. Projects are verified prior to escrow release.
+            All projects must comply with Dezignet platform terms. Dezignet does not permit prohibited project categories (such as unpermitted hazardous structures) and requires honest licensure disclosures. Projects are verified prior to release of funds by our payment provider.
           </p>
         </div>
 

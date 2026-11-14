@@ -6,6 +6,7 @@
 import { toggleSaveProject, type Project } from '../../services/projectsService';
 import { formatDate } from '../../services/usMarketService';
 import { formatMoney } from '../../utils/formatters';
+import { maskDisplayName } from '../../services/reviewsService';
 
 export function renderProjectDetails(project: Project, profileComplete: boolean = true): string {
   const isMilestone = project.paymentType === 'Milestone' || project.paymentType === 'Fixed Fee';
@@ -284,7 +285,17 @@ export function renderProjectDetails(project: Project, profileComplete: boolean 
             <h4 class="dez-client-heading">About the Client</h4>
             <div class="dez-client-meta-list">
               <div class="dez-client-meta-item">
-                <strong>${project.client.name}</strong>
+                <strong>${maskDisplayName(project.client.name)}</strong>
+              </div>
+              <div class="dez-client-meta-item" style="color: #4B5563;">
+                ${
+                  (project.client.ratingCount || 0) >= 3 && project.client.ratingAverage
+                    ? `<span style="color: #D97706; font-weight: 600;">★ ${project.client.ratingAverage.toFixed(1)}</span> (${project.client.ratingCount} reviews)`
+                    : (project.client.ratingCount || 0) > 0
+                    ? `(${project.client.ratingCount} review${project.client.ratingCount === 1 ? '' : 's'})`
+                    : '<span style="color: #6B7280;">New client</span>'
+                }
+                ${(project.client.ratingCount || 0) > 0 ? ` &bull; <span>${project.client.wouldWorkAgainPercent ?? 100}% positive</span>` : ''}
               </div>
               ${project.client.company ? `<div class="dez-client-meta-item" style="color:var(--dez-text-muted);">${project.client.company}</div>` : ''}
               <div class="dez-client-meta-item">

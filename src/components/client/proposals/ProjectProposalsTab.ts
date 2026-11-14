@@ -494,7 +494,13 @@ export function initProjectProposalsTab(
               </div>
 
               <div style="font-size: 11.5px; color: #6B7280; margin-bottom: 10px;">
-                ${s.years_experience} yrs exp &bull; ${s.rating_average > 0 ? `★ ${s.rating_average.toFixed(1)} (${s.rating_count})` : 'New talent'}
+                ${s.years_experience} yrs exp &bull; ${
+                  s.rating_count >= 3 && s.rating_average
+                    ? `<span style="color: #D97706; font-weight: 600;">★ ${s.rating_average.toFixed(1)}</span> (${s.rating_count})`
+                    : s.rating_count > 0
+                    ? `(${s.rating_count} reviews)`
+                    : 'New talent'
+                }
               </div>
 
               <!-- Match Reason -->
@@ -700,7 +706,13 @@ export function initProjectProposalsTab(
                 ${p.designer.title ? `${escapeHtml(p.designer.title)} • ` : ''}${escapeHtml(p.designer.studio_name || '')}
               </div>
               <div style="font-size: 12px; color: #94A3B8; margin-top: 4px;">
-                ${escapeHtml(p.designer.city || '')} • ${p.designer.years_experience} yrs exp • ${p.designer.rating_average > 0 ? `★ ${p.designer.rating_average} (${p.designer.rating_count})` : 'New talent'}
+                ${escapeHtml(p.designer.city || '')} • ${p.designer.years_experience} yrs exp • ${
+                  p.designer.rating_count >= 3 && p.designer.rating_average
+                    ? `<span style="color: #D97706; font-weight: 600;">★ ${p.designer.rating_average}</span> (${p.designer.rating_count})`
+                    : p.designer.rating_count > 0
+                    ? `(${p.designer.rating_count} reviews)`
+                    : 'New talent'
+                }
               </div>
               <div style="font-size: 12.5px; color: #334155; margin-top: 8px; line-height: 1.4;">
                 ${escapeHtml(p.cover_letter_preview)}...

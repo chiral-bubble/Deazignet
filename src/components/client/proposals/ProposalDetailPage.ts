@@ -166,7 +166,13 @@ function renderContent(mount: HTMLElement, p: DetailedProposal): void {
                 ${p.designer.title ? `${escapeHtml(p.designer.title)} • ` : ''}${escapeHtml(p.designer.studio_name || '')}
               </div>
               <div style="font-size: 12.5px; color: #94A3B8; margin-top: 4px;">
-                ${escapeHtml([p.designer.city, p.designer.state_region].filter(Boolean).join(', '))} • ${p.designer.years_experience} years experience • ${p.designer.rating_average > 0 ? `★ ${p.designer.rating_average} (${p.designer.rating_count} reviews)` : 'Member'}
+                ${escapeHtml([p.designer.city, p.designer.state_region].filter(Boolean).join(', '))} • ${p.designer.years_experience} years experience • ${
+                  p.designer.rating_count >= 3 && p.designer.rating_average
+                    ? `<span style="color: #D97706; font-weight: 600;">★ ${p.designer.rating_average}</span> (${p.designer.rating_count} reviews)`
+                    : p.designer.rating_count > 0
+                    ? `(${p.designer.rating_count} review${p.designer.rating_count === 1 ? '' : 's'})`
+                    : 'New talent'
+                }
               </div>
 
               ${p.can_offer_regulated_services ? `

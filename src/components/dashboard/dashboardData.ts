@@ -182,6 +182,14 @@ export const attentionItems: AttentionItem[] = [
     actionText: 'Inspect & Approve'
   },
   {
+    id: 'att-rev',
+    type: 'approval',
+    title: 'Leave double-blind review for completed project',
+    project: 'Austin Hill Country Villa',
+    actionText: 'Leave Review',
+    urgent: true
+  },
+  {
     id: 'att-3',
     type: 'message',
     title: 'Client question regarding HVAC specifications',

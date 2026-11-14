@@ -732,7 +732,13 @@ function renderDesignerCard(d: any, _selectedProjectId: string): string {
 
         <!-- Experience & Rating metrics -->
         <div style="font-size: 12px; color: #4B5563; line-height: 1.5; margin-bottom: 12px;">
-          <div>${d.years_experience} years experience • ${d.rating_count > 0 ? `★ ${d.rating_average} (${d.rating_count} reviews)` : 'Member'}</div>
+          <div>${d.years_experience} years experience &bull; ${
+            d.rating_count >= 3 && d.rating_average
+              ? `<span style="color: #D97706; font-weight: 600;">★ ${Number(d.rating_average).toFixed(1)}</span> (${d.rating_count} reviews)`
+              : d.rating_count > 0
+              ? `(${d.rating_count} review${d.rating_count === 1 ? '' : 's'})`
+              : 'New talent'
+          }</div>
           ${d.hourly_rate ? `<div>${formatUSD(d.hourly_rate * 100)}/hr</div>` : ''}
         </div>
       </div>

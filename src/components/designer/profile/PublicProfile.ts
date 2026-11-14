@@ -22,6 +22,8 @@ import { getAuthState } from '../../../services/authService';
 import { inviteDesigner } from '../../../services/invitationsService';
 import { formatMoney } from '../../../utils/formatters';
 import { maskLicenseNumber } from '../../../services/usMarketService';
+import { maskDisplayName } from '../../../services/reviewsService';
+import { openReportReviewModal, openReplyModal } from '../../common/ReviewModal';
 
 
 export function renderPublicProfile(
@@ -121,8 +123,8 @@ export function renderPublicProfile(
           <div class="dez-pub-metric-item">
             <span class="dez-pub-metric-val">
               ${
-                designer.stats.averageRating > 0
-                  ? `${designer.stats.averageRating.toFixed(2)} ★`
+                designer.stats.reviewCount >= 3 && designer.stats.averageRating > 0
+                  ? `${designer.stats.averageRating.toFixed(1)} ★`
                   : '&mdash;'
               }
             </span>
@@ -242,16 +244,16 @@ export function renderPublicProfile(
                 ${reviews
                   .map(
                     (rev) => `
-                  <article class="dez-pub-rev-item">
-                    <div class="dez-pub-rev-top">
+                  <article class="dez-pub-rev-item" style="border-bottom: 1px solid #F3F4F6; padding-bottom: 16px; margin-bottom: 16px;">
+                    <div class="dez-pub-rev-top" style="display: flex; justify-content: space-between; align-items: baseline;">
                       <div>
-                        <strong class="dez-pub-rev-client">${rev.clientName}</strong>
-                        ${rev.clientCompany ? `<span class="dez-pub-rev-company">(${rev.clientCompany})</span>` : ''}
+                        <strong class="dez-pub-rev-client" style="font-size: 13.5px; color: #111827;">${maskDisplayName(rev.clientName)}</strong>
+                        ${rev.clientCompany ? `<span class="dez-pub-rev-company" style="font-size: 12px; color: #6B7280;">(${rev.clientCompany})</span>` : ''}
                       </div>
-                      <span class="dez-pub-rev-date">${rev.date}</span>
+                      <span class="dez-pub-rev-date" style="font-size: 11.5px; color: #9CA3AF;">${rev.date}</span>
                     </div>
 
-                    <div class="dez-pub-rev-stars">
+                    <div class="dez-pub-rev-stars" style="margin: 4px 0 8px;">
                       ${Array.from({ length: 5 })
                         .map(
                           (_, i) => `
@@ -261,8 +263,37 @@ export function renderPublicProfile(
                         .join('')}
                     </div>
 
-                    <p class="dez-pub-rev-text">${rev.reviewText}</p>
-                    <div class="dez-pub-rev-project">Commission: <strong>${rev.projectName}</strong></div>
+                    <p class="dez-pub-rev-text" style="font-size: 13px; color: #374151; line-height: 1.5; margin: 0 0 8px;">${rev.reviewText}</p>
+                    
+                    ${rev.ratings ? `
+                      <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 11.5px; color: #6B7280; margin-bottom: 8px;">
+                        ${rev.ratings.communication ? `<span>Communication: <strong>${rev.ratings.communication}/5</strong></span>` : ''}
+                        ${rev.ratings.quality_of_work ? `<span>Quality: <strong>${rev.ratings.quality_of_work}/5</strong></span>` : ''}
+                        ${rev.ratings.timeliness ? `<span>Timeliness: <strong>${rev.ratings.timeliness}/5</strong></span>` : ''}
+                        ${rev.ratings.professionalism ? `<span>Professionalism: <strong>${rev.ratings.professionalism}/5</strong></span>` : ''}
+                      </div>
+                    ` : ''}
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #6B7280;">
+                      <div class="dez-pub-rev-project">Commission: <strong>${rev.projectName}</strong></div>
+                      <div style="display: flex; gap: 8px;">
+                        ${viewerRole === 'self' && !rev.reply ? `
+                          <button type="button" class="btn-reply-review" data-review-id="${rev.id}" style="background: transparent; border: none; font-size: 12px; color: #2563EB; cursor: pointer; text-decoration: underline;">
+                            Reply
+                          </button>
+                        ` : ''}
+                        <button type="button" class="btn-report-review" data-review-id="${rev.id}" style="background: transparent; border: none; font-size: 12px; color: #9CA3AF; cursor: pointer; text-decoration: underline;">
+                          Report review
+                        </button>
+                      </div>
+                    </div>
+
+                    ${rev.reply ? `
+                      <div class="dez-pub-rev-reply" style="margin-top: 10px; padding: 10px 14px; background: #F8FAFC; border-left: 3px solid #3B82F6; border-radius: 0 6px 6px 0; font-size: 12.5px; color: #334155;">
+                        <div style="font-weight: 600; margin-bottom: 2px; color: #1E293B;">Designer Response:</div>
+                        <div>${rev.reply}</div>
+                      </div>
+                    ` : ''}
                   </article>
                 `
                   )
@@ -726,6 +757,39 @@ export async function initPublicProfile(
       initProjectLightboxModal(lightboxSlot, project, () => {
         lightboxSlot.innerHTML = '';
       });
+    });
+  });
+
+  // Report review handlers
+  newRoot.querySelectorAll<HTMLElement>('.btn-report-review').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const revId = btn.getAttribute('data-review-id');
+      if (revId) {
+        openReportReviewModal({
+          reviewId: revId,
+          onReported: () => {
+            callbacks.onShowToast('Report Submitted', 'Your review report has been submitted to moderators.', 'info');
+          }
+        });
+      }
+    });
+  });
+
+  // Reply review handlers
+  newRoot.querySelectorAll<HTMLElement>('.btn-reply-review').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const revId = btn.getAttribute('data-review-id');
+      if (revId) {
+        openReplyModal({
+          reviewId: revId,
+          onReplied: () => {
+            callbacks.onShowToast('Reply Posted', 'Your reply has been published.', 'success');
+            initPublicProfile(container, designerId, callbacks);
+          }
+        });
+      }
     });
   });
 }

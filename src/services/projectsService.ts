@@ -5,7 +5,31 @@
  */
 
 import { supabase, USE_MOCKS } from '../lib/supabase';
-import type { ProjectStatus, PaymentType } from '../types/database.types';
+import type { ProjectStatus, PaymentType, ProfessionalType } from '../types/database.types';
+
+export const PROFESSIONAL_TYPES: ProfessionalType[] = [
+  'architect',
+  'engineer',
+  'interior_designer',
+  'landscape_architect',
+  'bim_specialist',
+  'visualization_professional',
+  'drafter_cad',
+  'other_consultant'
+];
+
+export function formatProjectBudgetRange(budgetMin?: number | null, budgetMax?: number | null): string {
+  if (budgetMin && budgetMax && budgetMin > 0 && budgetMax >= budgetMin) {
+    return `$${Number(budgetMin).toLocaleString()} to $${Number(budgetMax).toLocaleString()}`;
+  }
+  if (budgetMax && budgetMax > 0) {
+    return `$${Number(budgetMax).toLocaleString()}`;
+  }
+  if (budgetMin && budgetMin > 0) {
+    return `From $${Number(budgetMin).toLocaleString()}`;
+  }
+  return '$0';
+}
 
 // ─── Public Types (same shape as mock layer) ─────────────────────────────────
 
@@ -27,6 +51,9 @@ export interface ClientInfo {
   projectsPosted: number;
   paymentVerified: boolean;
   avatarText: string;
+  ratingAverage?: number | null;
+  ratingCount?: number;
+  wouldWorkAgainPercent?: number;
 }
 
 export interface ProjectReferenceImage {
@@ -379,7 +406,10 @@ function rowToProject(row: any, clientRow: any): Project {
         : 'Unknown',
       projectsPosted: Number(clientRow?.projects_posted ?? 0),
       paymentVerified: clientRow?.payment_verified === true,
-      avatarText
+      avatarText,
+      ratingAverage: clientRow?.rating_average !== undefined && clientRow?.rating_average !== null ? Number(clientRow.rating_average) : null,
+      ratingCount: Number(clientRow?.rating_count ?? 0),
+      wouldWorkAgainPercent: Number(clientRow?.would_work_again_percent ?? 100)
     },
     referenceImages: [], // mocked until storage phase
     milestones: milestones.length > 0 ? milestones : undefined
