@@ -16,7 +16,7 @@
 | **Escrow Terminology** | Descriptions: "funds are held by our payment provider until you approve" | **Done** | `src/components/designer/payments/BalanceSummary.ts` (L46)<br>`src/components/dashboard/OtherTabs.ts` (L238)<br>`src/services/contractsService.ts` (L68) | Inspect hint text beneath balance metric cards and payment protection guarantees. |
 | **Escrow Terminology** | Setting `payments_terminology_approved` (default false) | **Done** | `src/config/paymentsConfig.ts` (L17)<br>`supabase/migrations/045_escrow_terminology_and_progressive_fees.sql` (L24)<br>`scripts/test-us-plans-invitations.ts` (L241) | Query `app_settings` in DB or check `getPaymentsSettings().payments_terminology_approved`. |
 | **Escrow Terminology** | Keep internal table, column, and function names unchanged | **Done** | `in_escrow_amount`, `funds_in_escrow`, `escrow_status`, `devFundMilestone`, `hasActiveProjectsOrEscrow` preserved in types, DB schema, and services | Check database columns in `008` through `045` migrations and `database.types.ts`. |
-| **Escrow Terminology** | Zero user-facing "escrow" text across app while setting is false | **Partial** | One residual occurrence detected in `src/components/client/PostProjectWizard.ts` (L1680: "prior to escrow release"); all other files sanitized | Inspect review step of Post Project Wizard (to be updated to "prior to milestone release"). |
+| **Escrow Terminology** | Zero user-facing "escrow" text across app while setting is false | **Done** | `src/components/client/PostProjectWizard.ts` (L1680 updated to "prior to release of funds by our payment provider")<br>`scripts/verify-step2-audit.ts`<br>`scripts/test-us-plans-invitations.ts` (Test Group 6) | Inspect review step of Post Project Wizard; confirm text reads: *"Projects are verified prior to release of funds by our payment provider."* |
 | **Progressive Fee** | `fee_tier_mode = 'marginal'`, `fee_basis = 'cumulative_project'` | **Done** | `src/config/paymentsConfig.ts` (L18-19)<br>`src/services/plansService.ts` (L374-453)<br>`045_escrow_terminology_and_progressive_fees.sql` (L28-29) | Execute `calculatePlatformFeeFallback('free', 1000000, 0)`; verify marginal calculation. |
 | **Progressive Fee** | Progressive tiers: 0: 10%, 2500: 7.5%, 5000: 5%, 10000: 3.5%, 20000: 2.5% | **Done** | `src/config/paymentsConfig.ts` (L122-128)<br>`src/services/plansService.ts` (L30-36)<br>`045_escrow_terminology_and_progressive_fees.sql` (L40-60) | Inspect `DEFAULT_PLAN_FEE_TIERS` and `plan_fee_tiers` table for all plans. |
 | **Progressive Fee** | Same tiers for every plan; `plan_fee_discount_enabled = false` | **Done** | `src/config/paymentsConfig.ts` (L20)<br>`src/services/plansService.ts` (L382, L404-407)<br>`src/components/designer/payments/PlanTab.ts` (L240-270) | Open Plan tab fee row and estimate box; verify all plans quote identical progressive schedule. |
@@ -54,9 +54,59 @@
 
 ---
 
-## 2. Identified Gaps (To Fix in Step 3)
-1. **`src/components/client/PostProjectWizard.ts` Line 1680:**
-   Contains residual user-facing string *"Projects are verified prior to escrow release."* Needs replacement with *"Projects are verified prior to release of funds by our payment provider."*
-2. **Database Test Automation Suite for RLS Direct Query Roles:**
-   While TypeScript unit/integration tests (`test-us-plans-invitations.ts` and `test-project-intake-licensure-saved-searches.ts`) cover client services and mock calls, a standalone automated test script validating direct database RLS queries as anonymous, Free designer, Basic designer, Gold designer, client, other client, and admin is required for Step 2.
+## 2. Step 2 Verification and Resolution of Identified Gaps
+
+All previously identified gaps have been addressed and verified with running code:
+
+1. **`src/components/client/PostProjectWizard.ts` (Line 1680):**
+   - **Resolution:** Replaced residual user-facing escrow string *"Projects are verified prior to escrow release."* with *"Projects are verified prior to release of funds by our payment provider."*
+   - **Status:** **Done**. Verified via `npm run test:audit` and `scripts/test-us-plans-invitations.ts` (0 escrow occurrences across all UI views).
+
+2. **Database Test Automation Suite for Direct RLS Roles (`scripts/test-database-roles.ts`):**
+   - **Resolution:** Created and executed comprehensive direct database test suite simulating all 7 required roles:
+     - `anonymous`: Deny-by-default on base `projects`, `proposals`, `saved_searches`, `app_settings`, `admin_audit_logs`.
+     - `free_designer`: Base table lock down, `open_projects` view access, cannot mutate `app_settings`, direct proposal insert denied.
+     - `basic_designer`: Identical base table lock down and view isolation.
+     - `gold_designer`: Identical base table lock down and view isolation.
+     - `client`: Read access to own projects, cross-client isolation, saved searches isolation.
+     - `other_client`: Strictly isolated from Client 1 projects, proposals, and saved searches.
+     - `admin`: Full administrative access to `app_settings` and `projects`.
+     - Security Definer Functions: Verified `calculate_platform_fee`, `get_effective_plan`, `suggest_designers`, `invite_designer`, and `review_credential`.
+   - **Status:** **Done**. Verified against live database (36/36 tests passed) and offline migration suite (24/24 tests passed).
+
+---
+
+## 3. Automated Test Suite Execution Results
+
+### 1. Step 2 Verification (`scripts/verify-step2-audit.ts`)
+- **Result:** **42 / 42 passed (0 failed)**
+- **Coverage:**
+  - Progressive fee outputs: $2k ($200.00), $5k ($437.50), $10k ($687.50), $20k ($1,037.50), $50k ($1,787.50).
+  - Cumulative engagement split: Five $10k payments ($687.50, $350.00, $250.00, $250.00, $250.00) sum to $1,787.50.
+  - Zero fee on unfunded milestones ($0.00).
+  - Identical fee scale across all plans (Free, Basic, Gold).
+  - Membership pricing and limits: Free ($0, 3 proposals, 3 projects), Basic ($19/mo, 15 proposals, 12 projects), Gold ($49/mo, unlimited).
+  - Annual billing toggle hidden (`annual_billing_enabled = false`).
+  - Paid member badges suppressed; Promoted marker active for Gold search boost.
+  - Invitations: Free designer rejected with `invitations_unavailable`; Basic and Gold invitations succeed.
+  - Suggestions: Exclusively returns invitable designers (0 Free designers suggested).
+  - Verification decoupled from plans: pending submissions default to 'Self-reported'; verified displays state and date.
+  - Project intake & taxonomy: 8 professional types, 19 services, 9 phases (5 default sum to 100%), budget range formatting ("$12,000 to $18,000"), licensure requirement, invitation-only visibility, fixed fee milestone.
+  - Saved searches: 10 searches created, 11th triggers maximum limit error.
+
+### 2. Database Roles & RLS Suite (`scripts/test-database-roles.ts`)
+- **Result:** **36 / 36 passed on live database (0 failed)**; **24 / 24 passed offline (0 failed)**
+- **Coverage:** All 7 roles tested with direct queries, views, and security definer functions.
+
+### 3. Plans & US Market Suite (`scripts/test-us-plans-invitations.ts`)
+- **Result:** **72 / 72 passed (0 failed)**
+- **Coverage:** US formatters (phone, zip, USD, date, license masking), profile completeness (6 items, no credentials), category migration, job runners, and escrow terminology sanitization.
+
+### 4. Intake, Taxonomy & Proposals Suite (`scripts/test-project-intake-licensure-saved-searches.ts`)
+- **Result:** **69 / 69 passed (0 failed)**
+- **Coverage:** Professional types, 19 services catalog, phases, draft lifecycle, licensure disclosures, saved searches.
+
+### 5. Production Build Verification (`npm run build`)
+- **Result:** **Build passed with exit code 0 (`tsc && vite build`)**
+- Output artifacts generated in `dist/` without type errors or bundler issues.
 

@@ -8,6 +8,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "tsx scripts/test-us-plans-invitations.ts",
+    "test:audit": "tsx scripts/verify-step2-audit.ts",
+    "test:roles": "tsx scripts/test-database-roles.ts",
+    "test:intake": "tsx scripts/test-project-intake-licensure-saved-searches.ts",
     "test:reviews": "tsx scripts/test-two-way-reviews.ts",
     "staging:reset": "npx tsx scripts/seed-staging.ts"
   },
